@@ -1,6 +1,7 @@
 import numpy as np
 
 from config import FREQ_BINS
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
@@ -29,7 +30,7 @@ class FctAmplitudesTransformerNode(CNode, AmplitudesTransformer):
         self.powering = Element(self, "powering", ElementValue(powering))
         self.log = Element(self, "log", ElementValue(log))
         self.amplitudes_level_fct = Element(self, "amplitudes_level_fct", amplitudes_level_fct)
-        self.data = Element(self, "data", ElementValue(np.zeros(FREQ_BINS)))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(FREQ_BINS)))
 
     def c_update(self):
         self.transform_amplitudes(self.input_data.value)

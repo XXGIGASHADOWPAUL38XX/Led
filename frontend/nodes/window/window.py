@@ -1,6 +1,7 @@
 import numpy as np
 
 from backend.updatable.updatable import AudioUpdatable
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.components.elements.dials import ExpDial
@@ -32,10 +33,11 @@ class WindowNode(CNode, AudioUpdatable):
         self.input_data = Element(self, "input_data", ElementValue(input_data)) # Data to aggregate
         self.offset = Element(self, "offset", ElementValue(offset))
         input_shape = self.input_data.value.shape[0]
-        self.data = Element(self, "data", ElementValue((np
-            .repeat(init_value, self.length.value * input_shape)
-            .reshape(self.length.value, input_shape))
-        ))
+        self.data = AnalysableElement(self, "data", ElementValue((np
+                                                                  .repeat(init_value, self.length.value * input_shape)
+                                                                  .reshape(self.length.value, input_shape))
+                                                                 ))
+        self._offset_buffer = []
         self.window_fcts = Element(self, "window_fcts", ElementValue([]))
 
         self.length.valueChanged.connect(self.on_length_change)
@@ -56,13 +58,20 @@ class WindowNode(CNode, AudioUpdatable):
         input_shape = self.input_data.value.shape[0]
         if self.data.value.shape[0] != int(self.length.value) or self.data.value.shape[1] != input_shape:
             self._resize_data(input_shape)
-        self.roll()
+        offset = int(self.offset.value)
+        if offset:
+            self._offset_buffer.append(self.input_data.value.copy())
+            input_data = self._offset_buffer.pop(0) if len(self._offset_buffer) > offset else np.zeros_like(self.input_data.value)
+        else:
+            self._offset_buffer.clear()
+            input_data = self.input_data.value
+        self.roll(input_data)
         for window_fct in self.window_fcts.value:
             window_fct.aggregate(self.data.value)
 
-    def roll(self):
+    def roll(self, input_data):
         try:
             self.data.value[:] = np.roll(self.data.value, -1, axis=0)
-            self.data.value[-1] = np.roll(self.input_data.value, self.offset.value)
+            self.data.value[-1] = input_data
         except (IndexError, ValueError):
             pass

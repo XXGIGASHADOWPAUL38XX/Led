@@ -2,6 +2,7 @@ import numpy as np
 
 from backend.updatable.updatable import AudioUpdatable
 from config import FREQ_BINS
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
@@ -28,7 +29,7 @@ class BroadcastRescalerNode(CNode, AudioUpdatable):
         self.length = Element(self, "length", ElementValue(length))
 
         data_shape = (length, *self.input_data.value.shape[1:])
-        self.data = Element(self, "data", ElementValue(np.zeros(data_shape)))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(data_shape)))
 
     def c_update(self):
         ratio = self.input_data.value.shape[0] / self.length.value

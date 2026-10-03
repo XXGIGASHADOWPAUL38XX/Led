@@ -1,7 +1,8 @@
 import numpy as np
 
 from backend.updatable.updatable import AudioUpdatable
-from config import FREQ_BINS
+from config import FREQ_BINS, MAX_FREQUENCY
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
@@ -26,7 +27,7 @@ class AvgFrequenciesNode(CNode, AudioUpdatable):
 
         self.input_frequencies = Element(self, "input_frequencies", ElementValue(input_frequencies))
         self.input_amplitudes = Element(self, "input_amplitudes", ElementValue(input_amplitudes))
-        self.data = Element(self, "data", ElementValue(np.zeros(1)))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(1)), y_max=max(MAX_FREQUENCY, float(np.max(self.input_frequencies.value, initial=0))))
 
     def c_update(self):
         self.data.value[...] = np.sum(

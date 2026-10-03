@@ -134,7 +134,7 @@ class NodeSelector(Element):
             return
 
         self.selected_element = self.selected_elements[element_total - 1]
-        self.value = lambda: self.selected_element.value
+        self.value = self.selected_element
 
     def set_default_element(self, element):
         self.selected_node = element.node
@@ -150,7 +150,7 @@ class NodeSelector(Element):
         self.selection_elements_combobox.addItems(element_names)
         self.selection_elements_combobox.setCurrentText(element.name)
         self.selection_elements_combobox.blockSignals(False)
-        self.value = lambda: self.selected_element.value
+        self.value = self.selected_element
 
     def eventFilter(self, watched, event):
         super().eventFilter(watched, event)

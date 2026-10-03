@@ -359,3 +359,16 @@ class CNode(Node):
 
     def c_update(self, **kwargs):
         return {}
+
+
+class OfflineCNode(CNode):
+    is_offline = True
+
+    def calculate_playlist(self, tracks):
+        pass
+
+    def update_audio_index(self, track_index, audio_index):
+        pass
+
+    def update_audio_position(self, track_index, position):
+        pass

@@ -26,7 +26,7 @@ class ConstantArrayNode(CNode):
         super().__init__(self.nodeName, terminals, render=render, alias=alias)
         self.input_value = TextEdit(self, "input_value", ElementValue(input_value))
         self.length = Element(self, "length", ElementValue(length))
-        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(int(self.length.value))))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(int(self.length.value))), y_min=min(0.0, input_value), y_max=max(1.0, input_value))
         self.input_value.valueChanged.connect(self._refresh_data)
         self.length.valueChanged.connect(self._refresh_data)
         self._refresh_data()

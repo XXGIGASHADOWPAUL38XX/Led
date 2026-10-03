@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Callable
 
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.components.elements.node_selector.node_selector import NodeSelector
@@ -23,11 +24,8 @@ class WindowFct:
             selection_nodes=self.get_flowchart_visible_nodes,
             link_terminal=False
         )
-        self.data = Element(
-            self,
-            "data",
-            ElementValue(np.zeros(window.data.value.shape[-1] if window is not None else 1)),
-        )
+        self.data = AnalysableElement(self, "data",
+                                      ElementValue(np.zeros(window.data.value.shape[-1] if window is not None else 1)))
         self.window.valueChanged.connect(self.on_window_change)
         self.on_window_change()
 

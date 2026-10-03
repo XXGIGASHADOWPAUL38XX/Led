@@ -2,7 +2,7 @@ import numpy as np
 
 from backend.updatable.updatable import AudioUpdatable
 from config import FREQ_BINS
-from frontend.components.elements import Interval
+from frontend.components.elements import Interval, AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.components.elements.textedit import TextEdit
@@ -34,7 +34,7 @@ class BroadcastFractionNode(CNode, AudioUpdatable):
         self.interval_input = Interval(self, "interval_input", ElementValue(interval_input))
         self.input = Element(self, "input", ElementValue(input))
 
-        self.data = Element(self, "data", ElementValue(np.zeros(self._data_shape())))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(self._data_shape())))
         
         self.fraction.valueChanged.connect(self.on_fraction_change)
 

@@ -1,6 +1,7 @@
 import numpy as np
 
 from backend.pipelines.pipeline import AudioPipeline
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
@@ -18,7 +19,7 @@ class ZeroCrossingRateNode(CNode, AudioPipeline):
         }
         super().__init__(self.nodeName, terminals, render=render, alias=alias)
         self.buffer_data = Element(self, "buffer_data", ElementValue(buffer_data))
-        self.data = Element(self, "data", ElementValue(np.zeros(1)))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(1)))
 
     def c_update(self):
         data = np.asarray(self.buffer_data.value, dtype=float)

@@ -1,7 +1,7 @@
 import numpy as np
 
 import pyqtgraph as pg
-from PyQt5 import sip
+from PyQt5 import QtCore, QtWidgets, sip
 
 from frontend.components.elements.chart.line_chart_element import LineChartElement
 
@@ -31,9 +31,17 @@ class MultiLineChartElement(LineChartElement):
             plot.plot(x, data, pen=pg.mkPen(selector.color))
             for selector, data in zip(self.node.node_selectors, self.data)
         ]
+        for index, line in enumerate(self.lines):
+            line.setVisible(self.node.line_visibility[index])
         self.line = self.lines[0] if self.lines else None
         self.update_legend()
-        self.node._elements_container.layout().addWidget(self.node.window)
+        self.node.window.setFixedSize(600, 260)
+        self.node.window.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        self.node._elements_container.layout().addWidget(
+            self.node.window,
+            alignment=QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignTop,
+        )
+        self.node.window.show()
         return self.node.window
 
     def c_update(self):

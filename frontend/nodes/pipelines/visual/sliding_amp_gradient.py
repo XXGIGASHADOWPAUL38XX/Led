@@ -3,6 +3,7 @@ import numpy as np
 from backend.pipelines.pipeline import VisualPipeline
 from config import FREQ_BINS
 from frontend.components.elements.dials import LinearDial
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
@@ -42,7 +43,7 @@ class SlidingAmpGradientNode(VisualPipeline, CNode):
         self.gradiant_rainbow = Element(self, "gradiant_rainbow", ElementValue(RainbowNode(
             n_points=self.n_points_gradiant.value, parent=self, inv_fraction=0.4
         )))
-        self.data = Element(self, "data", ElementValue(np.zeros((FREQ_BINS, 3))))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros((FREQ_BINS, 3))), y_max=255.0)
         self.avg_amplitudes = Element(self, "avg_amplitudes", ElementValue(0.))
 
     def c_update(self):

@@ -27,18 +27,20 @@ class MultiLineChartNode(LineChartNode):
     ):
         super().__init__(self.nodeName, terminals={}, render=render, alias=alias)
         self.title = ElementValue(title)
-        self.node_selectors = node_selectors or [
+        selector_values = node_selectors or [None]
+        self.node_selectors = [
             ChartLineNodeSelector(
                 self,
-                "node_selector",
-                ElementValue(None),
+                f"node_selector_{index}",
+                ElementValue(value),
                 selection_nodes=self.get_flowchart_visible_nodes,
                 link_terminal=False,
             )
+        for index, value in enumerate(selector_values)
         ]
-        for selector in self.node_selectors:
-            if selector not in self.elements:
-                self.elements.append(selector)
+        self.line_visibility = [True] * len(self.node_selectors)
+        for index, selector in enumerate(self.node_selectors):
+            self._add_visibility_button(index, selector)
         self.add_selector_button = QtWidgets.QPushButton("Add node selector")
         self.add_selector_button.clicked.connect(self.add_node_selector)
         self.number_points = Element(self, "number_points", ElementValue(number_points))
@@ -77,6 +79,8 @@ class MultiLineChartNode(LineChartNode):
             link_terminal=False,
         )
         self.node_selectors.append(selector)
+        self.line_visibility.append(True)
+        self._add_visibility_button(len(self.node_selectors) - 1, selector)
         self.elements.insert(len(self.node_selectors) - 1, selector)
         self._elements_container.layout().insertWidget(len(self.node_selectors) - 1, selector)
         self.chart.input_data.append(0.0)
@@ -85,6 +89,20 @@ class MultiLineChartNode(LineChartNode):
             x = np.arange(self.chart.number_points)
             self.chart.lines.append(self.chart.plot.plot(x, self.chart.data[-1], pen=pg.mkPen(selector.color)))
         self.chart.update_legend()
+
+    def _add_visibility_button(self, index, selector):
+        button = QtWidgets.QToolButton()
+        button.setCheckable(True)
+        button.setChecked(True)
+        button.setText("●")
+        button.setToolTip("Show/hide curve")
+        button.toggled.connect(lambda visible: self.set_line_visibility(index, visible))
+        selector.controls_layout.addWidget(button)
+
+    def set_line_visibility(self, index, visible):
+        self.line_visibility[index] = visible
+        if index < len(self.chart.lines):
+            self.chart.lines[index].setVisible(visible)
 
     def draw(self):
         return self.chart.draw()

@@ -2,6 +2,7 @@ import numpy as np
 
 from backend.pipelines.pipeline import VisualPipeline
 from frontend.components.elements.dials import LinearDial
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
@@ -34,7 +35,7 @@ class BroadcastAdditionNode(VisualPipeline, CNode):
             self.level = Element(self, "level", ElementValue(level))
         else:
             self.level = LinearDial(self, "level", 0, 1, ElementValue(level))
-        self.data = Element(self, "data", ElementValue(np.zeros_like(self.input_data.value)))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros_like(self.input_data.value)), y_max=255.0)
 
     def c_update(self):
         input_data = np.asarray(self.input_data.value)

@@ -6,7 +6,7 @@ def search_tracks(query, options=None, limit=10):
     if not query:
         return None
     url = query if query.startswith(("http://", "https://")) else f"scsearch{limit}:{query}"
-    with YoutubeDL({"quiet": True, "extract_flat": True, **(options or {})}) as ydl:
+    with YoutubeDL({"quiet": True, "extract_flat": True, "skip_download": True, **(options or {})}) as ydl:
         info = ydl.extract_info(url, download=False)
     entries = info.get("entries") or [info]
     results = []

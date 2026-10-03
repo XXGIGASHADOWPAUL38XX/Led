@@ -2,6 +2,7 @@ from backend.updatable.updatable import AudioUpdatable
 
 import numpy as np
 
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
@@ -46,7 +47,7 @@ class SmoothingNode(CNode, AudioUpdatable):
         )
         self.average_window = window_function
 
-        self.data = Element(self, "data", ElementValue(np.zeros(self.input_value.value.shape[-1])))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(self.input_value.value.shape[-1])))
         self.length.valueChanged.connect(self._sync_length)
 
     def _sync_length(self, value):

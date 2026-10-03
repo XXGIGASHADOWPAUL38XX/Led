@@ -6,9 +6,11 @@ from PyQt5 import QtCore, QtWidgets
 from backend.pipelines.pipeline import VisualPipeline
 from backend.updatable.updatable import audio_updatable_objects, visual_updatable_objects
 from config import DELAY_UPDATE, FREQ_BINS, SAMPLE_RATE
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.nodes.buffer import BufferNode
+from frontend.nodes.controllers import ESP32Node
 from frontend.nodes.pipelines import AmplitudesNode
 from frontend.nodes.pipelines.auditory.filter.low_filter import LowFilterPipelineNode
 from frontend.nodes.pipelines.auditory.rms import RMSPipelineNode
@@ -46,7 +48,7 @@ class HarmonicTideNode(VisualPipeline, CNode):
 
         self.amplitudes = Element(self, "amplitudes", ElementValue(amplitudes))
         self.bass_drive = Element(self, "bass_drive", ElementValue(bass_drive))
-        self.data = Element(self, "data", ElementValue(np.zeros(FREQ_BINS)))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(FREQ_BINS)))
         self.brushes = Element(self, "brushes", ElementValue(np.zeros((FREQ_BINS, 4))))
 
         self.phase = 0.0
@@ -136,7 +138,6 @@ def main():
         buffer=buffer_node.data,
         fft_size=analysis_chunk_size,
         powering=0.35,
-        normalisation=True,
         alias="amplitudes",
     )
 
@@ -168,6 +169,11 @@ def main():
         input_value=1,
         length=FREQ_BINS,
         alias="constant_array_one",
+    )
+
+    esp32_node = ESP32Node(
+        rgba=harmonic_tide_node.brushes,
+        alias="esp32_node",
     )
 
     tide_chart_node = BarGraphChartNode(

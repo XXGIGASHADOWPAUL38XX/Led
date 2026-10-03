@@ -1,5 +1,2 @@
-- [x] convert esp32_ddp_ws2812b.ino to .cpp
-- [x] find port of esp32
-- [x] clear obsolete MicroPython firmware files and use esp32_ddp_ws2812b.cpp
-- [x] configure the host-side C++ toolchain with PlatformIO
-- [x] edit ESP32Node to send directly to the native ESP32 DDP receiver
+- when adding a node with ctrl a, both the search add and the added node should be added in the cursor position
+- 

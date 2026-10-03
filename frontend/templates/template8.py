@@ -60,7 +60,7 @@ def main():
     amplitudes_node = AmplitudesNode(
         buffer=buffer_node.data,
         fft_size=analysis_chunk_size,
-        # powering=0.5,
+        powering=0.4,
         alias="amplitudes_node",
     )
 
@@ -78,8 +78,8 @@ def main():
 
     avg_frequencies_correlation_offset = ValueTransformerPipelineNode(
         input_value=avg_frequencies_node.data,
-        input_value_interval=[400, 900],
-        output_value_interval=[0.04, 0.12],
+        input_value_interval=[800, 1000],
+        output_value_interval=[0, 0],
         alias="avg_frequencies_correlation_offset",
     )
 
@@ -92,7 +92,7 @@ def main():
 
     amplitudes_node_normalized = ValueTransformerPipelineNode(
         input_value=amplitudes_transformer_node.data,
-        input_value_interval=[0, 7],
+        input_value_interval=[0, 1],
         output_value_interval=[0, 1],
         alias="amplitudes_node_normalized",
     )
@@ -101,14 +101,14 @@ def main():
         arguments=[
             amplitudes_node_normalized.output_value,
             "**",
-            "2",
+            "7",
         ],
         length=amplitudes_node_normalized.output_value.value.shape[-1],
     )
 
     avg_frequencies_color_level = ValueTransformerPipelineNode(
         input_value=avg_frequencies_node.data,
-        input_value_interval=[400, 900],
+        input_value_interval=[800, 1000],
         output_value_interval=[0, 1],
         alias="avg_frequencies_color_level",
     )

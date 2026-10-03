@@ -32,7 +32,7 @@ class SinArrayNode(CNode):
         self.number_points = Element(self, "number_points", ElementValue(number_points))
         self.center = Element(self, "center", ElementValue(center))
         self.offset = Element(self, "offset", ElementValue(offset))
-        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(int(self.number_points.value))))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(int(self.number_points.value))), y_min=min(0.0, center - abs(offset)), y_max=max(1.0, center + abs(offset)))
 
         self.number_cycle.valueChanged.connect(self._refresh_data)
         self.number_points.valueChanged.connect(self._refresh_data)

@@ -18,9 +18,9 @@ class ESP32Node(ControllerNode):
     def __init__(
         self,
         rgba: np.ndarray = np.zeros((FREQ_BINS, 4), dtype=np.float32),
-        power_log: float = 1,
-        min_alpha: float = 4. / 255.,
-        remove_alpha: float = 4. / 255.,
+        power_log: float = 1.5,
+        min_alpha: float = 5. / 255.,
+        remove_alpha: float = 5. / 255.,
         esp32_ip: str = "192.168.1.11",
         ddp_port: int = 4048,
         led_count: int = FREQ_BINS + SKIP_LED_NUMBERS,

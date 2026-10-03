@@ -117,11 +117,12 @@ class Element(QtWidgets.QWidget):
         self.value_label = None
         self._value = None
         self._value_ref = None
+        self._value_source = None
         self._array_refresh_pending = False
 
         super().__init__()
         self.setProperty("ledRole", "elementRow")
-        self.arrayValueMutated.connect(self._flush_array_value_mutation, QtCore.Qt.QueuedConnection)
+        self.arrayValueMutated.connect(self._flush_array_value_mutation)
 
         if isinstance(value, ElementValue):
             self._value_ref = value
@@ -129,7 +130,6 @@ class Element(QtWidgets.QWidget):
 
         if isinstance(value, Element):
             self.value = value
-            value.valueChanged.connect(lambda v: self.valueChanged.emit(v))
             if self.link_terminal and self.node.parent is None:
                 QtCore.QTimer.singleShot(0, lambda: self.connect_terminal(value))
         else:
@@ -197,14 +197,27 @@ class Element(QtWidgets.QWidget):
     @value.setter
     def value(self, value):
         if isinstance(value, Element):
+            self._disconnect_value_source()
             self._value_ref = value
+            self._value_source = value
             self._value = self._wrap_observable_array(value.value)
+            value.valueChanged.connect(self._forward_value_changed)
             self.refresh_value_label()
             self.valueChanged.emit(self.value)
             return
+        self._disconnect_value_source()
         if isinstance(self._value_ref, Element):
             self._value_ref = None
         self._store_value(value)
+        self.refresh_value_label()
+        self.valueChanged.emit(self.value)
+
+    def _disconnect_value_source(self):
+        if self._value_source is not None:
+            self._value_source.valueChanged.disconnect(self._forward_value_changed)
+            self._value_source = None
+
+    def _forward_value_changed(self, value):
         self.refresh_value_label()
         self.valueChanged.emit(self.value)
 

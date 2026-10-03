@@ -2,6 +2,7 @@ import numpy as np
 
 from backend.pipelines.pipeline import VisualPipeline
 from config import FREQ_BINS, MAX_FREQUENCY, MIN_FREQUENCY
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
@@ -51,7 +52,7 @@ class ChromaPrismNode(VisualPipeline, CNode):
         self.zero_crossing_rate = Element(self, "zero_crossing_rate", ElementValue(zero_crossing_rate))
         self.crest_factor = Element(self, "crest_factor", ElementValue(crest_factor))
         self.mid_side_energy = Element(self, "mid_side_energy", ElementValue(mid_side_energy))
-        self.data = Element(self, "data", ElementValue(np.zeros(FREQ_BINS)))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(FREQ_BINS)))
         self.brushes = Element(self, "brushes", ElementValue(np.zeros((FREQ_BINS, 4))))
 
         self.memory = np.zeros(FREQ_BINS)

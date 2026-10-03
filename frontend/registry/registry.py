@@ -16,7 +16,13 @@ from frontend.nodes.features import (
     ZeroCrossingRateNode,
 )
 from frontend.nodes.function import FunctionNode
-from frontend.group_nodes import KickDecayNode
+from frontend.group_nodes import (
+    CenterToEdgeNode,
+    EdgeToCenterTriggerNode,
+    KickDecayNode,
+    SnareDecayNode,
+    SinglePeakTriggerNode,
+)
 from frontend.nodes.pipelines.amplitudes.amplitude_level_function import AmplitudesLevelFunction
 from frontend.nodes.pipelines.amplitudes.avg_frequencies import AvgFrequenciesNode
 from frontend.nodes.pipelines.amplitudes.linear_amplitude_transformer_node import LinearAmplitudesTransformerNode
@@ -27,9 +33,13 @@ from frontend.nodes.pipelines.auditory.filter.high_filter import HighFilterPipel
 from frontend.nodes.pipelines.auditory.filter.low_filter import LowFilterPipelineNode
 from frontend.nodes.pipelines.auditory.rms import RMSPipelineNode
 from frontend.nodes.pipelines.transforms.operator_node import OperatorPipelineNode
+from frontend.nodes.pipelines.transforms.clip_node import ClipNode
+from frontend.nodes.pipelines.transforms.peakfilter_node import PeakFilterNode
+from frontend.nodes.pipelines.transforms.threshold_filter_node import ThresholdFilterNode
 from frontend.nodes.pipelines.transforms.value_transformer import ValueTransformerPipelineNode
 from frontend.nodes.pipelines.visual import RGBAPipelineNode, RollingNode
 from frontend.nodes.playlist_player import SCPlaylistPlayer
+from frontend.nodes.offline.stems_recognition import StemsRecognitionNode
 from frontend.nodes.rainbow import GradiantNode, RainbowNode
 from frontend.nodes.buffer import BufferNode
 from frontend.nodes.group_node import GroupNode
@@ -41,7 +51,6 @@ from frontend.nodes.stream import StreamPlayerNode, StreamMicNode
 from frontend.nodes.visual.bar_graph_chart import BarGraphChartNode
 from frontend.nodes.visual.multi_line_chart import MultiLineChartNode
 from frontend.nodes.visual.single_line_chart import SingleLineChartNode
-from frontend.nodes.visual.spectrogram_chart import SpectrogramChartNode
 from frontend.nodes.simple.constant_array import ConstantArrayNode
 from frontend.nodes.pipelines.visual import SingleColorNode
 from frontend.nodes.simple.sin_array import SinArrayNode
@@ -50,6 +59,7 @@ from frontend.nodes.windows_fcts.averaged_window_fct import AveragedWindowFct
 from frontend.nodes.windows_fcts.ceil_window_fct import CeilWindowFct
 from frontend.nodes.windows_fcts.decreasing_avg_window_fct import DecreasingAvgWindowFct
 from frontend.nodes.windows_fcts.max_window_fct import MaxWindowFct
+from frontend.nodes.windows_fcts.sum_window_fct import SumWindowFct
 
 NODE_DIRECTORY_COLORS = {
     "frontend.nodes.broadcast": "#c56f38",
@@ -80,6 +90,10 @@ def node_color_for_module(module_name: str) -> str:
 nodes = [
     ESP32Node,
     KickDecayNode,
+    SnareDecayNode,
+    SinglePeakTriggerNode,
+    EdgeToCenterTriggerNode,
+    CenterToEdgeNode,
     BufferNode,
     GroupNode,
     RoutingNode,
@@ -108,7 +122,7 @@ nodes = [
     CeilWindowFct,
     DecreasingAvgWindowFct,
     MaxWindowFct,
-    SpectrogramChartNode,
+    SumWindowFct,
     BarGraphChartNode,
     MultiLineChartNode,
     SingleLineChartNode,
@@ -118,6 +132,9 @@ nodes = [
     RollingNode,
     ValueTransformerPipelineNode,
     OperatorPipelineNode,
+    ClipNode,
+    PeakFilterNode,
+    ThresholdFilterNode,
     AvgFrequenciesNode,
     LinearAmplitudesTransformerNode,
     FreqScaledAmplitudesTransformerNode,
@@ -126,6 +143,7 @@ nodes = [
     StreamPlayerNode,
     StreamMicNode,
     SCPlaylistPlayer,
+    StemsRecognitionNode,
     RGBAPipelineNode,
     BroadcastFractionNode,
     BroadcastIndexesNode,

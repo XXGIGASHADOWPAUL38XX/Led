@@ -2,7 +2,8 @@ import numpy as np
 from scipy.signal import butter
 
 from config import SAMPLE_RATE, FFT_SIZE
-from frontend.components.elements.dials import LinearDial
+from frontend.components.elements.dials import LinearDial, ExpDial
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
@@ -28,9 +29,9 @@ class BandFilterPipelineNode(CNode, Filter):
         self.buffer_data = Element(self, "buffer_data", ElementValue(buffer_data))
         Filter.__init__(self, buffer_data=self.buffer_data)
 
-        self.lowcut = LinearDial(self, "lowcut", 1, 1000, ElementValue(lowcut))
-        self.highcut = LinearDial(self, "highcut", 1, 5000, ElementValue(highcut))
-        self.data = Element(self, "data", ElementValue(np.zeros(self.buffer_data.value.shape)))
+        self.lowcut = ExpDial(self, "lowcut", 20, 1000, ElementValue(lowcut))
+        self.highcut = ExpDial(self, "highcut", 100, 10000, ElementValue(highcut))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(self.buffer_data.value.shape)), y_min=-1.0)
 
     @staticmethod
     def butter_bandpass(lowcut, highcut, fs, order=1):

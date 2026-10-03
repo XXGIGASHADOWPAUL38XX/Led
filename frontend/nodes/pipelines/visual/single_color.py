@@ -2,6 +2,7 @@ import numpy as np
 
 from config import FREQ_BINS
 from frontend.components.elements.color_picker import ColorPicker
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
@@ -27,7 +28,8 @@ class SingleColorNode(CNode):
 
         self.color = ColorPicker(self, "color", ElementValue(color))
         self.number_points = Element(self, "number_points", ElementValue(number_points))
-        self.data = Element(self, "data", ElementValue(np.zeros((int(self.number_points.value), 3), dtype=np.uint8)))
+        self.data = AnalysableElement(self, "data",
+                                      ElementValue(np.zeros((int(self.number_points.value), 3), dtype=np.uint8)), y_max=255.0)
 
         self.color.valueChanged.connect(self._refresh_data)
         self.number_points.valueChanged.connect(self._refresh_data)
@@ -38,4 +40,3 @@ class SingleColorNode(CNode):
             self.color.value,
             self.number_points.value
         ).reshape(self.number_points.value, 3)
-

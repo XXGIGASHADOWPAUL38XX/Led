@@ -4,6 +4,7 @@ from PyQt5.QtGui import QFont
 from PyQt5 import QtWidgets
 
 from backend.pipelines.pipeline import AudioPipeline
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.components.elements.node_selector.node_selector import NodeSelector
@@ -13,7 +14,7 @@ from frontend.overrides.CNode import CNode
 
 class OperatorPipelineNode(CNode, AudioPipeline):
     nodeName = "OperatorPipeline"
-    operations_string = ['(', '+', '-', '*', '**', '/', ')', '<', '<=', '=>', '>']
+    operations_string = ['(', '+', '-', '*', '**', '/', ')', '<', '<=', '=>', '>', '&']
     successMessage = lambda self, v: f"Operation compiled with success, Value : {v}"
     errorMessage = lambda self, e: f"Operation compile failed: {e}"
 
@@ -35,7 +36,7 @@ class OperatorPipelineNode(CNode, AudioPipeline):
         self.built_evaluation = None
         self.build_evaluation_arguments()
 
-        self.data = Element(self, "data", ElementValue(np.zeros(self.length)))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(self.length)))
 
         self.operation_state_label = QtWidgets.QLabel(self.successMessage(Element.format_value(self.data.value)))
         label_font = QFont(self.operation_state_label.font())
@@ -80,6 +81,8 @@ class OperatorPipelineNode(CNode, AudioPipeline):
     def resolve_token(self, token):
         if isinstance(token, Element):
             return self.resolve_token(token.value)
+        if callable(token):
+            return self.resolve_token(token())
         if isinstance(token, np.ndarray):
             return f"np.array({repr(token.tolist())})"
         return str(token)
@@ -88,7 +91,7 @@ class OperatorPipelineNode(CNode, AudioPipeline):
         expression = []
 
         for element in self.operation_elements:
-            expression.append(self.resolve_token(element.value))
+            expression.append(self.resolve_token(element))
         self.built_evaluation = " ".join(expression)
 
 

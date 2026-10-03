@@ -1,6 +1,7 @@
 import numpy as np
 
 from backend.pipelines.pipeline import AudioPipeline
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
@@ -28,7 +29,7 @@ class RMSPipelineNode(CNode, AudioPipeline):
         super().__init__(self.nodeName, terminals, render=render, alias=alias)
 
         self.buffer_data = Element(self, "buffer_data", ElementValue(buffer_data))
-        self.data = Element(self, "data", ElementValue(np.zeros(1)))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(1)))
         self.title = ElementValue(title)  # kept for backward-compat signature/state
         self.number_points = Element(self, "number_points", ElementValue(number_points))
         self.left_label = Element(self, "left_label", ElementValue(left_label))

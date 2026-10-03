@@ -3,6 +3,7 @@ from pyparsing import LineEnd
 
 from config import CHUNK_SIZE, FFT_SIZE
 from backend.updatable.updatable import AudioUpdatable
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.components.elements.textedit import TextEdit
@@ -29,7 +30,7 @@ class BufferNode(CNode, AudioUpdatable):
         self.indata = Element(self, "indata", ElementValue(indata))
         self.chunk_size = TextEdit(self, "chunk_size", ElementValue(chunk_size))
         self.length = Element(self, "length", ElementValue(length))
-        self.data = Element(self, "data", ElementValue(np.zeros((2, self.length.value))))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros((2, self.length.value))), chart_open=False, y_min=-1.0)
 
         self.chunk_size.valueChanged.connect(self.on_chunk_size_change)
         self.should_process = True

@@ -9,7 +9,8 @@
     - gestion des paquets fragmentes par offset ;
     - affichage lors du flag DDP PUSH ;
     - sortie WS2812B avec Adafruit_NeoPixel ;
-    - aucune correction gamma ;
+    - correction gamma optionnelle ;
+    - balance des blancs RGB configurable ;
     - aucun dithering temporel ;
     - aucune limitation logicielle de luminosite.
 
@@ -29,6 +30,7 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <Adafruit_NeoPixel.h>
+#include <math.h>
 
 // -----------------------------------------------------------------------------
 // Configuration utilisateur
@@ -64,6 +66,29 @@ static constexpr uint32_t FRAME_FALLBACK_US = 2500;
 static constexpr size_t UDP_BUFFER_SIZE = 1536;
 
 // -----------------------------------------------------------------------------
+// Correction colorimetrique
+// -----------------------------------------------------------------------------
+
+static constexpr bool ENABLE_COLOR_CORRECTION = true;
+
+// Gamma > 1 compresse les faibles valeurs PWM.
+// Si votre logiciel emetteur applique deja un gamma, utilisez 1.0.
+static constexpr float OUTPUT_GAMMA = 2.2f;
+
+// Balance des blancs par canal.
+// Diminuez un canal s'il parait trop fort.
+static constexpr float RED_GAIN   = 1.00f;
+static constexpr float GREEN_GAIN = 1.00f;
+static constexpr float BLUE_GAIN  = 1.00f;
+
+// Gain general fixe. 1.0 = aucune reduction.
+static constexpr float MASTER_GAIN = 1.00f;
+
+// Conserve au moins 1 pour toute entree non nulle.
+// Laissez false pour une vraie courbe gamma.
+static constexpr bool PRESERVE_NON_ZERO = false;
+
+// -----------------------------------------------------------------------------
 // Constantes DDP
 // -----------------------------------------------------------------------------
 
@@ -95,11 +120,61 @@ Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, LED_TYPE);
 static uint8_t rgbFrame[LED_COUNT * 3];
 static uint8_t udpBuffer[UDP_BUFFER_SIZE];
 
+static uint8_t correctionLutR[256];
+static uint8_t correctionLutG[256];
+static uint8_t correctionLutB[256];
+
 static bool frameDirty = false;
 static uint32_t lastDataMicros = 0;
 static uint32_t packetCount = 0;
 static uint32_t droppedPacketCount = 0;
 static uint32_t shownFrameCount = 0;
+
+// -----------------------------------------------------------------------------
+// Correction colorimetrique
+// -----------------------------------------------------------------------------
+
+static uint8_t buildCorrectedValue(uint8_t input, float channelGain) {
+  if (!ENABLE_COLOR_CORRECTION) {
+    return input;
+  }
+
+  const float normalized = static_cast<float>(input) / 255.0f;
+  const float gammaCorrected =
+    (OUTPUT_GAMMA == 1.0f) ? normalized : powf(normalized, OUTPUT_GAMMA);
+
+  float output = gammaCorrected * 255.0f * channelGain * MASTER_GAIN;
+
+  if (output < 0.0f) output = 0.0f;
+  if (output > 255.0f) output = 255.0f;
+
+  uint8_t result = static_cast<uint8_t>(lroundf(output));
+
+  if (PRESERVE_NON_ZERO && input > 0 && result == 0) {
+    result = 1;
+  }
+
+  return result;
+}
+
+static void buildCorrectionLuts() {
+  for (uint16_t value = 0; value < 256; ++value) {
+    const uint8_t input = static_cast<uint8_t>(value);
+    correctionLutR[value] = buildCorrectedValue(input, RED_GAIN);
+    correctionLutG[value] = buildCorrectedValue(input, GREEN_GAIN);
+    correctionLutB[value] = buildCorrectedValue(input, BLUE_GAIN);
+  }
+
+  Serial.printf(
+    "Correction: %s, gamma=%.2f, gains RGB=%.3f/%.3f/%.3f, master=%.3f\n",
+    ENABLE_COLOR_CORRECTION ? "activee" : "desactivee",
+    OUTPUT_GAMMA,
+    RED_GAIN,
+    GREEN_GAIN,
+    BLUE_GAIN,
+    MASTER_GAIN
+  );
+}
 
 // -----------------------------------------------------------------------------
 // Utilitaires
@@ -129,11 +204,15 @@ static void showFrame() {
   // Aucun gamma, aucune correction et aucun dithering ne sont appliques.
   for (uint16_t i = 0; i < LED_COUNT; ++i) {
     const size_t base = static_cast<size_t>(i) * 3;
+    const uint8_t rawR = rgbFrame[base + 0];
+    const uint8_t rawG = rgbFrame[base + 1];
+    const uint8_t rawB = rgbFrame[base + 2];
+
     strip.setPixelColor(
       i,
-      rgbFrame[base + 0],  // R
-      rgbFrame[base + 1],  // G
-      rgbFrame[base + 2]   // B
+      correctionLutR[rawR],
+      correctionLutG[rawG],
+      correctionLutB[rawB]
     );
   }
 
@@ -292,6 +371,7 @@ void setup() {
   Serial.println();
   Serial.println("ESP32 DDP -> WS2812B");
 
+  buildCorrectionLuts();
   strip.begin();
   strip.setBrightness(255); // Pas de reduction logicielle de luminosite.
   clearStrip();

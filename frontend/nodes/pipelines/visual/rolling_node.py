@@ -32,4 +32,3 @@ class RollingNode(VisualPipeline, CNode):
 
     def c_update(self):
         self.data.value[:] = np.roll(self.data.value, int(self.roll_speed.value), axis=0)
-

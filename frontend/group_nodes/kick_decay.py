@@ -1,6 +1,7 @@
 import numpy as np
 
 from config import FFT_SIZE
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.enums.gradiant.trigger_mode import TriggerMode
@@ -70,7 +71,7 @@ class KickDecayNode(GroupNode):
             alias=f"{self.alias}_window_function",
         )
 
-        self.data = Element(self, "data", ElementValue(self.window_function.data))
+        self.data = AnalysableElement(self, "data", ElementValue(self.window_function.data))
         self.nodes = [
             self.low_filter_node,
             self.rms_node,

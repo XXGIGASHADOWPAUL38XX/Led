@@ -2,6 +2,7 @@ import numpy as np
 
 from config import FREQ_BINS
 from backend.updatable.updatable import AudioUpdatable
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.enums.gradiant.trigger_mode import TriggerMode
@@ -39,7 +40,7 @@ class TriggerNode(CNode, AudioUpdatable):
         self.input_data = Element(self, "input_data", ElementValue(input_data))
         self.trigger_mode = ElementValue(trigger_mode)
         self.threshold = Element(self, "threshold", ElementValue(threshold))
-        self.data = Element(self, "data", ElementValue(np.zeros(self.input_data.value.shape[-1])))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(self.input_data.value.shape[-1])))
         self.block_signal = ElementValue(False)
 
     def c_update(self) -> None:

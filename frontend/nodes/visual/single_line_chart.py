@@ -1,9 +1,9 @@
 import numpy as np
-from PyQt5 import QtCore
 
 from frontend.components.elements.element_value import ElementValue
 from frontend.components.elements.chart.line_chart_element import LineChartElement
 from frontend.components.elements.node_selector.chart_line_from_node import ChartLineNodeSelector
+from frontend.components.elements.textedit import TextEdit
 from frontend.nodes.visual.line_chart import LineChartNode
 
 
@@ -35,6 +35,8 @@ class SingleLineChartNode(LineChartNode):
             self.elements.append(self.node_selector)
         self.title = ElementValue(title)
         self.number_points = ElementValue(number_points)
+        self.y_min = TextEdit(self, "y_min", ElementValue(y_min))
+        self.y_max = TextEdit(self, "y_max", ElementValue(y_max))
         self.chart = LineChartElement(
             self,
             "chart",
@@ -43,13 +45,23 @@ class SingleLineChartNode(LineChartNode):
             left_label,
             bottom_label,
             title,
-            y_min,
-            y_max,
+            float(self.y_min.value),
+            float(self.y_max.value),
             link_terminal=False,
-            register_in_node=False,
+            register_in_node=True,
         )
-        if render:
-            QtCore.QTimer.singleShot(0, self.draw)
+
+        self.y_min.valueChanged.connect(self.on_y_range_change)
+        self.y_max.valueChanged.connect(self.on_y_range_change)
+
+    def on_y_range_change(self):
+        try:
+            self.chart.y_min = float(self.y_min.value)
+            self.chart.y_max = float(self.y_max.value)
+        except (TypeError, ValueError):
+            return
+        if self.chart.line is not None:
+            self.chart.line.getViewBox().setYRange(self.chart.y_min, self.chart.y_max)
 
     def draw(self):
         return self.chart.draw()

@@ -20,6 +20,7 @@ class LineChartElement(ChartElement):
         y_max: float = 1.0,
         link_terminal: bool = True,
         register_in_node: bool = True,
+        show_chart_button: bool = True,
     ) -> None:
         self.input_data = input_data
         self.number_points = number_points
@@ -35,7 +36,7 @@ class LineChartElement(ChartElement):
             name,
             link_terminal=link_terminal,
             register_in_node=register_in_node,
-            show_chart_button=False,
+            show_chart_button=show_chart_button,
         )
 
     def draw(self):
@@ -49,7 +50,7 @@ class LineChartElement(ChartElement):
         values = np.asarray(self.input_data).reshape(-1) if isinstance(self.input_data, np.ndarray) else np.zeros(self.number_points)
         self.line = plot.plot(x, values if values.size == self.number_points else np.zeros(self.number_points), pen="b")
         self.window.setFixedSize(500, 150)
-        self.hbox_elements.addWidget(self.window)
+        self.node._elements_container.layout().addWidget(self.window)
         self.window.show()
         return self.window
 

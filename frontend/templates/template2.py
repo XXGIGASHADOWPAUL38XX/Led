@@ -50,7 +50,6 @@ def main():
         buffer=buffer_node.data,
         fft_size=analysis_chunk_size,
         # powering=0.5,
-        normalisation=True,
         alias="amplitudes_node",
     )
 

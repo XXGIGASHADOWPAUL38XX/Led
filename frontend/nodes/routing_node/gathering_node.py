@@ -3,6 +3,7 @@ from typing import List
 import numpy as np
 
 from backend.updatable.updatable import AudioUpdatable
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
@@ -29,13 +30,17 @@ class GatheringNode(CNode, AudioUpdatable):
         super().__init__(self.nodeName, terminals, render=render, alias=alias)
 
         self.gathering_elements = self.init_data_and_booleans()
-        self.data = Element(self, "data", ElementValue(np.zeros_like(input_datas[0].value))) ##!! wouldn't work for floats
+        self.data = AnalysableElement(self, "data",
+                                      ElementValue(np.zeros_like(input_datas[0].value)))  ##!! wouldn't work for floats
 
 
     def c_update(self):
-        true_elements = np.array(list(map(lambda x: x.value, self.input_datas)))[
-            np.array(list(map(lambda y: y.value, self.input_booleans))).flatten()
-        ]
+        values = np.array(list(map(lambda x: x.value, self.input_datas)))
+        booleans = np.asarray(
+            list(map(lambda y: y.value, self.input_booleans)),
+            dtype=bool,
+        ).flatten()
+        true_elements = values[booleans]
         if true_elements.shape[0] > 0:
             self.data.value[:] = true_elements
 
@@ -54,4 +59,3 @@ class GatheringNode(CNode, AudioUpdatable):
             elements.append(element)
 
         return elements
-

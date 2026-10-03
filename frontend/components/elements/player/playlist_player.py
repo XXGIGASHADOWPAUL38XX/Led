@@ -2,6 +2,8 @@ from typing import Sequence
 
 from PyQt5 import QtCore, QtWidgets
 
+from frontend.components.elements.element_value import ElementValue
+from frontend.components.elements.node_selector.node_selector import NodeSelector
 from frontend.components.elements.player.music_player import MusicPlayer
 
 
@@ -14,16 +16,22 @@ class PlaylistPlayer(QtWidgets.QWidget):
     searchResults = QtCore.pyqtSignal(object)
     loadingChanged = QtCore.pyqtSignal(bool)
     removeRequested = QtCore.pyqtSignal(int)
+    offlinePipelineAdded = QtCore.pyqtSignal(object)
 
     def __init__(
         self,
         playlist_metadata: Sequence[dict[str, object]] | None = None,
+        node=None,
+        offline_pipeline_nodes=None,
         parent: QtWidgets.QWidget | None = None,
     ) -> None:
         super().__init__(parent)
         self.setMinimumWidth(300)
         self.music_players = []
         self.playlist_metadata = playlist_metadata or []
+        self.node = node
+        self.offline_pipeline_nodes = offline_pipeline_nodes or (lambda: [])
+        self.offline_pipeline_selectors = []
 
         self.music_player_container = QtWidgets.QWidget(self)
         self.music_player_layout = QtWidgets.QVBoxLayout(self.music_player_container)
@@ -57,7 +65,30 @@ class PlaylistPlayer(QtWidgets.QWidget):
         self.loadingChanged.connect(self.set_loading)
         layout.addWidget(self.music_player_container)
 
+        self.add_offline_pipeline_button = QtWidgets.QPushButton("Add offline pipeline")
+        self.add_offline_pipeline_button.clicked.connect(lambda: self.add_offline_pipeline())
+        layout.addWidget(self.add_offline_pipeline_button)
+
         self.set_playlist_metadata(self.playlist_metadata)
+
+    def add_offline_pipeline(self, node=None):
+        selector = NodeSelector(
+            self.node,
+            f"offline_pipeline_{len(self.offline_pipeline_selectors)}",
+            ElementValue(None),
+            selection_nodes=self.offline_pipeline_nodes,
+            register_in_node=False,
+        )
+        self.offline_pipeline_selectors.append(selector)
+        self.music_player_layout.addWidget(selector)
+        if node is not None:
+            selector.selected_node = node
+            selector.refresh_selection_nodes()
+            selector.selection_nodes_combobox.setCurrentText(node.name())
+            self.offlinePipelineAdded.emit(node)
+
+    def offline_pipelines(self):
+        return [selector.selected_node for selector in self.offline_pipeline_selectors if selector.selected_node is not None]
 
     def set_search_results(self, results):
         self.search_results.clear()

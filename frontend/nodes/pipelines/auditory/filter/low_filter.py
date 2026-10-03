@@ -3,6 +3,7 @@ from scipy.signal import butter
 
 from config import SAMPLE_RATE, FFT_SIZE
 from frontend.components.elements.dials import LinearDial
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
@@ -28,7 +29,7 @@ class LowFilterPipelineNode(CNode, Filter):
         Filter.__init__(self, buffer_data=self.buffer_data)
 
         self.lowpass_freq = LinearDial(self, "lowpass_freq", 20, 1000, ElementValue(lowpass_freq))
-        self.data = Element(self, "data", ElementValue(np.zeros(self.buffer_data.value.shape)))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(self.buffer_data.value.shape)), y_min=-1.0)
 
     @staticmethod
     def butter_lowpass(lowcut, fs, order=1):

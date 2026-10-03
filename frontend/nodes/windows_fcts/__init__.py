@@ -2,3 +2,5 @@ from frontend.nodes.windows_fcts.averaged_window_fct import AveragedWindowFct
 from frontend.nodes.windows_fcts.ceil_window_fct import CeilWindowFct
 from frontend.nodes.windows_fcts.decreasing_avg_window_fct import DecreasingAvgWindowFct
 from frontend.nodes.windows_fcts.max_window_fct import MaxWindowFct
+from frontend.nodes.windows_fcts.min_window_fct import MinWindowFct
+from frontend.nodes.windows_fcts.sum_window_fct import SumWindowFct

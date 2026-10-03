@@ -1,6 +1,7 @@
 import numpy as np
 
 from config import FREQ_BINS
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
@@ -35,7 +36,7 @@ class LinearAmplitudesTransformerNode(CNode, AmplitudesTransformer):
         self.correlation_step = Element(self, "correlation_step", ElementValue(correlation_step))
         self.powering = Element(self, "powering", ElementValue(powering))
         self.log = Element(self, "log", ElementValue(log))
-        self.data = Element(self, "data", ElementValue(np.zeros(FREQ_BINS)))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(FREQ_BINS)))
 
     @staticmethod
     def _scalar(value):

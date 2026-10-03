@@ -1,6 +1,7 @@
 import numpy as np
 
 from backend.windows_fcts.window_fct import WindowFct
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
@@ -24,7 +25,7 @@ class CeilWindowFct(WindowFct, CNode):
         WindowFct.__init__(self, window, self.aggregate)
         self.window = window
         self.avg_axis = Element(self, "avg_axis", ElementValue(avg_axis))
-        self.data = Element(self, "data", ElementValue(np.zeros(window.data.value.shape[-1])))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(window.data.value.shape[-1])))
 
     def aggregate(self, window_data):
         self.data.value[...] = np.ceil(np.max(window_data, axis=self.avg_axis.value))

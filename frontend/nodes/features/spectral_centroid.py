@@ -1,7 +1,8 @@
 import numpy as np
 
 from backend.pipelines.pipeline import AudioPipeline
-from config import FREQ_BINS
+from config import FREQ_BINS, MAX_FREQUENCY
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
@@ -27,7 +28,7 @@ class SpectralCentroidNode(CNode, AudioPipeline):
         super().__init__(self.nodeName, terminals, render=render, alias=alias)
         self.amplitudes = Element(self, "amplitudes", ElementValue(amplitudes))
         self.frequencies = Element(self, "frequencies", ElementValue(frequencies))
-        self.data = Element(self, "data", ElementValue(np.zeros(1)))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(1)), y_max=max(MAX_FREQUENCY, float(np.max(self.frequencies.value, initial=0))))
 
     def c_update(self):
         amplitudes = np.maximum(np.asarray(self.amplitudes.value, dtype=float).reshape(-1), 0.0)

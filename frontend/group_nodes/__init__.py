@@ -1,1 +1,5 @@
 from frontend.group_nodes.kick_decay import KickDecayNode
+from frontend.group_nodes.snare_decay import SnareDecayNode
+from frontend.group_nodes.single_peak_trigger import SinglePeakTriggerNode
+from frontend.group_nodes.edge_to_center_trigger import EdgeToCenterTriggerNode
+from frontend.group_nodes.center_to_edge import CenterToEdgeNode

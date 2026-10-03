@@ -7,6 +7,7 @@ from backend.updatable.updatable import audio_updatable_objects, visual_updatabl
 from config import DELAY_UPDATE, SAMPLE_RATE
 from frontend.nodes.buffer import BufferNode
 from frontend.nodes.pipelines import AmplitudesNode
+from frontend.nodes.pipelines.transforms.peakfilter_node import PeakFilterNode
 from frontend.nodes.pipelines.visual import SingleColorNode, RGBAPipelineNode, RollingNode
 from frontend.nodes.playlist_player import SCPlaylistPlayer
 from frontend.nodes.stream.stream_player_node import StreamPlayerNode
@@ -48,26 +49,31 @@ def main():
         buffer=buffer_node.data,
         fft_size=analysis_chunk_size,
         # powering=0.5,
-        normalisation=True,
         alias="amplitudes_node",
+    )
+
+    peak_filter_node = PeakFilterNode(
+        input_value=amplitudes_node.data,
+        peaks_to_keep=3,
+        alias="peak_filter_node",
     )
 
     single_color_node = SingleColorNode()
 
     rgba_pipeline_node = RGBAPipelineNode(
         rgb=single_color_node.data,
-        alpha=amplitudes_node.data,
+        alpha=np.ones(amplitudes_node.data.value.shape[-1]),
     )
 
     spectogram_chart_node = BarGraphChartNode(
-        data=np.ones(amplitudes_node.data.value.shape[-1]),
+        data=peak_filter_node.data.value,
         title="Amplitudes",
         number_points=amplitudes_node.data.value.shape[0],
         left_label="Frequency",
         bottom_label="Amplitude",
         brushes=rgba_pipeline_node.rgba,
         y_min=0,
-        y_max=1,
+        y_max=30,
     )
 
     flowchart = CFlowchart(

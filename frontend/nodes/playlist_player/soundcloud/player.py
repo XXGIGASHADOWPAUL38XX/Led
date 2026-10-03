@@ -18,7 +18,7 @@ from frontend.components.elements.element_value import ElementValue
 from frontend.components.elements.player.playlist_player import PlaylistPlayer
 from frontend.components.elements.textedit.textedit import TextEdit
 from frontend.nodes.playlist_player.soundcloud.api import search_tracks
-from frontend.overrides.CNode import CNode
+from frontend.overrides.CNode import CNode, OfflineCNode
 
 
 class SCPlaylistPlayer(CNode, AudioUpdatable):
@@ -28,7 +28,7 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
     metadataReady = QtCore.pyqtSignal(object)
     trackLoaded = QtCore.pyqtSignal(int)
 
-    def __init__(self, playlist_url="https://soundcloud.com/trg-electro/sets/led", browser="chrome", profile="Default", prefetch_seconds=10, cache=True, render=True, alias=None):
+    def __init__(self, playlist_url="https://soundcloud.com/trg-electro/sets/led4", browser="chrome", profile="Default", prefetch_seconds=10, cache=True, render=True, alias=None):
         super().__init__(self.nodeName, {"audio": {"io": "out"}, "sample_rate": {"io": "out"}, "enqueue_token": {"io": "out"}}, render=render, alias=alias)
         AudioUpdatable.__init__(self)
         self.playlist_url = TextEdit(self, "playlist_url", ElementValue(playlist_url))
@@ -39,7 +39,7 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
         self.audio = Element(self, "audio", ElementValue(np.zeros((0, 2), dtype=np.float32)))
         self.sample_rate = Element(self, "sample_rate", ElementValue(0))
         self.enqueue_token = Element(self, "enqueue_token", ElementValue(0))
-        self.playlist_player = PlaylistPlayer([])
+        self.playlist_player = PlaylistPlayer([], self, self.get_offline_pipeline_nodes)
         self.elements.append(self.playlist_player)
         self.playlist_player.playRequested.connect(self.on_play_requested)
         self.playlist_player.pauseRequested.connect(self.on_pause_requested)
@@ -48,6 +48,7 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
         self.playlist_player.searchResults.connect(self.playlist_player.set_search_results)
         self.playlist_player.addRequested.connect(self.add_music)
         self.playlist_player.removeRequested.connect(self.remove_music)
+        self.playlist_player.offlinePipelineAdded.connect(self.calculate_offline_pipelines)
         self.metadataReady.connect(self.on_metadata_ready)
         self.trackLoaded.connect(self.on_track_loaded)
         self._thread = None
@@ -65,7 +66,7 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
             self.start()
 
     def _ydl_opts(self):
-        opts = {"quiet": True, "format": "bestaudio/best"}
+        opts = {"quiet": True, "format": "bestaudio[abr<=128]/bestaudio"}
         browser = str(self.browser.value).strip()
         profile = str(self.profile.value).strip()
         if browser:
@@ -91,29 +92,27 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
         return hashlib.sha256(f"{track_url}|{repr(sorted(opts.items()))}".encode()).hexdigest()
 
     @classmethod
-    def _download_track(cls, entry, opts, use_cache=True):
+    def _download_track(cls, entry, opts, use_cache=True, cache=None):
         track_url = entry.get("url")
         if not track_url:
             return np.zeros((0, 2), dtype=np.float32), SAMPLE_RATE
         key = cls._track_cache_key(track_url, opts)
-        cache = cls._load_cache(cls.tracks_cache_path) if use_cache else {}
+        cache = cache if cache is not None else (cls._load_cache(cls.tracks_cache_path) if use_cache else {})
         if key in cache:
             return cache[key]
         with tempfile.TemporaryDirectory() as tmp:
             download_opts = dict(opts)
             download_opts["outtmpl"] = os.path.join(tmp, "track.%(ext)s")
             download_opts["postprocessors"] = [{"key": "FFmpegExtractAudio", "preferredcodec": "wav", "preferredquality": "0"}]
-            download_opts["postprocessor_args"] = ["-ar", str(SAMPLE_RATE), "-ac", "2"]
             YoutubeDL(download_opts).download([track_url])
             audio, sample_rate = sf.read(os.path.join(tmp, "track.wav"))
             audio = np.asarray(audio, dtype=np.float32)
-            audio = audio[:, None] if audio.ndim == 1 else audio
+            if audio.ndim == 1:
+                audio = np.repeat(audio[:, None], 2, axis=1)
+            elif audio.shape[1] == 1:
+                audio = np.repeat(audio, 2, axis=1)
             result = audio, int(sample_rate)
         cache[key] = result
-        try:
-            cls._save_cache(cls.tracks_cache_path, cache)
-        except Exception:
-            pass
         return result
 
     @staticmethod
@@ -136,7 +135,15 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
     def _worker(self):
         try:
             opts = self._ydl_opts()
-            entries = self._extract_entries(str(self.playlist_url.value).strip(), opts)
+            playlist_url = str(self.playlist_url.value).strip()
+            entries_cache = self._load_cache(self.entries_cache_path) if bool(self.cache.value) else {}
+            entries_key = hashlib.sha256(f"{playlist_url}|{repr(sorted(opts.items()))}".encode()).hexdigest()
+            entries = entries_cache.get(entries_key)
+            if entries is None:
+                entries = self._extract_entries(playlist_url, opts)
+                entries_cache[entries_key] = entries
+                if bool(self.cache.value):
+                    self._save_cache(self.entries_cache_path, entries_cache)
         except Exception:
             self.playlist_player.loadingChanged.emit(False)
             return
@@ -145,12 +152,20 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
             self._tracks = [None] * len(entries)
             self._seek_ratios = [0.0] * len(entries)
         self.metadataReady.emit([self._entry_metadata(entry) for entry in entries])
+        track_cache = self._load_cache(self.tracks_cache_path) if bool(self.cache.value) else {}
+        prefetched_seconds = 0.0
         for index, entry in enumerate(entries):
             if self._stop_event.is_set():
                 break
+            if prefetched_seconds >= float(self.prefetch_seconds.value):
+                break
             with self._data_lock:
-                self._tracks[index] = self._download_track(entry, opts, bool(self.cache.value))
+                self._tracks[index] = self._download_track(entry, opts, bool(self.cache.value), track_cache)
+            prefetched_seconds += float(entry.get("duration") or 0.0)
             self.trackLoaded.emit(index)
+        if bool(self.cache.value):
+            self._save_cache(self.tracks_cache_path, track_cache)
+        self.playlist_player.loadingChanged.emit(False)
 
     def search_music(self, query):
         self.playlist_player.set_loading(True)
@@ -158,7 +173,7 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
 
     def _search_worker(self, query):
         try:
-            results = search_tracks(query, self._ydl_opts(), limit=10)
+            results = search_tracks(query, limit=5)
         except Exception:
             results = []
         self.playlist_player.searchResults.emit(results)
@@ -169,7 +184,10 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
     def _add_worker(self, entry):
         try:
             opts = self._ydl_opts()
-            track = self._download_track(entry, opts, bool(self.cache.value))
+            track_cache = self._load_cache(self.tracks_cache_path) if bool(self.cache.value) else {}
+            track = self._download_track(entry, opts, bool(self.cache.value), track_cache)
+            if bool(self.cache.value):
+                self._save_cache(self.tracks_cache_path, track_cache)
         except Exception:
             self.playlist_player.loadingChanged.emit(False)
             return
@@ -211,6 +229,7 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
             finished = index == len(self._tracks) - 1
         if finished:
             self.playlist_player.set_loading(False)
+            self.calculate_offline_pipelines()
         self._refresh_node_ui_geometry()
 
     def _refresh_node_ui_geometry(self):
@@ -234,6 +253,7 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
         self.sample_rate.value = int(sample_rate)
         self.enqueue_token.value = int(self.enqueue_token.value) + 1
         self._is_playing = True
+        self.update_offline_pipeline_position(index, self._track_start_position)
 
     def on_pause_requested(self, index):
         if index != self._current_track_index:
@@ -257,6 +277,7 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
         self.audio.value = audio[start:]
         self.sample_rate.value = int(sample_rate)
         self.enqueue_token.value = int(self.enqueue_token.value) + 1
+        self.update_offline_pipeline_position(index, self._track_start_position)
 
     def _current_position_ratio(self):
         if self._current_track_index < 0:
@@ -280,6 +301,26 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
         ratio = self._current_position_ratio()
         with self._data_lock:
             self._seek_ratios[self._current_track_index] = ratio
+        self.update_offline_pipeline_position(self._current_track_index, position)
+
+    def get_offline_pipeline_nodes(self):
+        return [node for node in self.get_flowchart_visible_nodes() if isinstance(node, OfflineCNode)]
+
+    def calculate_offline_pipelines(self, *_args):
+        with self._data_lock:
+            tracks = list(self._tracks)
+        if not tracks or any(track is None for track in tracks):
+            return
+        for node in self.playlist_player.offline_pipelines():
+            node.calculate_playlist(tracks)
+
+    def update_offline_pipeline_index(self, track_index, audio_index):
+        for node in self.playlist_player.offline_pipelines():
+            node.update_audio_index(track_index, audio_index)
+
+    def update_offline_pipeline_position(self, track_index, position):
+        for node in self.playlist_player.offline_pipelines():
+            node.update_audio_position(track_index, position)
 
     def start(self):
         if self._thread is not None and self._thread.is_alive():

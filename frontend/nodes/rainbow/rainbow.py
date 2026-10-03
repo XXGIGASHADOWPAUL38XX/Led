@@ -2,6 +2,7 @@ import numpy as np
 
 from config import FREQ_BINS
 from backend.rainbow.config import RAINBOW_INV_FRACTION
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.components.elements.dials import LinearDial

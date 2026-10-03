@@ -2,6 +2,7 @@ import numpy as np
 
 from backend.pipelines.pipeline import AudioPipeline
 from config import FREQ_BINS
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
@@ -29,7 +30,7 @@ class PitchClassChromaNode(CNode, AudioPipeline):
         self.amplitudes = Element(self, "amplitudes", ElementValue(amplitudes))
         self.frequencies = Element(self, "frequencies", ElementValue(frequencies))
         self.reference_frequency = Element(self, "reference_frequency", ElementValue(reference_frequency))
-        self.data = Element(self, "data", ElementValue(np.zeros(12)))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(12)))
 
     def c_update(self):
         amplitudes = np.maximum(np.asarray(self.amplitudes.value, dtype=float).reshape(-1), 0.0)

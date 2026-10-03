@@ -4,6 +4,7 @@ from scipy.signal import get_window
 from config import FFT_SIZE, FREQ_BINS, MAX_FREQUENCY, MIN_FREQUENCY, SAMPLE_RATE
 from backend.updatable.updatable import AudioUpdatable
 from frontend.components.elements.dials import ExpDial, LinearDial
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
@@ -19,8 +20,6 @@ class AmplitudesNode(CNode, AudioUpdatable):
             max_frequency: int | float = MAX_FREQUENCY,
             fft_size: int = FFT_SIZE,
             freq_bins: int = FREQ_BINS,
-            db_floor: int | float = 5,
-            db_ceil: int | float = 20,
             powering: int | float = 0.5,
             render: bool = True,
             alias: str | None = None,
@@ -41,11 +40,8 @@ class AmplitudesNode(CNode, AudioUpdatable):
         self.frequencies = Element(
             self, "frequencies", ElementValue(np.geomspace(self.min_frequency.value, self.max_frequency.value, self.freq_bins.value))
         )
-        # self.bins = self.freq_to_bin(self.frequencies.value, self.fft_size.value)
-        self.db_floor = Element(self, "db_floor", ElementValue(db_floor))
-        self.db_ceil = Element(self, "db_ceil", ElementValue(db_ceil))
         self.powering = LinearDial(self, "powering", 0, 3, ElementValue(powering))
-        self.data = Element(self, "data", ElementValue(np.zeros(self.freq_bins.value)))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(self.freq_bins.value)), y_max=60.0)
 
     def c_update(self):
         self.buffer_to_amplitudes()
@@ -64,9 +60,7 @@ class AmplitudesNode(CNode, AudioUpdatable):
             right=0.0,
         )
         updated_amplitudes = updated_amplitudes * np.power(self.frequencies.value, self.powering.value)
-        amplitude_ratio = (2.0 * updated_amplitudes) / np.sum(self.window)
-        updated_amplitudes = 20.0 * np.log10(
-            np.maximum(amplitude_ratio, 1e-12)
-        )
+        amplitude_ratio = updated_amplitudes / np.sum(self.window)
+        updated_amplitudes = 20.0 * (np.log10(np.maximum(amplitude_ratio, 1e-12) + 1))
 
         self.data.value[:] = updated_amplitudes

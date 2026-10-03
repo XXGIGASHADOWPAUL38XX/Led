@@ -8,6 +8,7 @@ from config import DELAY_UPDATE, SAMPLE_RATE, FREQ_BINS
 from frontend.nodes.broadcast.broadcast_addition import BroadcastAdditionNode
 from frontend.nodes.broadcast.broadcast_indexes import BroadcastIndexesNode
 from frontend.nodes.buffer import BufferNode
+from frontend.nodes.controllers import ESP32Node
 from frontend.nodes.features import EntropyNode
 from frontend.nodes.function import FunctionNode
 from frontend.nodes.pipelines import AmplitudesNode
@@ -56,7 +57,6 @@ def main():
         buffer=buffer_node.data,
         fft_size=analysis_chunk_size,
         # powering=0.5,
-        normalisation=True,
         alias="amplitudes_node",
     )
 
@@ -177,6 +177,11 @@ def main():
         rgb=broadcast_addition_colors.data,
         alpha=broadcast_addition_heights.data,
         alias="rgba_pipeline_node",
+    )
+
+    esp32_node = ESP32Node(
+        rgba=rgba_pipeline_node.rgba,
+        alias="esp32_node",
     )
 
     bar_chart_node = BarGraphChartNode(

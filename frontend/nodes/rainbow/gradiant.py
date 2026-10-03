@@ -4,6 +4,7 @@ import numpy as np
 from config import FREQ_BINS
 from frontend.components.elements.color_picker import ColorPicker
 from frontend.components.elements.dials import LinearDial
+from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.components.elements.textedit import TextEdit
