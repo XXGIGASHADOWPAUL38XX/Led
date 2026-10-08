@@ -8,6 +8,12 @@ from frontend.overrides.CNode import CNode
 
 
 class RGBAPipelineNode(VisualPipeline, CNode):
+    """Combine per-position RGB colors and normalized opacity.
+
+    Inputs `rgb` shaped (FREQ_BINS, 3) in [0, 255] and `alpha` shaped
+    (FREQ_BINS,) in [0, 1] produce `rgba` shaped (FREQ_BINS, 4) each visual
+    update. Alpha is multiplied by 255; values are not clipped."""
+
     nodeName = "RGBAPipeline"
 
     def __init__(

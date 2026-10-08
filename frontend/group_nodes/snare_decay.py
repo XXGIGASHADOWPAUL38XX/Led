@@ -17,6 +17,14 @@ from frontend.nodes.windows_fcts.max_window_fct import MaxWindowFct
 
 
 class SnareDecayNode(GroupNode):
+    """Combine band energy and spectral change into a trigger pipeline.
+
+    Input `buffer_data` is channels-first audio. Output `data` is a
+    one-element TriggerNode pulse array. Configure `min_frequency` and
+    `max_frequency` (Hz) and RMS `threshold`; child nodes compare new spectral
+    energy with delayed history and require weighted frequency above 500 Hz.
+    The final trigger currently uses EQUAL against 0.5 on a boolean condition."""
+
     nodeName = "SnareDecay"
 
     def __init__(

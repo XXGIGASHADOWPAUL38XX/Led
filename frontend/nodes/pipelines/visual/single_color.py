@@ -9,6 +9,11 @@ from frontend.overrides.CNode import CNode
 
 
 class SingleColorNode(CNode):
+    """Generate a uniform RGB strip for coloring a visualization.
+
+    Inputs `color` (RGB tuple in [0, 255]) and `number_points` produce
+    output `data` shaped (number_points, 3). Refreshes when either input changes."""
+
     nodeName = "SingleColor"
 
     def __init__(

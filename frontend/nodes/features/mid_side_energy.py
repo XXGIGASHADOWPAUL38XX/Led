@@ -10,7 +10,12 @@ from frontend.overrides.CNode import CNode
 
 
 class MidSideEnergyNode(CNode, AudioPipeline):
-    """nodeName labels the graph node; this node outputs mid/side stereo energy metrics."""
+    """Measure stereo center energy and stereo width.
+
+    Input `buffer_data` has shape (2, samples), channels first. Outputs
+    `mid_energy`, `side_energy`, and `mid_ratio` are one-element arrays;
+    `data` is [mid_energy, side_energy]. Each audio update averages squared
+    (L + R) / 2 and (L - R) / 2; configure `length` in samples."""
 
     nodeName = "MidSideEnergy"
 

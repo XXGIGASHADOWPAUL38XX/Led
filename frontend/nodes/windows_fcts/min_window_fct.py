@@ -8,6 +8,13 @@ from frontend.overrides.CNode import CNode
 
 
 class MinWindowFct(WindowFct, CNode):
+    """Compute the minimum of a WindowNode history.
+
+    Configure `window` and `avg_axis` (0 for per-position history reduction;
+    None reduces all axes). Output `data` receives the minimum when
+    the window calls `aggregate(window_data)` after each audio update.
+    The window is supplied at construction, not through an input terminal."""
+
     nodeName = "MinWindowFct"
 
     def __init__(self, window: CNode, avg_axis=None, render: bool = True, alias: str | None = None, parent: CNode | None = None):

@@ -13,6 +13,14 @@ from frontend.components.elements.textedit.textedit import TextEdit
 from frontend.overrides.CNode import CNode
 
 class OperatorPipelineNode(CNode, AudioPipeline):
+    """Evaluate an expression assembled from Elements and literal tokens.
+
+    Configure ordered `arguments`, such as [source.data, "*", 0.5], and
+    output `length`. Element arguments create named inputs and corresponding
+    `_out` passthrough terminals; `data` contains the expression result each
+    audio update. Boolean scalars become one-element arrays. Uses Python eval;
+    supply trusted expressions whose results fit the output buffer."""
+
     nodeName = "OperatorPipeline"
     operations_string = ['(', '+', '-', '*', '**', '/', ')', '<', '<=', '=>', '>', '&']
     successMessage = lambda self, v: f"Operation compiled with success, Value : {v}"

@@ -9,7 +9,11 @@ from frontend.overrides.CNode import CNode
 
 
 class EntropyNode(CNode, AudioPipeline):
-    """nodeName labels the graph node; this node outputs normalized spectral entropy."""
+    """Measure how evenly spectral amplitude is distributed.
+
+    Input `amplitudes` is a spectrum vector. Output `data` is a one-element
+    array of normalized spectral entropy, approximately [0, 1], each audio
+    update. Negative amplitudes are ignored; silence gives zero."""
 
     nodeName = "Entropy"
 

@@ -9,6 +9,13 @@ from frontend.nodes.pipelines.amplitudes.amplitude_transformer import Amplitudes
 
 
 class FctAmplitudesTransformerNode(CNode, AmplitudesTransformer):
+    """Shape a spectrum with a supplied amplitude-level function.
+
+    Input `input_data` is a FREQ_BINS vector; configure `amplitudes_level_fct`
+    with an object exposing `fct(data)`. Output `data` applies that function
+    then the constructor `log` exponent each audio update. The inherited
+    transform mutates the function result; `powering` is currently unused."""
+
     nodeName = "FctAmplitudesTransformer"
 
     def __init__(

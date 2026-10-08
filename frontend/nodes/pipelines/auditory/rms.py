@@ -8,6 +8,12 @@ from frontend.overrides.CNode import CNode
 
 
 class RMSPipelineNode(CNode, AudioPipeline):
+    """Measure overall audio level with root mean square amplitude.
+
+    Input `buffer_data` is audio, typically shaped (channels, samples).
+    Output `data` is a one-element array of sqrt(mean(audio ** 2)) across
+    channels and samples each audio update. Chart settings do not alter RMS."""
+
     nodeName = "RMS"
 
     def __init__(

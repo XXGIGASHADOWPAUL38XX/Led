@@ -8,6 +8,7 @@ from urllib.parse import unquote, urlparse
 
 import numpy as np
 import soundfile as sf
+import static_ffmpeg
 from PyQt5 import QtCore
 from yt_dlp import YoutubeDL
 
@@ -22,6 +23,15 @@ from frontend.overrides.CNode import CNode, OfflineCNode
 
 
 class SCPlaylistPlayer(CNode, AudioUpdatable):
+    """Download, cache, and control playback of a SoundCloud playlist.
+
+    No input terminals; configure `playlist_url`, browser/profile cookies,
+    `prefetch_seconds`, and `cache`. Outputs `audio` shaped (samples, 2),
+    `sample_rate` in Hz, and changing `enqueue_token` connect to StreamPlayer
+    inputs. Play/seek publishes remaining track audio; pause publishes empty
+    audio. Background loading starts for a nonempty URL and supports offline
+    playlist analysis nodes."""
+
     nodeName = "SCPlaylistPlayer"
     entries_cache_path = os.path.expanduser("~/.cache/led/sc_playlist_entries.pkl")
     tracks_cache_path = os.path.expanduser("~/.cache/led/sc_playlist_tracks.pkl")
@@ -101,6 +111,7 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
         if key in cache:
             return cache[key]
         with tempfile.TemporaryDirectory() as tmp:
+            static_ffmpeg.add_paths()
             download_opts = dict(opts)
             download_opts["outtmpl"] = os.path.join(tmp, "track.%(ext)s")
             download_opts["postprocessors"] = [{"key": "FFmpegExtractAudio", "preferredcodec": "wav", "preferredquality": "0"}]

@@ -9,6 +9,11 @@ from frontend.overrides.CNode import CNode
 
 
 class ConstantArrayNode(CNode):
+    """Generate a constant vector for masks, levels, or array arithmetic.
+
+    Inputs `input_value` and `length` set the repeated value and element count.
+    Output `data` has shape (length,) and refreshes when either input changes."""
+
     nodeName = "ConstantArray"
 
     def __init__(

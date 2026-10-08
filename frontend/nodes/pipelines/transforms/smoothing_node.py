@@ -12,6 +12,14 @@ from frontend.nodes.windows_fcts.averaged_window_fct import AveragedWindowFct
 
 
 class SmoothingNode(CNode, AudioUpdatable):
+    """Wrap a history window and aggregation function for signal smoothing.
+
+    Input `input_value` is a vector; output `data` has its last-axis length.
+    Configure positive history `length`, update delay `offset`, `avg_axis`
+    (default 0), and optional `window_function` (default AveragedWindowFct).
+    Child nodes retain history; c_update attempts to copy the aggregate and
+    keeps the previous output if that copy fails."""
+
     nodeName = "Smoothing"
 
     def __init__(

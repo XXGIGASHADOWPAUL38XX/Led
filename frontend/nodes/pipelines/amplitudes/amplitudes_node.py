@@ -11,6 +11,14 @@ from frontend.overrides.CNode import CNode
 
 
 class AmplitudesNode(CNode, AudioUpdatable):
+    """Convert a stereo audio window to a logarithmically spaced spectrum.
+
+    Input `buffer` has shape (2, fft_size), channels first. Outputs
+    `frequencies` (Hz) and `data` have shape (freq_bins,). Each audio update
+    applies a Hann window, averages channel FFT magnitudes, interpolates bins,
+    weights by frequency ** powering, and applies 20 * log10(1 + amplitude).
+    Configure `fft_size`, `freq_bins`, and frequency bounds; uses SAMPLE_RATE."""
+
     nodeName = "Amplitudes"
 
     def __init__(

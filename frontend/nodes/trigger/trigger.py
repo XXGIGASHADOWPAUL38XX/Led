@@ -10,6 +10,13 @@ from frontend.overrides.CNode import CNode
 
 
 class TriggerNode(CNode, AudioUpdatable):
+    """Emit a one-update pulse when the last input value crosses a condition.
+
+    Inputs `input_data` and `threshold` use configured `trigger_mode` LESS,
+    EQUAL, or GREATER. Output `data` is a vector matching input's last-axis
+    length: all ones when the condition changes to true, zeros otherwise.
+    Samples the final flattened input value each audio update."""
+
     nodeName = "Trigger"
 
     @classmethod

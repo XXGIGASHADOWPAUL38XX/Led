@@ -1,8 +1,7 @@
 import numpy as np
-from pyparsing import LineEnd
 
-from config import CHUNK_SIZE, FFT_SIZE
 from backend.updatable.updatable import AudioUpdatable
+from config import CHUNK_SIZE, FFT_SIZE
 from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
@@ -11,6 +10,15 @@ from frontend.overrides.CNode import CNode
 
 
 class BufferNode(CNode, AudioUpdatable):
+    """Keep a rolling stereo audio window for FFT or other audio analysis.
+
+    Input `indata`: array shaped (2, chunk_size), with channels first.
+    Output `data`: array shaped (2, length), ordered oldest to newest.
+    Each audio update appends `chunk_size` samples and discards the oldest;
+    the window starts filled with zeros. Configure `chunk_size` and `length`
+    in samples, with chunk_size <= length.
+    """
+
     nodeName = "Buffer"
 
     def __init__(

@@ -7,6 +7,13 @@ from frontend.overrides.CNode import CNode
 
 
 class AveragedWindowFct(WindowFct, CNode):
+    """Compute the mean of a WindowNode history.
+
+    Select or configure `window` and `avg_axis` (0 for per-position history reduction;
+    None reduces all axes). Output `data` receives the mean when
+    the window calls `aggregate(window_data)` after each audio update.
+    Window selection uses a NodeSelector rather than an input terminal."""
+
     nodeName = "AveragedWindowFct"
 
     def __init__(

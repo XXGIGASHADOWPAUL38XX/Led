@@ -9,6 +9,12 @@ from frontend.overrides.CNode import CNode
 
 
 class BroadcastAdditionNode(VisualPipeline, CNode):
+    """Blend two arrays for mixing colors or visual signals.
+
+    Inputs `input_data`, `secondary_data`, and `level` produce output `data`
+    as input_data * (1 - level) + secondary_data * level each visual update.
+    Shapes must broadcast; a per-position level expands over color channels."""
+
     nodeName = "BroadcastAddition"
 
     def __init__(

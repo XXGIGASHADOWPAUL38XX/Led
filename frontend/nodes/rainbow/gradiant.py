@@ -12,6 +12,12 @@ from frontend.overrides.CNode import CNode
 
 
 class GradiantNode(CNode):
+    """Generate a spatial RGB gradient by interpolating in HSV color space.
+
+    Output `data` has shape (n_points, 3), integer channels in [0, 255].
+    Configure `n_points`, RGB `color_in`/`color_out`, and extra hue `cycle`;
+    changes regenerate the gradient. No input terminals are declared."""
+
     nodeName = "Gradiant"
 
     def __init__(

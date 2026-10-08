@@ -10,6 +10,13 @@ from frontend.overrides.CNode import CNode
 
 
 class OutboundsFctNode(CNode, AudioUpdatable):
+    """Generate a nonnegative mirrored edge-to-center intensity profile.
+
+    Inputs `y_outbound`, `y_center`, and `y_offset` set edge level, center
+    level, and cyclic shift fraction. Output `data` has shape (length,) each
+    audio update. Configure `length` and optional `cute_side_mode`; negative
+    levels clip to zero and the offset times length must be an integer shift."""
+
     nodeName = "OutboundsFct"
 
     def __init__(

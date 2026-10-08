@@ -13,3 +13,7 @@ pyqt-switch
 
 # Native ESP32 firmware build and upload
 platformio
+
+yt-dlp
+static-ffmpeg
+soundfile

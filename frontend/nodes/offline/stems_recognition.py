@@ -152,6 +152,15 @@ def find_stem_data(audio, sample_rate, analysis_nb_frames=2, similarity_threshol
 
 
 class StemsRecognitionNode(OfflineCNode):
+    """Analyze complete tracks for recurring spectral groups and presence.
+
+    Receives (audio, sample_rate) tracks through `calculate_playlist`, not
+    input terminals. Playback position updates dynamic `stem_N` outputs,
+    each a one-element 0/1 presence array, plus internal average amplitudes.
+    Configure `analysis_nb_frames`, `hop_ms`, similarity/level thresholds,
+    and `min_presence_count`; this detects spectral groups rather than
+    producing separated audio tracks."""
+
     nodeName = "StemsRecognition"
 
     def __init__(self, analysis_nb_frames=5, similarity_threshold=0.5, level_threshold=0.25, min_presence_count=11, hop_ms=10, render=True, alias=None):

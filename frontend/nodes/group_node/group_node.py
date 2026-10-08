@@ -9,6 +9,13 @@ from frontend.overrides.CNode import CNode
 
 
 class GroupNode(CNode):
+    """Arrange related nodes inside a titled visual group.
+
+    Configure `nodes`, title, padding, color, and `hide_node`; optional
+    `terminals` are defined by subclasses. `draw()` opens child charts and
+    `start()` starts `auto_start_nodes`. Grouping itself does not process
+    signals; concrete subclasses expose outputs from their child pipelines."""
+
     nodeName = "GroupNode"
     is_group_node = True
 

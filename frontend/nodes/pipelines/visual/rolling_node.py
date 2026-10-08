@@ -10,6 +10,12 @@ from frontend.overrides.CNode import CNode
 
 
 class RollingNode(VisualPipeline, CNode):
+    """Rotate a color or data array cyclically along its first axis.
+
+    Input `input_data` initializes output `data` with the same array.
+    Each visual update rolls the retained data by int(`roll_speed`) positions;
+    this accumulates motion and writes into the shared source array."""
+
     nodeName = "RollingNode"
 
     def __init__(

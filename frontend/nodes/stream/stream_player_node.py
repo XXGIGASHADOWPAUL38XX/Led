@@ -12,6 +12,13 @@ from frontend.overrides.CNode import CNode
 
 
 class StreamPlayerNode(CNode, AudioUpdatable):
+    """Play stereo audio and expose channels-first blocks for analysis.
+
+    Inputs `audio_in` shaped (samples, 2), `sample_rate_in` (Hz), and
+    `enqueue_token` replace playback when the token changes. Output `chunk`
+    has shape (2, chunk_size). Empty audio stops playback. Configure
+    `chunk_size`; direct `enqueue()` appends tracks with matching sample rates."""
+
     nodeName = "StreamPlayer"
 
     def __init__(

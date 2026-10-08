@@ -8,6 +8,13 @@ from frontend.overrides.CNode import CNode
 
 
 class MaxWindowFct(WindowFct, CNode):
+    """Compute the maximum of a WindowNode history.
+
+    Configure `window` and `avg_axis` (0 for per-position history reduction;
+    None reduces all axes). Output `data` receives the maximum when
+    the window calls `aggregate(window_data)` after each audio update.
+    The window is supplied at construction, not through an input terminal."""
+
     nodeName = "MaxWindowFct"
 
     def __init__(

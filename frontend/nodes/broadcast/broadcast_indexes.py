@@ -9,6 +9,12 @@ from frontend.overrides.CNode import CNode
 
 
 class BroadcastIndexesNode(CNode, AudioUpdatable):
+    """Sample a vector using normalized positions.
+
+    Inputs `input_data` (1D) and `indexes` produce output `data` with the
+    indexes shape. Each audio update converts indexes * source length to
+    integers and clamps them to valid positions; use indexes in [0, 1]."""
+
     nodeName = "BroadcastIndexesNode"
 
     def __init__(

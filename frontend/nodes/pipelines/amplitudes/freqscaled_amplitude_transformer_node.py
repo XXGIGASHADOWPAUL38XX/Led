@@ -10,6 +10,13 @@ from frontend.nodes.pipelines.amplitudes.amplitude_transformer import Amplitudes
 
 
 class FreqScaledAmplitudesTransformerNode(CNode, AmplitudesTransformer):
+    """Aggregate spectrum neighborhoods with index-dependent widths.
+
+    Input `input_data` and output `data` are FREQ_BINS vectors. Configure
+    `correlation_weight_min` to widen neighborhoods toward higher indices;
+    each audio update sums values divided by normalized ramp weights, then
+    applies the constructor `log` exponent. `powering` is currently unused."""
+
     nodeName = "FreqScaledAmplitudesTransformer"
 
     def __init__(

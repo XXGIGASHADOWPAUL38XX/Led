@@ -9,6 +9,12 @@ from frontend.overrides.CNode import CNode
 
 
 class ClipNode(CNode, AudioUpdatable):
+    """Clamp an array to a fixed numeric range.
+
+    Input `input_value` produces output `data` with the same shape each audio
+    update. Configure `min_value` and `max_value`; values outside the range
+    become the nearest bound."""
+
     nodeName = "Clip"
 
     def __init__(

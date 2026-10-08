@@ -8,6 +8,12 @@ from frontend.overrides.CNode import CNode
 
 
 class SinArrayNode(CNode):
+    """Generate a sampled sine wave for spatial modulation.
+
+    Inputs `number_cycle`, `number_points`, `center`, and `offset` control
+    cycles, length, baseline, and amplitude. Output `data` has shape
+    (number_points,) and refreshes on changes; the endpoint is excluded."""
+
     nodeName = "SinArray"
 
     def __init__(

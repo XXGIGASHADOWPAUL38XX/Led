@@ -9,6 +9,13 @@ from frontend.overrides.CNode import CNode
 
 
 class WindowNode(CNode, AudioUpdatable):
+    """Keep recent vector frames for temporal aggregation.
+
+    Input `input_data` shaped (N,) produces output `data` shaped (length, N),
+    oldest to newest. Configure positive integer `length`, initial
+    `init_value`, and nonnegative `offset` in audio updates. Each update
+    appends one delayed frame and calls registered window functions."""
+
     nodeName = "Window"
 
     def __init__(

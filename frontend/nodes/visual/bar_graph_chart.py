@@ -10,6 +10,12 @@ from frontend.overrides.CNode import CNode
 
 
 class BarGraphChartNode(CNode, VisualUpdatable):
+    """Display a vector as a colored bar chart.
+
+    Inputs `data` (bar heights) and `brushes` (per-bar RGBA colors) feed a
+    chart each visual update; no output terminals. Configure `number_points`,
+    title, axis labels, and `y_min`/`y_max` for the displayed range."""
+
     nodeName = "BarGraphChart"
 
     def __init__(

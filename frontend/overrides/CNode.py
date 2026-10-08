@@ -17,6 +17,13 @@ from frontend.overrides.node_style import (
 
 
 class CNode(Node):
+    """Base graph node for connecting Elements and saving template state.
+
+    Define named input/output `terminals` and matching Element attributes in
+    subclasses; connections share upstream values. Configure `alias` for a
+    unique graph name, `render` for UI creation, and `parent` for embedding.
+    The base `c_update` performs no processing."""
+
     sig_initiated = QtCore.pyqtSignal()
     INNER_MARGIN = 10
     TERMINAL_WIDTH = 40
@@ -362,6 +369,12 @@ class CNode(Node):
 
 
 class OfflineCNode(CNode):
+    """Base node for analysis of complete playlist tracks before playback.
+
+    Subclasses implement `calculate_playlist(tracks)` for (audio, sample_rate)
+    pairs and update outputs through `update_audio_index` or
+    `update_audio_position`. No terminals or analysis are defined here."""
+
     is_offline = True
 
     def calculate_playlist(self, tracks):

@@ -9,6 +9,12 @@ from frontend.overrides.CNode import CNode
 
 
 class PeakFilterNode(CNode, AudioUpdatable):
+    """Keep only the strongest local peaks in a vector.
+
+    Input `input_value` produces same-shaped output `data` each audio update.
+    Configure nonnegative `peaks_to_keep`; values below an adjacent sample
+    and all but the largest remaining peaks become zero."""
+
     nodeName = "PeakFilter"
 
     def __init__(

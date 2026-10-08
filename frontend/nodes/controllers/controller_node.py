@@ -8,6 +8,13 @@ from frontend.overrides.CNode import CNode
 
 
 class ControllerNode(CNode, VisualUpdatable):
+    """Base RGBA-to-LED controller with brightness shaping.
+
+    Input `rgba` has shape (FREQ_BINS, 4), channels in [0, 255]; there is no
+    output terminal. `process_rgba()` modifies alpha in place using
+    `power_log`, `min_alpha`, and `remove_alpha`, then fills internal `rgb`
+    with black prefix LEDs. Use ESP32Node for transmission."""
+
     def __init__(
         self,
         rgba: np.ndarray = np.zeros((FREQ_BINS, 4)),

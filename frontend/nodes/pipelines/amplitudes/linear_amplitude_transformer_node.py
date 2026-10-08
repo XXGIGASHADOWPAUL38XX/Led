@@ -9,6 +9,14 @@ from frontend.nodes.pipelines.amplitudes.amplitude_transformer import Amplitudes
 
 
 class LinearAmplitudesTransformerNode(CNode, AmplitudesTransformer):
+    """Apply optional triangular correlation and an exponent to a spectrum.
+
+    Inputs `input_data`, `correlation_offset`, and `correlation_step` produce
+    output `data` shaped (FREQ_BINS,) each audio update. Correlation runs only
+    when both controls are supplied; step must be nonzero. The constructor
+    `log` is an exponent; without correlation, the input is modified in place.
+    `powering` is currently unused."""
+
     nodeName = "LinearAmplitudesTransformer"
 
     def __init__(

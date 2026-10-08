@@ -11,6 +11,13 @@ from frontend.nodes.visual.line_chart import LineChartNode
 
 
 class MultiLineChartNode(LineChartNode):
+    """Plot several selected Elements as separate scalar histories.
+
+    Configure `node_selectors`, `number_points`, title, labels, and y bounds.
+    Each visual update samples the last flattened value from each selected
+    Element, or zero if absent. Lines can be added or hidden through the UI;
+    there are no graph terminals."""
+
     nodeName = "MultiLineChart"
 
     def __init__(

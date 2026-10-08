@@ -9,6 +9,12 @@ from frontend.overrides.CNode import CNode
 
 
 class BroadcastRescalerNode(CNode, AudioUpdatable):
+    """Resize an array along its first axis by nearest lower-index sampling.
+
+    Inputs `input_data` and positive `length` produce output `data` shaped
+    (length, *input_data.shape[1:]) each audio update. Configure the output
+    length at construction to match its allocated buffer."""
+
     nodeName = "BroadcastRescalerNode"
 
     def __init__(

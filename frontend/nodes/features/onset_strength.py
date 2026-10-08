@@ -9,7 +9,11 @@ from frontend.overrides.CNode import CNode
 
 
 class OnsetStrengthNode(CNode, AudioPipeline):
-    """nodeName labels the graph node; this node outputs noise-adjusted onset strength."""
+    """Detect spectral attacks above a moving noise floor.
+
+    Input `amplitudes` is a spectrum vector. Output `data` is a nonnegative
+    one-element array each audio update: mean positive change from the
+    previous spectrum minus an exponential noise estimate. Keeps frame history."""
 
     nodeName = "OnsetStrength"
 

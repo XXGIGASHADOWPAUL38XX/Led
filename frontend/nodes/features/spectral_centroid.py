@@ -9,7 +9,11 @@ from frontend.overrides.CNode import CNode
 
 
 class SpectralCentroidNode(CNode, AudioPipeline):
-    """nodeName labels the graph node; this node outputs the amplitude-weighted center frequency."""
+    """Measure spectral brightness as an amplitude-weighted frequency.
+
+    Inputs `amplitudes` and `frequencies` are matching spectrum vectors.
+    Output `data` is a one-element array in Hz each audio update; negative
+    amplitudes are ignored and silent or empty input gives zero."""
 
     nodeName = "SpectralCentroid"
 

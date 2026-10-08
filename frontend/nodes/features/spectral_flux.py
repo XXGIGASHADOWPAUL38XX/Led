@@ -9,7 +9,11 @@ from frontend.overrides.CNode import CNode
 
 
 class SpectralFluxNode(CNode, AudioPipeline):
-    """nodeName labels the graph node; this node outputs positive frame-to-frame spectral change."""
+    """Measure positive spectrum change for transient detection.
+
+    Input `amplitudes` is a spectrum vector. Output `data` is a nonnegative
+    one-element array of mean positive change since the previous audio
+    update. Keeps the previous spectrum, initially zero."""
 
     nodeName = "SpectralFlux"
 

@@ -10,6 +10,13 @@ from frontend.overrides.CNode import CNode
 
 
 class GatheringNode(CNode, AudioUpdatable):
+    """Select enabled source values using a parallel boolean list.
+
+    Configure nonempty `input_datas` and matching `input_booleans` as Elements;
+    source Elements create named input terminals. Output `data` receives the
+    enabled values each audio update and keeps its previous value if none
+    are enabled. Selected values must fit the preallocated output shape."""
+
     nodeName = "Gathering"
 
     def __init__(

@@ -28,6 +28,13 @@ register_nodes()
 
 
 class HarmonicTideNode(VisualPipeline, CNode):
+    """Animate spectrum bars and RGB colors with bass-driven waves.
+
+    Inputs `amplitudes` (spectrum vector) and `bass_drive` (one-element array
+    in [0, 1]) produce `data` shaped (FREQ_BINS,) in [0, 1] and `brushes`
+    shaped (FREQ_BINS, 4) in [0, 255]. Each visual update smooths spectrum,
+    tracks bass attacks, and advances an animated color/intensity wave."""
+
     nodeName = "HarmonicTide"
 
     def __init__(

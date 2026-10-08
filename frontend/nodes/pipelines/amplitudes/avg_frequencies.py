@@ -9,6 +9,12 @@ from frontend.overrides.CNode import CNode
 
 
 class AvgFrequenciesNode(CNode, AudioUpdatable):
+    """Compute the amplitude-weighted average frequency.
+
+    Inputs `input_frequencies` (Hz) and `input_amplitudes` are matching vectors.
+    Output `data` is a one-element array in Hz each audio update, using a
+    small denominator epsilon so silent spectra produce zero."""
+
     nodeName = "AvgFrequencies"
 
     def __init__(

@@ -14,6 +14,13 @@ from frontend.nodes.windows_fcts.decreasing_avg_window_fct import DecreasingAvgW
 
 
 class KickDecayNode(GroupNode):
+    """Detect low-frequency attacks and produce a decaying intensity signal.
+
+    Input `buffer_data` is channels-first audio. Output `data` is a
+    one-element array from low-pass filtering, RMS threshold onset pulses,
+    and weighted-max history. Configure `lowpass_freq` in Hz, `threshold`
+    in RMS units, and `decay_length` in audio updates."""
+
     nodeName = "KickDecay"
 
     def __init__(

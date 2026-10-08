@@ -12,6 +12,13 @@ from frontend.overrides.CNode import CNode
 
 
 class RainbowNode(CNode):
+    """Pass through or mirror an RGB gradient for a color strip.
+
+    Input `gradiant` and output `data` are RGB arrays in [0, 255]. Configure
+    `n_points` for the default embedded GradiantNode and `mode` for LINEAR
+    or MIRROR; MIRROR joins every other source row with its reverse.
+    Refreshes on visual updates; `inv_fraction` currently has no effect."""
+
     nodeName = "Rainbow"
 
     def __init__(

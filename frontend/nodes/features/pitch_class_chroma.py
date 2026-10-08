@@ -9,7 +9,12 @@ from frontend.overrides.CNode import CNode
 
 
 class PitchClassChromaNode(CNode, AudioPipeline):
-    """nodeName labels the graph node; this node outputs normalized 12-bin chroma energy."""
+    """Fold spectral amplitudes into twelve pitch classes across octaves.
+
+    Inputs `amplitudes` and `frequencies` are matching vectors (Hz).
+    Output `data` has shape (12,), peak-normalized to [0, 1] each audio update;
+    bin zero is the `reference_frequency` pitch (default A, 440 Hz), followed
+    by semitones. Nonpositive frequencies are ignored; silence gives zeros."""
 
     nodeName = "PitchClassChroma"
 

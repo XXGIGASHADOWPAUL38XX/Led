@@ -9,7 +9,13 @@ from frontend.overrides.CNode import CNode
 
 
 class ChromaPrismNode(VisualPipeline, CNode):
-    """nodeName labels the graph node; this node turns audio features into bar heights and colors."""
+    """Convert spectrum and audio features into animated bars and RGBA colors.
+
+    Inputs: `amplitudes`, 12-bin `chroma`, scalar-array `spectral_centroid`
+    (Hz), `spectral_flux`, `onset_strength`, `entropy`, `zero_crossing_rate`,
+    `crest_factor`, and `mid_side_energy` shaped (2,). Outputs `data` shaped
+    (FREQ_BINS,) in [0, 1] and `brushes` shaped (FREQ_BINS, 4) in [0, 255]
+    update with spectrum memory and animation phase each visual frame."""
 
     nodeName = "ChromaPrism"
 

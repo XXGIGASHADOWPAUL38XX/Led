@@ -9,6 +9,13 @@ from frontend.overrides.CNode import CNode
 
 
 class AmplitudesLevelFunction(CNode, AudioUpdatable):
+    """Provide a frequency-index gain curve to an amplitude transformer.
+
+    Configure `number_points`, `offset`, and sigmoid `drop`/`rise` magnitudes,
+    centers, and widths. Calling `fct(amplitudes_data)` multiplies a matching
+    vector by the curve and returns `data` shaped (number_points,).
+    Processing requires a caller; the declared data terminal is not linked."""
+
     nodeName = "AmplitudeLevelFunction"
 
     def __init__(

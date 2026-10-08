@@ -8,6 +8,13 @@ from frontend.overrides.CNode import CNode
 
 
 class ValueTransformerPipelineNode(CNode, AudioPipeline):
+    """Map scalar or vector values between numeric intervals.
+
+    Input `input_value` produces output `output_value` each audio update.
+    Configure ascending `input_value_interval` and `output_value_interval`;
+    linear interpolation clamps out-of-range inputs to endpoint outputs.
+    A scalar produces a one-element array; use 1D arrays for vector input."""
+
     nodeName = "ValueTransformer"
 
     @staticmethod

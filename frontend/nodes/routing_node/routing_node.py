@@ -4,6 +4,12 @@ from frontend.overrides.CNode import CNode
 
 
 class RoutingNode(CNode):
+    """Placeholder for routing a configured list of operator nodes.
+
+    Configure `operator_nodes`; a `data` output terminal is declared, but no
+    data Element or routing behavior is implemented. Do not use as a working
+    signal source in generated templates."""
+
     nodeName = "Routing"
 
     def __init__(

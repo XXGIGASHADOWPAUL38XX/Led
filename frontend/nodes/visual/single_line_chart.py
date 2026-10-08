@@ -8,6 +8,13 @@ from frontend.nodes.visual.line_chart import LineChartNode
 
 
 class SingleLineChartNode(LineChartNode):
+    """Plot a selected Element's latest scalar value over time.
+
+    Configure `node_selector` or initial `input_data` to select an Element;
+    its last flattened value is sampled each visual update, or zero if absent.
+    `number_points` sets history length; title, labels, and y bounds control
+    display. Selection uses the UI; there are no graph terminals."""
+
     nodeName = "SingleLineChart"
 
     def __init__(

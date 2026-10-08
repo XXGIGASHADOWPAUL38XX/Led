@@ -14,6 +14,13 @@ from frontend.nodes.windows_fcts.averaged_window_fct import AveragedWindowFct
 
 
 class SinglePeakTriggerNode(GroupNode):
+    """Isolate the strongest spectral peak above its recent average.
+
+    Input `buffer_data` has shape (2, fft_size). Output `data` is a spectrum
+    vector of retained amplitudes, not a boolean trigger. Child nodes compute
+    FFT amplitudes, subtract a `window_length` frame mean, keep one local peak,
+    and zero it unless it reaches `threshold`."""
+
     nodeName = "SinglePeakTrigger"
 
     def __init__(

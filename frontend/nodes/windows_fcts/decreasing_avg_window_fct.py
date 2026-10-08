@@ -7,6 +7,13 @@ from frontend.overrides.CNode import CNode
 
 
 class DecreasingAvgWindowFct(WindowFct, CNode):
+    """Produce a decaying peak envelope from a WindowNode history.
+
+    Select or configure `window` and `avg_axis` (usually 0). Output `data`
+    is the maximum of history frames weighted linearly from oldest=0 to
+    newest=1, not an average. The window calls aggregation each audio update;
+    selection uses a NodeSelector rather than an input terminal."""
+
     nodeName = "DecreasingAvgWindowFct"
 
     def __init__(

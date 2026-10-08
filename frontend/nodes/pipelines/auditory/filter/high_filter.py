@@ -11,6 +11,14 @@ from frontend.nodes.pipelines.auditory.filter.filter import Filter
 
 
 class HighFilterPipelineNode(CNode, Filter):
+    """Apply a first-order Butterworth high-pass filter to audio.
+
+    Input `buffer_data` and output `data` have shape (channels, samples).
+    Configure `highpass_freq` in Hz, within (0, SAMPLE_RATE / 2).
+    Each audio update filters along the sample axis at SAMPLE_RATE;
+    filter state is reset for each block.
+    """
+
     nodeName = "HighFilter"
 
     def __init__(

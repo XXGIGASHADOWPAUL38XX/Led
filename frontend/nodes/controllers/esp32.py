@@ -13,6 +13,14 @@ from frontend.nodes.controllers.controller_node import ControllerNode
 
 
 class ESP32Node(ControllerNode):
+    """Send an RGBA strip to an ESP32 over UDP using DDP.
+
+    Input `rgba` has shape (FREQ_BINS, 4) in [0, 255]; no graph outputs.
+    Configure `esp32_ip`, `ddp_port`, `led_count`, and alpha shaping controls.
+    A worker starts at construction, converts RGBA to RGB with skipped-prefix
+    LEDs, pads or truncates to led_count, and transmits continuously.
+    Alpha processing modifies the input; `close()` stops the worker/socket."""
+
     nodeName = "ESP32"
 
     def __init__(

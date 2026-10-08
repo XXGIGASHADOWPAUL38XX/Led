@@ -9,6 +9,12 @@ from frontend.overrides.CNode import CNode
 
 
 class ThresholdFilterNode(CNode, AudioUpdatable):
+    """Suppress array values below a threshold.
+
+    Inputs `input_value` and scalar `threshold` produce same-shaped output
+    `data` each audio update. Values below threshold become zero; values at
+    or above threshold are retained."""
+
     nodeName = "ThresholdFilter"
 
     def __init__(

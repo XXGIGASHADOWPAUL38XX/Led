@@ -8,7 +8,11 @@ from frontend.overrides.CNode import CNode
 
 
 class CrestFactorNode(CNode, AudioPipeline):
-    """nodeName labels the graph node; this node outputs peak-to-RMS crest factor."""
+    """Measure waveform peak relative to RMS for transient detection.
+
+    Input `buffer_data` is audio, typically shaped (channels, samples).
+    Output `data` is a one-element array of max(abs(audio)) / RMS over all
+    channels and samples each audio update; empty or silent input gives zero."""
 
     nodeName = "CrestFactor"
 

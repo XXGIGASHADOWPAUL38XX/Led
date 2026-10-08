@@ -13,6 +13,12 @@ from frontend.nodes.windows_fcts.decreasing_avg_window_fct import DecreasingAvgW
 
 
 class CenterToEdgeNode(GroupNode):
+    """Turn a trigger pulse into a fading center-to-edge intensity profile.
+
+    Input `input_trigger` is a one-element pulse array. Output `data` has
+    shape (length,). Child nodes retain a weighted-max `decay_length` history,
+    vary the edge level against a fixed center, and multiply by decay strength."""
+
     nodeName = "CenterToEdge"
 
     def __init__(self, input_trigger=np.zeros(1), length=FREQ_BINS, decay_length=5, render=True, alias=None):

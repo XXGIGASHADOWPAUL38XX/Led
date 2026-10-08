@@ -10,6 +10,13 @@ from frontend.overrides.CNode import CNode
 
 
 class BroadcastFractionNode(CNode, AudioUpdatable):
+    """Select a movable contiguous slice along the first array axis.
+
+    Inputs `input_data`, `input`, and `interval_input` define the source and
+    position; configure `fraction` as the retained proportion (0 to 1).
+    Output `data` preserves trailing dimensions. Each audio update clamps
+    the normalized position to [0, 1]; interval endpoints must differ."""
+
     nodeName = "BroadcastFractionNode"
 
     def __init__(

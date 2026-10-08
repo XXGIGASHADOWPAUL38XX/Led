@@ -112,6 +112,14 @@ class FunctionEditor(QtWidgets.QDialog):
 
 
 class FunctionNode(CNode):
+    """Generate an editable piecewise-linear spatial curve.
+
+    Inputs `input_data` and `number_points` determine the output `data` shape;
+    input_data values are not transformed. Configure normalized (x, y)
+    `points`. With an array input, the curve spans its first axis and repeats
+    across trailing dimensions; otherwise it is a number_points vector.
+    Regenerates on input changes or accepted curve edits."""
+
     nodeName = "Function"
 
     def __init__(

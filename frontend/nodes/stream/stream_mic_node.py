@@ -13,6 +13,13 @@ from config import SAMPLE_RATE, CHUNK_SIZE
 
 
 class StreamMicNode(CNode, AudioUpdatable):
+    """Capture mono microphone blocks for audio processing.
+
+    Output `chunk` is a 1D array of chunk_size samples, written by the device
+    callback. Configure `sample_rate`, `chunk_size`, and optional
+    `user_callback`; call `start()` to capture and `stop()` to release the
+    device. Changing chunk size restarts an active stream."""
+
     nodeName = "StreamMic"
 
     def __init__(

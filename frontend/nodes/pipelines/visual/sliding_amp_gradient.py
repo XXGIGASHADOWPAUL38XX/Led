@@ -11,6 +11,14 @@ from frontend.nodes.rainbow import RainbowNode
 
 
 class SlidingAmpGradientNode(VisualPipeline, CNode):
+    """Move an RGB gradient window according to spectral center frequency.
+
+    Inputs `input_frequencies` (Hz) and `input_amplitudes` are matching
+    vectors. Output `data` is an RGB array shaped (FREQ_BINS, 3) each visual
+    update. Configure `slide_window_fraction` and distinct `slide_min_avg_amp`
+    / `slide_max_avg_amp` bounds, which represent weighted frequency in Hz.
+    Construction expects input_amplitudes to expose its array through `.value`."""
+
     nodeName = "SlidingAmpGradientNode"
 
     def __init__(

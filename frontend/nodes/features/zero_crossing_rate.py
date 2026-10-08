@@ -8,7 +8,11 @@ from frontend.overrides.CNode import CNode
 
 
 class ZeroCrossingRateNode(CNode, AudioPipeline):
-    """nodeName labels the graph node; this node outputs the average waveform sign-change rate."""
+    """Measure waveform sign changes as a rough noisiness feature.
+
+    Input `buffer_data` has shape (channels, samples). Output `data` is a
+    one-element array in [0, 1], the channel-averaged fraction of adjacent
+    samples changing sign each audio update; fewer than two samples gives zero."""
 
     nodeName = "ZeroCrossingRate"
 
