@@ -89,7 +89,7 @@ class NodeSelector(Element):
     def extract_selection_element_names(self):
         return list(map(
             lambda x: x.name,
-            list(filter(lambda x: isinstance(x, Element), self.selected_node.elements))
+            self.selected_elements
         ))
 
     def refresh_selection_nodes(self):
@@ -120,7 +120,7 @@ class NodeSelector(Element):
                 if item - 1 < len(selection_nodes)
                 else self.selected_node
             )
-            self.selected_elements = self.selected_node.elements
+            self.selected_elements = [element for element in self.selected_node.elements if isinstance(element, Element) and (not self.selection_elements.value or element.name in self.selection_elements.value)]
             self.selection_elements_combobox.clear()
 
         element_names = ["null"] + self.extract_selection_element_names()
@@ -129,20 +129,33 @@ class NodeSelector(Element):
         self.set_element_value(0)
 
     def set_element_value(self, element_total):
-        if element_total <= 0:
-            self.value = None
-            return
+        element = self.selected_elements[element_total - 1] if element_total > 0 else None
+        self._set_selected_element(element)
 
-        self.selected_element = self.selected_elements[element_total - 1]
-        self.value = self.selected_element
+    def _set_selected_element(self, element):
+        self.selected_element = element
+        terminal_name = self.name.lower()
+        if self.link_terminal and terminal_name in self.node.terminals:
+            target = self.node[terminal_name]
+            if element is None or not target.connectedTo(element.node[element.name.lower()]):
+                target.disconnectAll()
+                if element is not None:
+                    self.connect_terminal(element)
+        self.value = element
 
     def set_default_element(self, element):
+        if element is None:
+            self.selection_nodes_combobox.setCurrentIndex(0)
+            self._set_selected_element(None)
+            return
         self.selected_node = element.node
-        self.selected_elements = self.selected_node.elements
+        self.selected_elements = [element for element in self.selected_node.elements if isinstance(element, Element) and (not self.selection_elements.value or element.name in self.selection_elements.value)]
         self.selected_element = element
 
         self.refresh_selection_nodes()
+        self.selection_nodes_combobox.blockSignals(True)
         self.selection_nodes_combobox.setCurrentText(self.selected_node.name())
+        self.selection_nodes_combobox.blockSignals(False)
 
         element_names = ["null"] + self.extract_selection_element_names()
         self.selection_elements_combobox.blockSignals(True)
@@ -150,7 +163,7 @@ class NodeSelector(Element):
         self.selection_elements_combobox.addItems(element_names)
         self.selection_elements_combobox.setCurrentText(element.name)
         self.selection_elements_combobox.blockSignals(False)
-        self.value = self.selected_element
+        self._set_selected_element(element)
 
     def eventFilter(self, watched, event):
         super().eventFilter(watched, event)

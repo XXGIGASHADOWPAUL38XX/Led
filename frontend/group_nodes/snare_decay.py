@@ -1,8 +1,9 @@
+from frontend.components.elements.dials import LinearDial
+from frontend.components.elements.parameters import DataElement
 import numpy as np
 
 from config import FFT_SIZE
 from frontend.components.elements import AnalysableElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.nodes.group_node import GroupNode
 from frontend.nodes.pipelines import AmplitudesNode
@@ -48,7 +49,7 @@ class SnareDecayNode(GroupNode):
             alias=alias,
         )
 
-        self.buffer_data = Element(self, "buffer_data", ElementValue(buffer_data))
+        self.buffer_data = DataElement(self, 'buffer_data', ElementValue(buffer_data))
         self.band_filter_node = BandFilterPipelineNode(
             buffer_data=self.buffer_data,
             lowcut=min_frequency,
@@ -99,9 +100,10 @@ class SnareDecayNode(GroupNode):
             render=render,
             alias=f"{self.alias}_avg_frequencies",
         )
+        self.threshold = LinearDial(self, "threshold", 0, 1, threshold)
         self.condition_node = OperatorPipelineNode(
             arguments=[
-                "(", self.rms_node.data, ">", threshold, ")",
+                "(", self.rms_node.data, ">", self.threshold, ")",
                 "&",
                 "(", self.avg_frequencies_node.data, ">", 500, ")",
             ],
@@ -115,8 +117,10 @@ class SnareDecayNode(GroupNode):
             render=render,
             alias=f"{self.alias}_trigger",
         )
+        self.min_frequency = self.band_filter_node.lowcut
+        self.max_frequency = self.band_filter_node.highcut
         self.data = AnalysableElement(self, "data", ElementValue(self.trigger_node.data))
-        self.nodes = [
+        self.nodes.value = [
             self.band_filter_node,
             self.amplitudes_node,
             self.amplitude_history_window,

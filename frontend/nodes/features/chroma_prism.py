@@ -1,9 +1,9 @@
+from frontend.components.elements.parameters import DataElement
 import numpy as np
 
 from backend.pipelines.pipeline import VisualPipeline
 from config import FREQ_BINS, MAX_FREQUENCY, MIN_FREQUENCY
 from frontend.components.elements import AnalysableElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
 
@@ -49,17 +49,17 @@ class ChromaPrismNode(VisualPipeline, CNode):
         VisualPipeline.__init__(self)
         CNode.__init__(self, node_name=self.nodeName, terminals=terminals, render=render, alias=alias)
 
-        self.amplitudes = Element(self, "amplitudes", ElementValue(amplitudes))
-        self.chroma = Element(self, "chroma", ElementValue(chroma))
-        self.spectral_centroid = Element(self, "spectral_centroid", ElementValue(spectral_centroid))
-        self.spectral_flux = Element(self, "spectral_flux", ElementValue(spectral_flux))
-        self.onset_strength = Element(self, "onset_strength", ElementValue(onset_strength))
-        self.entropy = Element(self, "entropy", ElementValue(entropy))
-        self.zero_crossing_rate = Element(self, "zero_crossing_rate", ElementValue(zero_crossing_rate))
-        self.crest_factor = Element(self, "crest_factor", ElementValue(crest_factor))
-        self.mid_side_energy = Element(self, "mid_side_energy", ElementValue(mid_side_energy))
+        self.amplitudes = DataElement(self, 'amplitudes', ElementValue(amplitudes))
+        self.chroma = DataElement(self, 'chroma', ElementValue(chroma))
+        self.spectral_centroid = DataElement(self, 'spectral_centroid', ElementValue(spectral_centroid))
+        self.spectral_flux = DataElement(self, 'spectral_flux', ElementValue(spectral_flux))
+        self.onset_strength = DataElement(self, 'onset_strength', ElementValue(onset_strength))
+        self.entropy = DataElement(self, 'entropy', ElementValue(entropy))
+        self.zero_crossing_rate = DataElement(self, 'zero_crossing_rate', ElementValue(zero_crossing_rate))
+        self.crest_factor = DataElement(self, 'crest_factor', ElementValue(crest_factor))
+        self.mid_side_energy = DataElement(self, 'mid_side_energy', ElementValue(mid_side_energy))
         self.data = AnalysableElement(self, "data", ElementValue(np.zeros(FREQ_BINS)))
-        self.brushes = Element(self, "brushes", ElementValue(np.zeros((FREQ_BINS, 4))))
+        self.brushes = DataElement(self, 'brushes', ElementValue(np.zeros((FREQ_BINS, 4))))
 
         self.memory = np.zeros(FREQ_BINS)
         self.phase = 0.0

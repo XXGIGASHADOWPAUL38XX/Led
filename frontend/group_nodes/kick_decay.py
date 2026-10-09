@@ -1,8 +1,8 @@
+from frontend.components.elements.parameters import DataElement
 import numpy as np
 
 from config import FFT_SIZE
 from frontend.components.elements import AnalysableElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.enums.gradiant.trigger_mode import TriggerMode
 from frontend.nodes.group_node import GroupNode
@@ -44,8 +44,7 @@ class KickDecayNode(GroupNode):
             alias=alias,
         )
 
-        self.buffer_data = Element(self, "buffer_data", ElementValue(buffer_data))
-        self.decay_length = Element(self, "decay_length", ElementValue(decay_length))
+        self.buffer_data = DataElement(self, 'buffer_data', ElementValue(buffer_data))
 
         self.low_filter_node = LowFilterPipelineNode(
             buffer_data=buffer_data,
@@ -78,8 +77,11 @@ class KickDecayNode(GroupNode):
             alias=f"{self.alias}_window_function",
         )
 
+        self.lowpass_freq = self.low_filter_node.lowpass_freq
+        self.threshold = self.trigger_node.threshold
+        self.decay_length = self.window_node.length
         self.data = AnalysableElement(self, "data", ElementValue(self.window_function.data))
-        self.nodes = [
+        self.nodes.value = [
             self.low_filter_node,
             self.rms_node,
             self.trigger_node,

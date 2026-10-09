@@ -1,8 +1,8 @@
+from frontend.components.elements.parameters import DataElement, IntegerDial
 import numpy as np
 
 from config import FREQ_BINS
 from frontend.components.elements import AnalysableElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.nodes.function.outbounds_fct import OutboundsFctNode
 from frontend.nodes.group_node import GroupNode
@@ -30,8 +30,8 @@ class EdgeToCenterTriggerNode(GroupNode):
             render=render,
             alias=alias,
         )
-        self.input_trigger = Element(self, "input_trigger", ElementValue(input_trigger))
-        self.length = Element(self, "length", ElementValue(length))
+        self.input_trigger = DataElement(self, 'input_trigger', ElementValue(input_trigger))
+        self.length = IntegerDial(self, 'length', 1, 4096, ElementValue(length))
         self.window_node = WindowNode(
             input_data=self.input_trigger,
             length=decay_length,
@@ -66,8 +66,9 @@ class EdgeToCenterTriggerNode(GroupNode):
             render=render,
             alias=f"{self.alias}_intensity",
         )
+        self.decay_length = self.window_node.length
         self.data = AnalysableElement(self, "data", ElementValue(self.intensity_node.data))
-        self.nodes = [
+        self.nodes.value = [
             self.window_node,
             self.decay_node,
             self.center_value_node,

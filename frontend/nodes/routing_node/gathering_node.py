@@ -1,3 +1,4 @@
+from frontend.components.elements.parameters import DataElement, SequenceElement
 from typing import List
 
 import numpy as np
@@ -26,16 +27,16 @@ class GatheringNode(CNode, AudioUpdatable):
         render: bool = True,
         alias: str | None = None,
     ) -> None:
-        self.input_datas = input_datas
-        self.input_booleans = input_booleans
         terminals = {
             "data": {"io": "out"},
         }
-        for data in self.input_datas:
+        for data in input_datas:
             terminals[self.resolve_element_name(data)] = {"io": "in"}
 
         super().__init__(self.nodeName, terminals, render=render, alias=alias)
 
+        self.input_datas = SequenceElement(self, "input_datas", input_datas, link_terminal=False, register_in_node=False)
+        self.input_booleans = SequenceElement(self, "input_booleans", input_booleans, link_terminal=False, register_in_node=False)
         self.gathering_elements = self.init_data_and_booleans()
         self.data = AnalysableElement(self, "data",
                                       ElementValue(np.zeros_like(input_datas[0].value)))  ##!! wouldn't work for floats
@@ -61,7 +62,7 @@ class GatheringNode(CNode, AudioUpdatable):
 
         for data in self.input_datas:
             name = self.resolve_element_name(data)
-            element = Element(self, name, ElementValue(data))
+            element = DataElement(self, name, ElementValue(data))
             setattr(self, name, element)
             elements.append(element)
 

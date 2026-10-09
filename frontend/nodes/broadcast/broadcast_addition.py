@@ -1,3 +1,4 @@
+from frontend.components.elements.parameters import DataElement
 import numpy as np
 
 from backend.pipelines.pipeline import VisualPipeline
@@ -34,11 +35,11 @@ class BroadcastAdditionNode(VisualPipeline, CNode):
         VisualPipeline.__init__(self)
         CNode.__init__(self, node_name=self.nodeName, terminals=terminals, render=render, alias=alias)
 
-        self.input_data = Element(self, "input_data", ElementValue(input_data))
-        self.secondary_data = Element(self, "secondary_data", ElementValue(secondary_data))
+        self.input_data = DataElement(self, 'input_data', ElementValue(input_data))
+        self.secondary_data = DataElement(self, 'secondary_data', ElementValue(secondary_data))
         level_value = level.value if isinstance(level, Element) else level
         if np.asarray(level_value).size > 1:
-            self.level = Element(self, "level", ElementValue(level))
+            self.level = DataElement(self, 'level', ElementValue(level))
         else:
             self.level = LinearDial(self, "level", 0, 1, ElementValue(level))
         self.data = AnalysableElement(self, "data", ElementValue(np.zeros_like(self.input_data.value)), y_max=255.0)

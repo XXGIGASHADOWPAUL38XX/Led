@@ -1,8 +1,8 @@
+from frontend.components.elements.parameters import DataElement
 import numpy as np
 
 from config import FFT_SIZE
 from frontend.components.elements import AnalysableElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.nodes.group_node import GroupNode
 from frontend.nodes.pipelines import AmplitudesNode
@@ -43,8 +43,7 @@ class SinglePeakTriggerNode(GroupNode):
             alias=alias,
         )
 
-        self.buffer_data = Element(self, "buffer_data", ElementValue(buffer_data))
-        self.window_length = Element(self, "window_length", ElementValue(window_length))
+        self.buffer_data = DataElement(self, 'buffer_data', ElementValue(buffer_data))
         buffer_shape = self.buffer_data.value.shape
 
         self.amplitudes_node = AmplitudesNode(
@@ -84,8 +83,10 @@ class SinglePeakTriggerNode(GroupNode):
             alias=f"{self.alias}_threshold_filter",
         )
 
+        self.threshold = self.threshold_filter_node.threshold
+        self.window_length = self.window_node.length
         self.data = AnalysableElement(self, "data", ElementValue(self.threshold_filter_node.data))
-        self.nodes = [
+        self.nodes.value = [
             self.amplitudes_node,
             self.window_node,
             self.window_function,

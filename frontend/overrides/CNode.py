@@ -1,5 +1,7 @@
 import inspect
 import math
+from enum import Enum
+from importlib import import_module
 from typing import Iterable, Mapping, Any
 
 import numpy as np
@@ -93,6 +95,7 @@ class CNode(Node):
             raw_value, ref = self._state_parameter_value(parameter_name, parameter)
             if ref is not None:
                 init_refs[parameter_name] = ref
+                continue
 
             serialized_value = self.serialize_state_value(raw_value)
             if serialized_value is not None:
@@ -150,6 +153,8 @@ class CNode(Node):
 
     @classmethod
     def serialize_state_value(cls, value):
+        if isinstance(value, Enum):
+            return cls._serde("enum", module=type(value).__module__, class_name=type(value).__name__, name=value.name)
         if isinstance(value, np.ndarray):
             return cls._serde("ndarray", dtype=str(value.dtype), value=value.tolist())
         if isinstance(value, np.generic):
@@ -185,6 +190,8 @@ class CNode(Node):
     def deserialize_state_value(cls, value):
         if isinstance(value, dict):
             serde_type = value.get(cls._SERDE_TAG)
+            if serde_type == "enum":
+                return vars(import_module(value["module"]))[value["class_name"]][value["name"]]
             if serde_type == "ndarray":
                 return np.array(value["value"], dtype=np.dtype(value["dtype"]))
             if serde_type == "npscalar":

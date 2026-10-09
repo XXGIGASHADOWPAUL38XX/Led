@@ -1,8 +1,9 @@
+from frontend.components.elements.dials import LinearDial
+from frontend.components.elements.parameters import IntegerDial, SequenceElement
 import numpy as np
 import pyqtgraph as pg
 from PyQt5 import QtCore, QtWidgets, sip
 
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.components.elements.chart.multi_line_chart_element import MultiLineChartElement
 from frontend.components.elements.node_selector.chart_line_from_node import ChartLineNodeSelector
@@ -33,9 +34,9 @@ class MultiLineChartNode(LineChartNode):
         alias=None,
     ):
         super().__init__(self.nodeName, terminals={}, render=render, alias=alias)
-        self.title = ElementValue(title)
+        self.title = TextEdit(self, "title", ElementValue(title))
         selector_values = node_selectors or [None]
-        self.node_selectors = [
+        self.node_selectors = SequenceElement(self, "node_selectors", [
             ChartLineNodeSelector(
                 self,
                 f"node_selector_{index}",
@@ -44,17 +45,17 @@ class MultiLineChartNode(LineChartNode):
                 link_terminal=False,
             )
         for index, value in enumerate(selector_values)
-        ]
+        ], link_terminal=False, register_in_node=False)
         self.line_visibility = [True] * len(self.node_selectors)
         for index, selector in enumerate(self.node_selectors):
             self._add_visibility_button(index, selector)
         self.add_selector_button = QtWidgets.QPushButton("Add node selector")
         self.add_selector_button.clicked.connect(self.add_node_selector)
-        self.number_points = Element(self, "number_points", ElementValue(number_points))
-        self.left_label = Element(self, "left_label", ElementValue(left_label))
-        self.bottom_label = Element(self, "bottom_label", ElementValue(bottom_label))
-        self.y_min = TextEdit(self, "y_min", ElementValue(y_min))
-        self.y_max = TextEdit(self, "y_max", ElementValue(y_max))
+        self.number_points = IntegerDial(self, 'number_points', 1, 4096, ElementValue(number_points))
+        self.left_label = TextEdit(self, 'left_label', ElementValue(left_label))
+        self.bottom_label = TextEdit(self, 'bottom_label', ElementValue(bottom_label))
+        self.y_min = LinearDial(self, 'y_min', -10000, 10000, ElementValue(y_min))
+        self.y_max = LinearDial(self, 'y_max', -10000, 10000, ElementValue(y_max))
         self.chart = MultiLineChartElement(
             self,
             "chart",

@@ -1,10 +1,10 @@
+from frontend.components.elements.parameters import DataElement
 import numpy as np
 from scipy.signal import butter
 
 from config import SAMPLE_RATE, FFT_SIZE
 from frontend.components.elements.dials import LinearDial
 from frontend.components.elements import AnalysableElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
 from frontend.nodes.pipelines.auditory.filter.filter import Filter
@@ -33,7 +33,7 @@ class HighFilterPipelineNode(CNode, Filter):
             "data": {"io": "out"},
         }
         super().__init__(self.nodeName, terminals, render=render, alias=alias)
-        self.buffer_data = Element(self, "buffer_data", ElementValue(buffer_data))
+        self.buffer_data = DataElement(self, 'buffer_data', ElementValue(buffer_data))
         Filter.__init__(self, buffer_data=self.buffer_data)
 
         self.highpass_freq = LinearDial(self, "highpass_freq", 20, 5000, ElementValue(highpass_freq))

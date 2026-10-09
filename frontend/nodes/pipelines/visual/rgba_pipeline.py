@@ -1,8 +1,8 @@
+from frontend.components.elements.parameters import DataElement
 import numpy as np
 
 from backend.pipelines.pipeline import VisualPipeline
 from config import FREQ_BINS
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
 
@@ -31,9 +31,9 @@ class RGBAPipelineNode(VisualPipeline, CNode):
         VisualPipeline.__init__(self)
         CNode.__init__(self, node_name=self.nodeName, terminals=terminals, render=render, alias=alias)
 
-        self.rgb = Element(self, "rgb", ElementValue(rgb))
-        self.alpha = Element(self, "alpha", ElementValue(alpha))
-        self.rgba = Element(self, "rgba", ElementValue(np.zeros((FREQ_BINS, 4))))
+        self.rgb = DataElement(self, 'rgb', ElementValue(rgb))
+        self.alpha = DataElement(self, 'alpha', ElementValue(alpha))
+        self.rgba = DataElement(self, 'rgba', ElementValue(np.zeros((FREQ_BINS, 4))))
 
     def c_update(self):
         rgb = self.rgb.value[:FREQ_BINS]

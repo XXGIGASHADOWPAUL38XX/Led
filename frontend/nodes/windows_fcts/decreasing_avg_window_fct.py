@@ -1,7 +1,7 @@
+from frontend.components.elements.parameters import AxisElement
 import numpy as np
 
 from frontend.nodes.windows_fcts.window_fct import WindowFct
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
 
@@ -12,7 +12,7 @@ class DecreasingAvgWindowFct(WindowFct, CNode):
     Select or configure `window` and `avg_axis` (usually 0). Output `data`
     is the maximum of history frames weighted linearly from oldest=0 to
     newest=1, not an average. The window calls aggregation each audio update;
-    selection uses a NodeSelector rather than an input terminal."""
+    connect Window.data to input `window`, or use the NodeSelector."""
 
     nodeName = "DecreasingAvgWindowFct"
 
@@ -29,7 +29,7 @@ class DecreasingAvgWindowFct(WindowFct, CNode):
         }
         CNode.__init__(self, self.nodeName, terminals=terminals, render=render, alias=alias, parent=parent)
         WindowFct.__init__(self, window, self.aggregate)
-        self.avg_axis = Element(self, "avg_axis", ElementValue(avg_axis))
+        self.avg_axis = AxisElement(self, 'avg_axis', ElementValue(avg_axis))
 
     def aggregate(self, window_data):
         if window_data.shape[0] <= 1:

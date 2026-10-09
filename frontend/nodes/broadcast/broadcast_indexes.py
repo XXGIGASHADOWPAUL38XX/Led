@@ -1,9 +1,9 @@
+from frontend.components.elements.parameters import ArrayElement, DataElement
 import numpy as np
 
 from backend.updatable.updatable import AudioUpdatable
 from config import FREQ_BINS
 from frontend.components.elements import AnalysableElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
 
@@ -31,8 +31,8 @@ class BroadcastIndexesNode(CNode, AudioUpdatable):
         }
         super().__init__(self.nodeName, terminals, render=render, alias=alias)
 
-        self.input_data = Element(self, "input_data", ElementValue(input_data))
-        self.indexes = Element(self, "indexes", ElementValue(indexes))
+        self.input_data = DataElement(self, 'input_data', ElementValue(input_data))
+        self.indexes = ArrayElement(self, 'indexes', ElementValue(indexes), min_value=0, max_value=1)
         self.data = AnalysableElement(self, "data", ElementValue(np.zeros_like(self.indexes.value, dtype=float)))
         self.current_indexes = np.empty_like(self.indexes.value, dtype=np.int16)
 

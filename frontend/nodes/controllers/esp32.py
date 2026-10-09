@@ -1,3 +1,5 @@
+from frontend.components.elements.textedit import TextEdit
+from frontend.components.elements.parameters import IntegerDial
 import socket
 import struct
 import threading
@@ -6,9 +8,7 @@ import time
 import numpy as np
 
 from config import DELAY_UPDATE, FREQ_BINS, SKIP_LED_NUMBERS
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
-from frontend.components.elements.dials import LinearDial
 from frontend.nodes.controllers.controller_node import ControllerNode
 
 
@@ -44,16 +44,9 @@ class ESP32Node(ControllerNode):
             alias=alias,
         )
 
-        self.power_log = LinearDial(
-            self,
-            "power_log",
-            0,
-            10,
-            ElementValue(power_log),
-        )
-        self.esp32_ip = Element(self, "esp32_ip", ElementValue(esp32_ip))
-        self.ddp_port = Element(self, "ddp_port", ElementValue(ddp_port))
-        self.led_count = Element(self, "led_count", ElementValue(led_count))
+        self.esp32_ip = TextEdit(self, 'esp32_ip', ElementValue(esp32_ip))
+        self.ddp_port = IntegerDial(self, 'ddp_port', 1, 65535, ElementValue(ddp_port))
+        self.led_count = IntegerDial(self, 'led_count', 1, 4096, ElementValue(led_count))
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 

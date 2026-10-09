@@ -1,4 +1,4 @@
-from frontend.components.elements.element import Element
+from frontend.components.elements.parameters import SequenceElement
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
 
@@ -23,7 +23,7 @@ class RoutingNode(CNode):
         }
         super().__init__(self.nodeName, terminals, render=render, alias=alias)
 
-        self.operator_nodes = Element(self, "operator_nodes", ElementValue(operator_nodes or []))
+        self.operator_nodes = SequenceElement(self, 'operator_nodes', ElementValue(operator_nodes or []))
 
     def c_update(self):
         pass

@@ -1,11 +1,10 @@
+from frontend.components.elements.parameters import DataElement, IntegerDial
 import numpy as np
 
 from backend.pipelines.pipeline import AudioPipeline
 from config import FFT_SIZE
 from frontend.components.elements import AnalysableElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
-from frontend.components.elements.textedit import TextEdit
 from frontend.overrides.CNode import CNode
 
 
@@ -28,11 +27,11 @@ class MidSideEnergyNode(CNode, AudioPipeline):
             "data": {"io": "out"},
         }
         super().__init__(self.nodeName, terminals, render=render, alias=alias)
-        self.length = TextEdit(self, "length", ElementValue(length))
-        self.buffer_data = Element(self, "buffer_data", ElementValue(buffer_data))
-        self.mid_energy = Element(self, "mid_energy", ElementValue(np.zeros(1)))
-        self.side_energy = Element(self, "side_energy", ElementValue(np.zeros(1)))
-        self.mid_ratio = Element(self, "mid_ratio", ElementValue(np.zeros(1)))
+        self.length = IntegerDial(self, 'length', 1, 4096, ElementValue(length))
+        self.buffer_data = DataElement(self, 'buffer_data', ElementValue(buffer_data))
+        self.mid_energy = DataElement(self, 'mid_energy', ElementValue(np.zeros(1)))
+        self.side_energy = DataElement(self, 'side_energy', ElementValue(np.zeros(1)))
+        self.mid_ratio = DataElement(self, 'mid_ratio', ElementValue(np.zeros(1)))
         self.data = AnalysableElement(self, "data", ElementValue(np.zeros(2)))
 
         self.length.valueChanged.connect(self.on_length_change)

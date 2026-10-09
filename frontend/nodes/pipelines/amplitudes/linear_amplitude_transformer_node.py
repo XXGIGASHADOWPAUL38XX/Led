@@ -1,8 +1,9 @@
+from frontend.components.elements.dials import LinearDial
+from frontend.components.elements.parameters import DataElement, OptionalDial
 import numpy as np
 
 from config import FREQ_BINS
 from frontend.components.elements import AnalysableElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
 from frontend.nodes.pipelines.amplitudes.amplitude_transformer import AmplitudesTransformer
@@ -39,11 +40,11 @@ class LinearAmplitudesTransformerNode(CNode, AmplitudesTransformer):
         CNode.__init__(self, self.nodeName, terminals, render=render, alias=alias)
         AmplitudesTransformer.__init__(self, powering=powering, log=log)
 
-        self.input_data = Element(self, "input_data", ElementValue(input_data))
-        self.correlation_offset = Element(self, "correlation_offset", ElementValue(correlation_offset))
-        self.correlation_step = Element(self, "correlation_step", ElementValue(correlation_step))
-        self.powering = Element(self, "powering", ElementValue(powering))
-        self.log = Element(self, "log", ElementValue(log))
+        self.input_data = DataElement(self, 'input_data', ElementValue(input_data))
+        self.correlation_offset = OptionalDial(self, 'correlation_offset', 0, 1, ElementValue(correlation_offset))
+        self.correlation_step = OptionalDial(self, 'correlation_step', 0.001, 1, ElementValue(correlation_step))
+        self.powering = LinearDial(self, 'powering', 0, 10, ElementValue(powering))
+        self.log = LinearDial(self, 'log', 0.01, 10, ElementValue(log))
         self.data = AnalysableElement(self, "data", ElementValue(np.zeros(FREQ_BINS)))
 
     @staticmethod

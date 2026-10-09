@@ -1,8 +1,10 @@
+from frontend.components.elements.dials import LinearDial
+from frontend.components.elements.textedit import TextEdit
+from frontend.components.elements.parameters import DataElement, IntegerDial
 import numpy as np
 
 from backend.pipelines.pipeline import AudioPipeline
 from frontend.components.elements import AnalysableElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
 
@@ -33,15 +35,15 @@ class RMSPipelineNode(CNode, AudioPipeline):
             "data": {"io": "out"},
         }
         super().__init__(self.nodeName, terminals, render=render, alias=alias)
+        self.title = TextEdit(self, "title", ElementValue(title))
 
-        self.buffer_data = Element(self, "buffer_data", ElementValue(buffer_data))
+        self.buffer_data = DataElement(self, 'buffer_data', ElementValue(buffer_data))
         self.data = AnalysableElement(self, "data", ElementValue(np.zeros(1)))
-        self.title = ElementValue(title)  # kept for backward-compat signature/state
-        self.number_points = Element(self, "number_points", ElementValue(number_points))
-        self.left_label = Element(self, "left_label", ElementValue(left_label))
-        self.bottom_label = Element(self, "bottom_label", ElementValue(bottom_label))
-        self.y_min = Element(self, "y_min", ElementValue(y_min))
-        self.y_max = Element(self, "y_max", ElementValue(y_max))
+        self.number_points = IntegerDial(self, 'number_points', 1, 4096, ElementValue(number_points))
+        self.left_label = TextEdit(self, 'left_label', ElementValue(left_label))
+        self.bottom_label = TextEdit(self, 'bottom_label', ElementValue(bottom_label))
+        self.y_min = LinearDial(self, 'y_min', -10000, 10000, ElementValue(y_min))
+        self.y_max = LinearDial(self, 'y_max', -10000, 10000, ElementValue(y_max))
 
     def c_update(self):
         self.data.value[...] = np.sqrt(np.mean(self.buffer_data.value ** 2))

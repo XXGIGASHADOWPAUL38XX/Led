@@ -2,7 +2,6 @@ import inspect
 import weakref
 
 import networkx as nx
-import numpy as np
 from PyQt5 import QtCore
 from pyqtgraph.debug import printExc
 from pyqtgraph.flowchart import Flowchart
@@ -65,22 +64,6 @@ class CFlowchart(Flowchart):
         if event.type() in self.PAUSE_EVENTS:
             pause_updates()
         return False
-
-    def saveState(self, *args, **kwargs):
-        state = super().saveState(*args, **kwargs)
-        self._round_ndarrays(state)
-        return state
-
-    @classmethod
-    def _round_ndarrays(cls, value):
-        if isinstance(value, dict):
-            if value.get(CNode._SERDE_TAG) == "ndarray" and np.issubdtype(np.dtype(value["dtype"]), np.floating):
-                value["value"] = np.round(value["value"], 1).tolist()
-            for item in value.values():
-                cls._round_ndarrays(item)
-        elif isinstance(value, list):
-            for item in value:
-                cls._round_ndarrays(item)
 
     def createNode(self, nodeType, name=None, pos=None, ctor_kwargs=None):
         needs_setup_form = name is None

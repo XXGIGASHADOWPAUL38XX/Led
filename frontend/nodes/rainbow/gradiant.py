@@ -1,13 +1,11 @@
+from frontend.components.elements.parameters import DataElement, IntegerDial
 import colorsys
 import numpy as np
 
 from config import FREQ_BINS
 from frontend.components.elements.color_picker import ColorPicker
 from frontend.components.elements.dials import LinearDial
-from frontend.components.elements import AnalysableElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
-from frontend.components.elements.textedit import TextEdit
 from frontend.overrides.CNode import CNode
 
 
@@ -35,11 +33,11 @@ class GradiantNode(CNode):
         }
         super().__init__(self.nodeName, terminals=terminals, render=render, parent=parent, alias=alias)
 
-        self.n_points = TextEdit(self, "n_points", ElementValue(n_points))
+        self.n_points = IntegerDial(self, 'n_points', 1, 4096, ElementValue(n_points))
         self.color_in = ColorPicker(self, "color_in", ElementValue(color_in))
         self.color_out = ColorPicker(self, "color_out", ElementValue(color_out))
         self.cycle = LinearDial(self, "cycle", 0, 10, ElementValue(cycle))
-        self.data = Element(self, "data", ElementValue(np.zeros((int(self.n_points.value), 3), dtype=int)))
+        self.data = DataElement(self, 'data', ElementValue(np.zeros((int(self.n_points.value), 3), dtype=int)))
 
         self.n_points.valueChanged.connect(self.refresh_gradiant)
         self.color_in.valueChanged.connect(self.refresh_gradiant)

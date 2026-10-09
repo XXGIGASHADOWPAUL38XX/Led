@@ -1,3 +1,4 @@
+from frontend.components.elements.parameters import IntegerDial
 import numpy as np
 from scipy.spatial.distance import cdist
 
@@ -165,11 +166,11 @@ class StemsRecognitionNode(OfflineCNode):
 
     def __init__(self, analysis_nb_frames=5, similarity_threshold=0.5, level_threshold=0.25, min_presence_count=11, hop_ms=10, render=True, alias=None):
         super().__init__(self.nodeName, {}, render=render, alias=alias)
-        self.analysis_nb_frames = LinearDial(self, "analysis_nb_frames", 1, 10, ElementValue(analysis_nb_frames))
+        self.analysis_nb_frames = IntegerDial(self, "analysis_nb_frames", 1, 10, ElementValue(analysis_nb_frames))
         self.similarity_threshold = LinearDial(self, "similarity_threshold", 0, 1, ElementValue(similarity_threshold))
-        self.level_threshold = LinearDial(self, "level_threshold", 0.4, 1, ElementValue(level_threshold))
-        self.min_presence_count = LinearDial(self, "min_presence_count", 1, 100, ElementValue(min_presence_count))
-        self.hop_ms = LinearDial(self, "hop_ms", 1, 20, ElementValue(hop_ms))
+        self.level_threshold = LinearDial(self, "level_threshold", 0, 1, ElementValue(level_threshold))
+        self.min_presence_count = IntegerDial(self, "min_presence_count", 1, 100, ElementValue(min_presence_count))
+        self.hop_ms = IntegerDial(self, "hop_ms", 1, 20, ElementValue(hop_ms))
         self.triggers = []
         self.avg_amplitudes = []
         self.stem_outputs = self.triggers

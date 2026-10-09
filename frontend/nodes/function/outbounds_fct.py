@@ -1,9 +1,9 @@
+from frontend.components.elements.parameters import EnumElement, IntegerDial, OptionalDial
 import numpy as np
 
 from config import FFT_SIZE, FREQ_BINS
 from backend.updatable.updatable import AudioUpdatable
 from frontend.components.elements import AnalysableElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.enums.cut_side.cut_side_mode import CutSideMode
 from frontend.overrides.CNode import CNode
@@ -37,12 +37,12 @@ class OutboundsFctNode(CNode, AudioUpdatable):
         }
         super().__init__(self.nodeName, terminals, render=render, alias=alias)
 
-        self.y_outbound = Element(self, "y_outbound", ElementValue(y_outbound))
-        self.y_center = Element(self, "y_center", ElementValue(y_center))
-        self.y_offset = Element(self, "y_offset", ElementValue(y_offset))
-        self.cute_side_mode = Element(self, "cute_side_mode", ElementValue(cute_side_mode))
-        self.length = Element(self, "length", ElementValue(length))
-        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(self.length.value)), y_max=max(1.0, y_outbound, y_center))
+        self.y_outbound = OptionalDial(self, 'y_outbound', -4, 4, ElementValue(y_outbound))
+        self.y_center = OptionalDial(self, 'y_center', -4, 4, ElementValue(y_center))
+        self.y_offset = OptionalDial(self, 'y_offset', 0, 1, ElementValue(y_offset))
+        self.cute_side_mode = EnumElement(self, 'cute_side_mode', ElementValue(cute_side_mode))
+        self.length = IntegerDial(self, 'length', 1, 4096, ElementValue(length))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(self.length.value)), y_max=max(1.0, float(np.max(self.y_outbound.value)), float(np.max(self.y_center.value))))
 
     def c_update(self):
         half_length = (self.length.value + 1) // 2
@@ -55,7 +55,7 @@ class OutboundsFctNode(CNode, AudioUpdatable):
             np.concatenate((half_part, half_part[::-1] if self.length.value % 2 == 0 else half_part[-2::-1])),
             0,
         )
-        offsetted = np.roll(mirrored, self.y_offset.value * self.length.value)
+        offsetted = np.roll(mirrored, int(float(np.asarray(self.y_offset.value).reshape(-1)[0]) * self.length.value))
 
         if self.cute_side_mode.value != CutSideMode.NONE:
             tray_edge_index = np.argsort(offsetted)[0 if self.cute_side_mode.value == CutSideMode.LEFT else 1]

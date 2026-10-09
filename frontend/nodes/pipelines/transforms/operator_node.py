@@ -1,3 +1,4 @@
+from frontend.components.elements.parameters import IntegerDial, SequenceElement
 import numpy as np
 from PyQt5 import QtCore
 from PyQt5.QtGui import QFont
@@ -31,20 +32,20 @@ class OperatorPipelineNode(CNode, AudioPipeline):
             "data": {"io": "out"}
         }
 
-        self.length = length
-        self.arguments = arguments
         self.terminal_element_names = {}
         self.operation_element_names = [self.resolve_element_name(arg) for arg in arguments]
 
-        self.update_terminal()
+        self.update_terminal(arguments)
 
         super().__init__(node_name=self.nodeName, terminals=self.terminals_dict.copy(), render=render, parent=parent, alias=alias)
 
+        self.length = IntegerDial(self, "length", 0, 4096, length)
+        self.arguments = SequenceElement(self, "arguments", arguments, link_terminal=False, register_in_node=False)
         self.operation_elements = self.define_operation_elements(arguments)
         self.built_evaluation = None
         self.build_evaluation_arguments()
 
-        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(self.length)))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(self.length.value)))
 
         self.operation_state_label = QtWidgets.QLabel(self.successMessage(Element.format_value(self.data.value)))
         label_font = QFont(self.operation_state_label.font())
@@ -109,11 +110,11 @@ class OperatorPipelineNode(CNode, AudioPipeline):
             return np.array([result])
         return result
 
-    def update_terminal(self):
+    def update_terminal(self, arguments=None):
         args_elements_indexes = list(map(
             lambda x: x[0], filter(
                 lambda y: isinstance(y[1], Element),
-                enumerate(self.arguments)
+                enumerate(self.arguments.value if arguments is None else arguments)
             )
         ))
         for arg_element_index in args_elements_indexes:

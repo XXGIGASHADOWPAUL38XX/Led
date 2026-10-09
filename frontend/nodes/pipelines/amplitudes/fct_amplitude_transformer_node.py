@@ -1,8 +1,9 @@
+from frontend.components.elements.dials import LinearDial
+from frontend.components.elements.parameters import DataElement, ReferenceElement
 import numpy as np
 
 from config import FREQ_BINS
 from frontend.components.elements import AnalysableElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
 from frontend.nodes.pipelines.amplitudes.amplitude_transformer import AmplitudesTransformer
@@ -33,10 +34,10 @@ class FctAmplitudesTransformerNode(CNode, AmplitudesTransformer):
         CNode.__init__(self, self.nodeName, terminals, render=render)
         AmplitudesTransformer.__init__(self, powering=powering, log=log)
 
-        self.input_data = Element(self, "input_data", ElementValue(input_data))
-        self.powering = Element(self, "powering", ElementValue(powering))
-        self.log = Element(self, "log", ElementValue(log))
-        self.amplitudes_level_fct = Element(self, "amplitudes_level_fct", amplitudes_level_fct)
+        self.input_data = DataElement(self, 'input_data', ElementValue(input_data))
+        self.powering = LinearDial(self, 'powering', 0, 10, ElementValue(powering))
+        self.log = LinearDial(self, 'log', 0.01, 10, ElementValue(log))
+        self.amplitudes_level_fct = ReferenceElement(self, 'amplitudes_level_fct', amplitudes_level_fct)
         self.data = AnalysableElement(self, "data", ElementValue(np.zeros(FREQ_BINS)))
 
     def c_update(self):

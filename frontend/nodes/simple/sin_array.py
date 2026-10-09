@@ -1,8 +1,9 @@
+from frontend.components.elements.dials import LinearDial
+from frontend.components.elements.parameters import IntegerDial
 import numpy as np
 
 from config import FREQ_BINS
 from frontend.components.elements.analysable_element import AnalysableElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
 
@@ -34,10 +35,10 @@ class SinArrayNode(CNode):
         }
         super().__init__(self.nodeName, terminals, render=render, alias=alias)
 
-        self.number_cycle = Element(self, "number_cycle", ElementValue(number_cycle))
-        self.number_points = Element(self, "number_points", ElementValue(number_points))
-        self.center = Element(self, "center", ElementValue(center))
-        self.offset = Element(self, "offset", ElementValue(offset))
+        self.number_cycle = LinearDial(self, 'number_cycle', 0, 20, ElementValue(number_cycle))
+        self.number_points = IntegerDial(self, 'number_points', 1, 4096, ElementValue(number_points))
+        self.center = LinearDial(self, 'center', -1, 1, ElementValue(center))
+        self.offset = LinearDial(self, 'offset', -1, 1, ElementValue(offset))
         self.data = AnalysableElement(self, "data", ElementValue(np.zeros(int(self.number_points.value))), y_min=min(0.0, center - abs(offset)), y_max=max(1.0, center + abs(offset)))
 
         self.number_cycle.valueChanged.connect(self._refresh_data)

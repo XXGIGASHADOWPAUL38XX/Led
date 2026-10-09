@@ -1,3 +1,4 @@
+from frontend.components.elements.parameters import DataElement, IntegerDial
 import numpy as np
 from scipy.signal import get_window
 
@@ -5,7 +6,6 @@ from config import FFT_SIZE, FREQ_BINS, MAX_FREQUENCY, MIN_FREQUENCY, SAMPLE_RAT
 from backend.updatable.updatable import AudioUpdatable
 from frontend.components.elements.dials import ExpDial, LinearDial
 from frontend.components.elements import AnalysableElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
 
@@ -39,15 +39,13 @@ class AmplitudesNode(CNode, AudioUpdatable):
         }
         super().__init__(self.nodeName, terminals, render=render, alias=alias)
 
-        self.freq_bins = Element(self, "freq_bins", ElementValue(freq_bins))
-        self.buffer = Element(self, "buffer", ElementValue(buffer))
-        self.fft_size = Element(self, "fft_size", ElementValue(fft_size))
+        self.freq_bins = IntegerDial(self, 'freq_bins', 1, 4096, ElementValue(freq_bins))
+        self.buffer = DataElement(self, 'buffer', ElementValue(buffer))
+        self.fft_size = IntegerDial(self, 'fft_size', 16, 65536, ElementValue(fft_size))
         self.window = get_window('hann', self.fft_size.value)
-        self.min_frequency = ExpDial(self, "min_frequency", 20, 2000, ElementValue(min_frequency))
-        self.max_frequency = Element(self, "max_frequency", ElementValue(max_frequency))
-        self.frequencies = Element(
-            self, "frequencies", ElementValue(np.geomspace(self.min_frequency.value, self.max_frequency.value, self.freq_bins.value))
-        )
+        self.min_frequency = ExpDial(self, "min_frequency", 20, 20000, ElementValue(min_frequency))
+        self.max_frequency = LinearDial(self, 'max_frequency', 20, 20000, ElementValue(max_frequency))
+        self.frequencies = DataElement(self, 'frequencies', ElementValue(np.geomspace(self.min_frequency.value, self.max_frequency.value, self.freq_bins.value)))
         self.powering = LinearDial(self, "powering", 0, 3, ElementValue(powering))
         self.data = AnalysableElement(self, "data", ElementValue(np.zeros(self.freq_bins.value)), y_max=60.0)
 

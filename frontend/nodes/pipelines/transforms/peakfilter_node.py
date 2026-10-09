@@ -1,10 +1,9 @@
+from frontend.components.elements.parameters import DataElement, IntegerDial
 import numpy as np
 
 from backend.updatable.updatable import AudioUpdatable
 from frontend.components.elements import AnalysableElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
-from frontend.components.elements.textedit import TextEdit
 from frontend.overrides.CNode import CNode
 
 
@@ -30,8 +29,8 @@ class PeakFilterNode(CNode, AudioUpdatable):
         }
         super().__init__(self.nodeName, terminals, render=render, alias=alias)
 
-        self.input_value = Element(self, "input_value", ElementValue(input_value))
-        self.peaks_to_keep = TextEdit(self, "peaks_to_keep", ElementValue(peaks_to_keep))
+        self.input_value = DataElement(self, 'input_value', ElementValue(input_value))
+        self.peaks_to_keep = IntegerDial(self, 'peaks_to_keep', 1, 4096, ElementValue(peaks_to_keep))
         self.data = AnalysableElement(self, "data", ElementValue(np.zeros_like(self.input_value.value)))
 
     def c_update(self):

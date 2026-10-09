@@ -1,9 +1,9 @@
+from frontend.components.elements.parameters import DataElement, IntegerDial
 import numpy as np
 
 from backend.updatable.updatable import AudioUpdatable
 from config import FREQ_BINS
 from frontend.components.elements import AnalysableElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
 
@@ -31,8 +31,8 @@ class BroadcastRescalerNode(CNode, AudioUpdatable):
         }
         super().__init__(self.nodeName, terminals, render=render, alias=alias)
 
-        self.input_data = Element(self, "input_data", ElementValue(input_data))
-        self.length = Element(self, "length", ElementValue(length))
+        self.input_data = DataElement(self, 'input_data', ElementValue(input_data))
+        self.length = IntegerDial(self, 'length', 1, 4096, ElementValue(length))
 
         data_shape = (length, *self.input_data.value.shape[1:])
         self.data = AnalysableElement(self, "data", ElementValue(np.zeros(data_shape)))

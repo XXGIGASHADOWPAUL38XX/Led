@@ -1,8 +1,9 @@
+from frontend.components.elements.dials import LinearDial
+from frontend.components.elements.parameters import DataElement
 import numpy as np
 
 from config import FREQ_BINS, SKIP_LED_NUMBERS
 from backend.updatable.updatable import VisualUpdatable
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
 
@@ -30,15 +31,11 @@ class ControllerNode(CNode, VisualUpdatable):
         CNode.__init__(self, self.nodeName, terminals, render=render, alias=alias)
         VisualUpdatable.__init__(self)
 
-        self.power_log = Element(self, "power_log", ElementValue(power_log))
-        self.min_alpha = min_alpha
-        self.remove_alpha = remove_alpha
-        self.rgba = Element(self, "rgba", ElementValue(rgba))
-        self.rgb = Element(
-            self,
-            "rgb",
-            ElementValue(np.zeros((FREQ_BINS + SKIP_LED_NUMBERS, 3))),
-        )
+        self.power_log = LinearDial(self, 'power_log', 0, 10, ElementValue(power_log))
+        self.min_alpha = LinearDial(self, "min_alpha", 0, 1, min_alpha)
+        self.remove_alpha = LinearDial(self, "remove_alpha", 0, 1, remove_alpha)
+        self.rgba = DataElement(self, 'rgba', ElementValue(rgba))
+        self.rgb = DataElement(self, 'rgb', ElementValue(np.zeros((FREQ_BINS + SKIP_LED_NUMBERS, 3))))
 
     def process_rgba(self):
         self.humanize_alpha()
@@ -54,11 +51,11 @@ class ControllerNode(CNode, VisualUpdatable):
     def set_minimal_alpha(self):
         self.rgba.value[:, 3] = np.maximum(
             self.rgba.value[:, 3],
-            self.min_alpha * 255,
+            self.min_alpha.value * 255,
         )
 
     def remove_alpha_min(self):
-        threshold = self.remove_alpha * 255
+        threshold = self.remove_alpha.value * 255
         self.rgba.value[:, 3] = np.where(
             self.rgba.value[:, 3] < threshold,
             0,

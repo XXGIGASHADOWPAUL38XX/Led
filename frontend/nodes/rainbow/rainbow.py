@@ -1,8 +1,8 @@
+from frontend.components.elements.parameters import DataElement, EnumElement, IntegerDial
 import numpy as np
 
 from config import FREQ_BINS
 from backend.rainbow.config import RAINBOW_INV_FRACTION
-from frontend.components.elements import AnalysableElement
 from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.components.elements.dials import LinearDial
@@ -38,11 +38,11 @@ class RainbowNode(CNode):
 
         CNode.__init__(self, self.nodeName, terminals=terminals, render=render, parent=parent, alias=alias)
 
-        self.n_points = n_points
+        self.n_points = IntegerDial(self, "n_points", 1, 4096, n_points)
         self.inv_fraction = LinearDial(self, "inv_fraction", 0, 1, ElementValue(inv_fraction))
-        self.gradiant = Element(self, "gradiant", ElementValue(gradiant or GradiantNode(n_points, render=False, parent=self).data))
-        self.mode = Element(self, "mode", ElementValue(mode))
-        self.data = Element(self, "data", ElementValue(np.zeros_like(self.gradiant.value)))
+        self.gradiant = DataElement(self, 'gradiant', ElementValue(gradiant or GradiantNode(n_points, render=False, parent=self).data))
+        self.mode = EnumElement(self, 'mode', ElementValue(mode))
+        self.data = DataElement(self, 'data', ElementValue(np.zeros_like(self.gradiant.value)))
         self.gradiant.valueChanged.connect(self.refresh_rainbow)
         self.mode.valueChanged.connect(self.refresh_rainbow)
         self.refresh_rainbow()

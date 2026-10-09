@@ -1,11 +1,10 @@
+from frontend.components.elements.parameters import DataElement, IntegerDial
 import numpy as np
 
 from backend.updatable.updatable import AudioUpdatable
 from config import CHUNK_SIZE, FFT_SIZE
 from frontend.components.elements import AnalysableElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
-from frontend.components.elements.textedit import TextEdit
 from frontend.overrides.CNode import CNode
 
 
@@ -35,9 +34,9 @@ class BufferNode(CNode, AudioUpdatable):
         }
         super().__init__(self.nodeName, terminals, render=render, alias=alias)
 
-        self.indata = Element(self, "indata", ElementValue(indata))
-        self.chunk_size = TextEdit(self, "chunk_size", ElementValue(chunk_size))
-        self.length = Element(self, "length", ElementValue(length))
+        self.indata = DataElement(self, 'indata', ElementValue(indata))
+        self.chunk_size = IntegerDial(self, 'chunk_size', 16, 65536, ElementValue(chunk_size))
+        self.length = IntegerDial(self, 'length', 1, 4096, ElementValue(length))
         self.data = AnalysableElement(self, "data", ElementValue(np.zeros((2, self.length.value))), chart_open=False, y_min=-1.0)
 
         self.chunk_size.valueChanged.connect(self.on_chunk_size_change)

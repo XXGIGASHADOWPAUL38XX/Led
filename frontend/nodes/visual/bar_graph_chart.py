@@ -1,9 +1,10 @@
+from frontend.components.elements.dials import LinearDial
+from frontend.components.elements.parameters import DataElement, IntegerDial
 import numpy as np
 
 from backend.updatable.updatable import VisualUpdatable
 from config import FREQ_BINS
 from frontend.components.elements.chart.bar_graph_chart import BarGraphChartElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.components.elements.textedit.textedit import TextEdit
 from frontend.overrides.CNode import CNode
@@ -35,16 +36,16 @@ class BarGraphChartNode(CNode, VisualUpdatable):
             "brushes": {"io": "in"},
             "data": {"io": "in"},
         }
-        self.title = ElementValue(title)
         super().__init__(node_name=self.nodeName, terminals=terminals, render=render, alias=alias)
+        self.title = TextEdit(self, "title", ElementValue(title))
 
-        self.number_points = Element(self, "number_points", ElementValue(number_points))
-        self.brushes = Element(self, "brushes", ElementValue(brushes))
-        self.left_label = Element(self, "left_label", ElementValue(left_label))
-        self.bottom_label = Element(self, "bottom_label", ElementValue(bottom_label))
-        self.y_min = TextEdit(self, "y_min", ElementValue(y_min))
-        self.y_max = TextEdit(self, "y_max", ElementValue(y_max))
-        self.data = Element(self, "data", ElementValue(data))
+        self.number_points = IntegerDial(self, 'number_points', 1, 4096, ElementValue(number_points))
+        self.brushes = DataElement(self, 'brushes', ElementValue(brushes))
+        self.left_label = TextEdit(self, 'left_label', ElementValue(left_label))
+        self.bottom_label = TextEdit(self, 'bottom_label', ElementValue(bottom_label))
+        self.y_min = LinearDial(self, 'y_min', -10000, 10000, ElementValue(y_min))
+        self.y_max = LinearDial(self, 'y_max', -10000, 10000, ElementValue(y_max))
+        self.data = DataElement(self, 'data', ElementValue(data))
         self.chart = BarGraphChartElement(
             self,
             "chart",

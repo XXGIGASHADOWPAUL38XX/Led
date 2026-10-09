@@ -1,9 +1,9 @@
+from frontend.components.elements.parameters import DataElement
 import numpy as np
 
 from backend.pipelines.pipeline import AudioPipeline
 from config import FREQ_BINS
 from frontend.components.elements import AnalysableElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
 
@@ -23,7 +23,7 @@ class SpectralFluxNode(CNode, AudioPipeline):
             "data": {"io": "out"},
         }
         super().__init__(self.nodeName, terminals, render=render, alias=alias)
-        self.amplitudes = Element(self, "amplitudes", ElementValue(amplitudes))
+        self.amplitudes = DataElement(self, 'amplitudes', ElementValue(amplitudes))
         self.data = AnalysableElement(self, "data", ElementValue(np.zeros(1)), y_max=10.0)
         self.previous = np.zeros_like(np.asarray(self.amplitudes.value, dtype=float).reshape(-1))
 

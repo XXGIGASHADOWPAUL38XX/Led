@@ -1,3 +1,6 @@
+from frontend.components.elements.dials import LinearDial
+from frontend.components.elements.switch.switch import Switch
+from frontend.components.elements.parameters import DataElement
 import hashlib
 import os
 import pickle
@@ -14,7 +17,6 @@ from yt_dlp import YoutubeDL
 
 from backend.updatable.updatable import AudioUpdatable
 from config import SAMPLE_RATE
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.components.elements.player.playlist_player import PlaylistPlayer
 from frontend.components.elements.textedit.textedit import TextEdit
@@ -44,11 +46,11 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
         self.playlist_url = TextEdit(self, "playlist_url", ElementValue(playlist_url))
         self.browser = TextEdit(self, "browser", ElementValue(browser))
         self.profile = TextEdit(self, "profile", ElementValue(profile))
-        self.prefetch_seconds = Element(self, "prefetch_seconds", ElementValue(float(prefetch_seconds)))
-        self.cache = Element(self, "cache", ElementValue(bool(cache)))
-        self.audio = Element(self, "audio", ElementValue(np.zeros((0, 2), dtype=np.float32)))
-        self.sample_rate = Element(self, "sample_rate", ElementValue(0))
-        self.enqueue_token = Element(self, "enqueue_token", ElementValue(0))
+        self.prefetch_seconds = LinearDial(self, 'prefetch_seconds', 0, 300, ElementValue(float(prefetch_seconds)))
+        self.cache = Switch(self, 'cache', ElementValue(bool(cache)))
+        self.audio = DataElement(self, 'audio', ElementValue(np.zeros((0, 2), dtype=np.float32)))
+        self.sample_rate = DataElement(self, 'sample_rate', ElementValue(0))
+        self.enqueue_token = DataElement(self, 'enqueue_token', ElementValue(0))
         self.playlist_player = PlaylistPlayer([], self, self.get_offline_pipeline_nodes)
         self.elements.append(self.playlist_player)
         self.playlist_player.playRequested.connect(self.on_play_requested)

@@ -1,10 +1,9 @@
+from frontend.components.elements.parameters import DataElement, IntegerDial, ReferenceElement
 from typing import Callable
 
 from backend.updatable.updatable import AudioUpdatable
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
-from frontend.components.elements.dials.linear_dial import LinearDial
 
 import numpy as np
 import sounddevice as sd
@@ -32,19 +31,19 @@ class StreamMicNode(CNode, AudioUpdatable):
         terminals = {"chunk": {"io": "out"}}
         super().__init__(self.nodeName, terminals, render=render)
 
-        self.user_callback = user_callback
-        self.sample_rate = Element(self, "Sample rate", ElementValue(sample_rate))
-        self.chunk_size = LinearDial(self, "Chunk size", 30, 70, value=chunk_size)
+        self.user_callback = ReferenceElement(self, "user_callback", user_callback, link_terminal=False)
+        self.sample_rate = IntegerDial(self, "sample_rate", 8000, 192000, ElementValue(sample_rate))
+        self.chunk_size = IntegerDial(self, "chunk_size", 16, 65536, value=chunk_size)
         self.chunk_size.dial.valueChanged.connect(self.on_chunk_size_changed)
-        self.chunk = Element(self, "Chunk", ElementValue(np.zeros(chunk_size)))
+        self.chunk = DataElement(self, 'Chunk', ElementValue(np.zeros(chunk_size)))
         self.sd_stream_mic = None
         self._chunk_size_proxy = None
         self._chunk_size_proxy_pending = False
 
     def callback(self, indata, frames, time, status):
         self.chunk.value[:] = indata.flatten()
-        if self.user_callback is not None:
-            self.user_callback(indata, frames, time, status)
+        if self.user_callback.value is not None:
+            self.user_callback.value(indata, frames, time, status)
 
     def start(self):
         self.sd_stream_mic = sd.InputStream(

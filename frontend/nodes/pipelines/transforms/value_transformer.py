@@ -1,7 +1,7 @@
+from frontend.components.elements.parameters import DataElement
 import numpy as np
 
 from backend.pipelines.pipeline import AudioPipeline
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.components.elements.interval import Interval
 from frontend.overrides.CNode import CNode
@@ -48,12 +48,10 @@ class ValueTransformerPipelineNode(CNode, AudioPipeline):
 
         super().__init__(node_name=self.nodeName, terminals=terminals, render=render, alias=alias)
 
-        self.input_value = Element(self, "input_value", ElementValue(input_value))
+        self.input_value = DataElement(self, 'input_value', ElementValue(input_value))
         self.input_value_interval = Interval(self, "input_value_interval", ElementValue(input_value_interval))
         self.output_value_interval = Interval(self, "output_value_interval", ElementValue(output_value_interval))
-        self.output_value = Element(self, "output_value", ElementValue(
-            np.zeros(self._compute_input_value_shape(self.input_value.value)))
-        )
+        self.output_value = DataElement(self, 'output_value', ElementValue(np.zeros(self._compute_input_value_shape(self.input_value.value))))
 
 
     def c_update(self):

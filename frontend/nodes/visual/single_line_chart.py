@@ -1,3 +1,5 @@
+from frontend.components.elements.dials import LinearDial
+from frontend.components.elements.parameters import IntegerDial
 import numpy as np
 
 from frontend.components.elements.element_value import ElementValue
@@ -31,6 +33,7 @@ class SingleLineChartNode(LineChartNode):
         alias=None,
     ):
         super().__init__(self.nodeName, terminals={}, render=render, alias=alias)
+        self.title = TextEdit(self, "title", ElementValue(title))
         self.node_selector = node_selector or ChartLineNodeSelector(
             self,
             "node_selector",
@@ -40,10 +43,12 @@ class SingleLineChartNode(LineChartNode):
         )
         if self.node_selector not in self.elements:
             self.elements.append(self.node_selector)
-        self.title = ElementValue(title)
-        self.number_points = ElementValue(number_points)
-        self.y_min = TextEdit(self, "y_min", ElementValue(y_min))
-        self.y_max = TextEdit(self, "y_max", ElementValue(y_max))
+        self.number_points = IntegerDial(self, "number_points", 1, 4096, number_points)
+        self.y_min = LinearDial(self, 'y_min', -10000, 10000, ElementValue(y_min))
+        self.y_max = LinearDial(self, 'y_max', -10000, 10000, ElementValue(y_max))
+        self.left_label = TextEdit(self, "left_label", left_label)
+        self.bottom_label = TextEdit(self, "bottom_label", bottom_label)
+        self.input_data = self.node_selector
         self.chart = LineChartElement(
             self,
             "chart",

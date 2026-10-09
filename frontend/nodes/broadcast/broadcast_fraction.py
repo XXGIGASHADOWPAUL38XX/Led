@@ -1,11 +1,11 @@
+from frontend.components.elements.dials import LinearDial
+from frontend.components.elements.parameters import DataElement
 import numpy as np
 
 from backend.updatable.updatable import AudioUpdatable
 from config import FREQ_BINS
 from frontend.components.elements import Interval, AnalysableElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
-from frontend.components.elements.textedit import TextEdit
 from frontend.overrides.CNode import CNode
 
 
@@ -36,10 +36,10 @@ class BroadcastFractionNode(CNode, AudioUpdatable):
         }
         super().__init__(self.nodeName, terminals, render=render, alias=alias)
 
-        self.input_data = Element(self, "input_data", ElementValue(input_data))
-        self.fraction = TextEdit(self, "fraction", ElementValue(fraction))
+        self.input_data = DataElement(self, 'input_data', ElementValue(input_data))
+        self.fraction = LinearDial(self, 'fraction', 0, 1, ElementValue(fraction))
         self.interval_input = Interval(self, "interval_input", ElementValue(interval_input))
-        self.input = Element(self, "input", ElementValue(input))
+        self.input = LinearDial(self, 'input', 0, 1, ElementValue(input))
 
         self.data = AnalysableElement(self, "data", ElementValue(np.zeros(self._data_shape())))
         

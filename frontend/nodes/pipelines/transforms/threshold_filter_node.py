@@ -1,10 +1,10 @@
+from frontend.components.elements.dials import LinearDial
+from frontend.components.elements.parameters import DataElement
 import numpy as np
 
 from backend.updatable.updatable import AudioUpdatable
 from frontend.components.elements import AnalysableElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
-from frontend.components.elements.textedit import TextEdit
 from frontend.overrides.CNode import CNode
 
 
@@ -31,8 +31,8 @@ class ThresholdFilterNode(CNode, AudioUpdatable):
         }
         super().__init__(self.nodeName, terminals, render=render, alias=alias)
 
-        self.input_value = Element(self, "input_value", ElementValue(input_value))
-        self.threshold = TextEdit(self, "threshold", ElementValue(threshold))
+        self.input_value = DataElement(self, 'input_value', ElementValue(input_value))
+        self.threshold = LinearDial(self, 'threshold', -100, 100, ElementValue(threshold))
         self.data = AnalysableElement(self, "data", ElementValue(np.zeros_like(self.input_value.value)))
 
     def c_update(self):

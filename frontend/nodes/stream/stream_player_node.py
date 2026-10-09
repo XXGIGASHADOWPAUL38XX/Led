@@ -1,3 +1,4 @@
+from frontend.components.elements.parameters import DataElement, IntegerDial, ReferenceElement
 import threading
 from typing import Callable
 
@@ -6,7 +7,6 @@ import sounddevice as sd
 
 from config import CHUNK_SIZE, SAMPLE_RATE
 from backend.updatable.updatable import AudioUpdatable
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.overrides.CNode import CNode
 
@@ -39,13 +39,13 @@ class StreamPlayerNode(CNode, AudioUpdatable):
             "chunk": {"io": "out"},
         }
         super().__init__(self.nodeName, terminals=terminals, render=render, alias=alias)
-        self.audio_in = Element(self, "audio_in", ElementValue(audio_in))
-        self.sample_rate_in = Element(self, "sample_rate_in", ElementValue(sample_rate_in))
-        self.enqueue_token = Element(self, "enqueue_token", ElementValue(enqueue_token))
-        self.sample_rate = Element(self, "sample_rate", ElementValue(sample_rate))
-        self.chunk_size = Element(self, "chunk_size", ElementValue(chunk_size))
-        self.chunk = Element(self, "chunk", ElementValue(np.zeros((2, chunk_size), dtype=np.float32)))
-        self.user_callback = user_callback
+        self.audio_in = DataElement(self, 'audio_in', ElementValue(audio_in))
+        self.sample_rate_in = DataElement(self, 'sample_rate_in', ElementValue(sample_rate_in))
+        self.enqueue_token = DataElement(self, 'enqueue_token', ElementValue(enqueue_token))
+        self.sample_rate = IntegerDial(self, 'sample_rate', 8000, 192000, ElementValue(sample_rate))
+        self.chunk_size = IntegerDial(self, 'chunk_size', 16, 65536, ElementValue(chunk_size))
+        self.chunk = DataElement(self, 'chunk', ElementValue(np.zeros((2, chunk_size), dtype=np.float32)))
+        self.user_callback = ReferenceElement(self, "user_callback", user_callback, link_terminal=False)
         self._last_enqueue_token = int(self.enqueue_token.value)
 
         self._lock = threading.Lock()
@@ -88,8 +88,8 @@ class StreamPlayerNode(CNode, AudioUpdatable):
                 self.chunk.value[:] = block
             self._cursor = end
 
-        if self.user_callback:
-            self.user_callback(outdata, frames, time, status)
+        if self.user_callback.value:
+            self.user_callback.value(outdata, frames, time, status)
 
     def start(self):
         if self._running:

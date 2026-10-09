@@ -1,4 +1,9 @@
 from __future__ import annotations
+from frontend.components.elements.color_picker.color_picker import ColorPicker
+from frontend.components.elements.dials import LinearDial
+from frontend.components.elements.switch.switch import Switch
+from frontend.components.elements.textedit import TextEdit
+from frontend.components.elements.parameters import SequenceElement
 
 from collections.abc import Iterable
 
@@ -32,17 +37,17 @@ class GroupNode(CNode):
         alias: str | None = None,
     ) -> None:
         super().__init__(self.nodeName, terminals=terminals or {}, render=render, alias=alias)
-        self.hide_node = hide_node
-        if self.hide_node:
+        self.hide_node = Switch(self, "hide_node", hide_node)
+        if self.hide_node.value:
             self.graphicsItem().hide()
-        self.title = title
-        self.padding = float(padding)
-        self.color = color
+        self.title = TextEdit(self, "title", title)
+        self.padding = LinearDial(self, "padding", 0, 1, float(padding))
+        self.color = ColorPicker(self, "color", color)
         self._rect_item = None
         self._title_item = None
         self._update_timer = None
-        self.nodes = list(nodes or [])
-        self.auto_start_nodes = list(auto_start_nodes or [])
+        self.nodes = SequenceElement(self, "nodes", list(nodes or []), link_terminal=False, register_in_node=False)
+        self.auto_start_nodes = SequenceElement(self, "auto_start_nodes", list(auto_start_nodes or []), link_terminal=False, register_in_node=False)
         QtCore.QTimer.singleShot(0, self.attach_to_scene)
 
     def attach_to_scene(self):
@@ -55,12 +60,12 @@ class GroupNode(CNode):
             QtCore.QTimer.singleShot(0, self.attach_to_scene)
             return
 
-        if self.hide_node:
+        if self.hide_node.value:
             self.graphicsItem().hide()
         self._attach_internal_nodes(view_box)
 
         if self._rect_item is None:
-            pen = QtGui.QPen(QtGui.QColor(*self.color))
+            pen = QtGui.QPen(QtGui.QColor(*self.color.value))
             pen.setWidth(2)
             pen.setStyle(QtCore.Qt.PenStyle.DotLine)
             self._rect_item = QtWidgets.QGraphicsRectItem()
@@ -70,8 +75,8 @@ class GroupNode(CNode):
             scene.addItem(self._rect_item)
 
         if self._title_item is None:
-            self._title_item = QtWidgets.QGraphicsTextItem(self.title)
-            self._title_item.setDefaultTextColor(QtGui.QColor(*self.color))
+            self._title_item = QtWidgets.QGraphicsTextItem(self.title.value)
+            self._title_item.setDefaultTextColor(QtGui.QColor(*self.color.value))
             self._title_item.setZValue(-99)
             scene.addItem(self._title_item)
 
@@ -114,7 +119,7 @@ class GroupNode(CNode):
         self._rect_item.setRect(rect)
         self._rect_item.show()
         if self._title_item is not None:
-            self._title_item.setPlainText(self.title)
+            self._title_item.setPlainText(self.title.value)
             self._title_item.setPos(rect.left(), rect.top() - max(20.0, rect.height() * 0.03))
             self._title_item.show()
 
@@ -128,8 +133,8 @@ class GroupNode(CNode):
         if rect is None:
             return None
 
-        x_padding = rect.width() * self.padding
-        y_padding = rect.height() * self.padding
+        x_padding = rect.width() * self.padding.value
+        y_padding = rect.height() * self.padding.value
         return rect.adjusted(-x_padding, -y_padding, x_padding, y_padding)
 
     def _resolved_nodes(self):

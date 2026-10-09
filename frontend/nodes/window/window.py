@@ -1,10 +1,11 @@
+from frontend.components.elements.dials import LinearDial
+from frontend.components.elements.parameters import DataElement, IntegerDial, IntegerExpDial, SequenceElement
 import numpy as np
+from config import FREQ_BINS
 
 from backend.updatable.updatable import AudioUpdatable
 from frontend.components.elements import AnalysableElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
-from frontend.components.elements.dials import ExpDial
 from frontend.overrides.CNode import CNode
 
 
@@ -20,8 +21,8 @@ class WindowNode(CNode, AudioUpdatable):
 
     def __init__(
         self,
-        input_data: np.ndarray | object = lambda x : np.zeros(0),
-        length: int | float = 0,
+        input_data: np.ndarray | object = np.zeros(FREQ_BINS),
+        length: int | float = 1,
         init_value: float = 0.0,
         offset: int = 0,
         render: bool = True,
@@ -36,16 +37,17 @@ class WindowNode(CNode, AudioUpdatable):
 
         super().__init__(self.nodeName, terminals, render=render, alias=alias, parent=parent)
 
-        self.length = ExpDial(self, "length", 1, 1000, ElementValue(length))
-        self.input_data = Element(self, "input_data", ElementValue(input_data)) # Data to aggregate
-        self.offset = Element(self, "offset", ElementValue(offset))
+        self.length = IntegerExpDial(self, "length", 1, 1000, ElementValue(length))
+        self.input_data = DataElement(self, 'input_data', ElementValue(input_data)) # Data to aggregate
+        self.offset = IntegerDial(self, 'offset', 0, 1000, ElementValue(offset))
+        self.init_value = LinearDial(self, "init_value", -100, 100, init_value)
         input_shape = self.input_data.value.shape[0]
         self.data = AnalysableElement(self, "data", ElementValue((np
                                                                   .repeat(init_value, self.length.value * input_shape)
                                                                   .reshape(self.length.value, input_shape))
                                                                  ))
         self._offset_buffer = []
-        self.window_fcts = Element(self, "window_fcts", ElementValue([]))
+        self.window_fcts = SequenceElement(self, 'window_fcts', ElementValue([]))
 
         self.length.valueChanged.connect(self.on_length_change)
         self.should_process = True

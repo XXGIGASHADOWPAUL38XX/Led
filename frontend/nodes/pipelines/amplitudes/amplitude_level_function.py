@@ -1,8 +1,8 @@
+from frontend.components.elements.parameters import DataElement, IntegerDial
 import numpy as np
 
 from backend.updatable.updatable import AudioUpdatable
 from frontend.components.elements import AnalysableElement
-from frontend.components.elements.element import Element
 from frontend.components.elements.element_value import ElementValue
 from frontend.components.elements.dials import LinearDial
 from frontend.overrides.CNode import CNode
@@ -35,18 +35,19 @@ class AmplitudesLevelFunction(CNode, AudioUpdatable):
         }
         super().__init__(self.nodeName, terminals, render=render)
 
-        self.arange = Element(self, "arange", ElementValue(np.arange(number_points)))
+        self.number_points = IntegerDial(self, "number_points", 1, 4096, number_points)
+        self.arange = DataElement(self, 'arange', ElementValue(np.arange(number_points)))
         self.data = AnalysableElement(self, "data", ElementValue(np.zeros(number_points)), link_terminal=False, y_min=-1.0, y_max=2.0)
 
         self.offset = LinearDial(self, "offset", 0.0, 1.5, offset)
 
         self.drop = LinearDial(self, "drop", 0.0, 1.0, drop)
-        self.drop_center = LinearDial(self, "drop_center", 0, number_points // 2, drop_center)
-        self.drop_width = LinearDial(self, "drop_width", 1, max(10, number_points // 5), drop_width)
+        self.drop_center = IntegerDial(self, "drop_center", 0, number_points // 2, drop_center)
+        self.drop_width = IntegerDial(self, "drop_width", 1, max(10, number_points // 5), drop_width)
 
         self.rise = LinearDial(self, "rise", 0.0, 0.5, rise)
-        self.rise_center = LinearDial(self, "rise_center", number_points // 2, number_points, rise_center)
-        self.rise_width = LinearDial(self, "rise_width", 1, max(10, number_points // 5), rise_width)
+        self.rise_center = IntegerDial(self, "rise_center", number_points // 2, number_points, rise_center)
+        self.rise_width = IntegerDial(self, "rise_width", 1, max(10, number_points // 5), rise_width)
 
     def fct(self, amplitudes_data):
         self.data.value[:] = amplitudes_data * (
