@@ -1,0 +1,67 @@
+from backend.components.elements.parameters import Parameter, DataElement
+import numpy as np
+
+from backend.pipelines.pipeline import AudioPipeline
+from config import FFT_SIZE
+from backend.components.elements import AnalysableElement
+from backend.components.elements.element_value import ElementValue
+from backend.overrides.CNode import CNode
+
+class MidSideEnergyNode(CNode, AudioPipeline):
+    """Measure stereo center energy and stereo width.
+
+    Input `buffer_data` has shape (2, samples), channels first. Outputs
+    `mid_energy`, `side_energy`, and `mid_ratio` are one-element arrays;
+    `data` is [mid_energy, side_energy]. Each audio update averages squared
+    (L + R) / 2 and (L - R) / 2; configure `length` in samples."""
+
+    nodeName = "MidSideEnergy"
+
+    def __init__(self, buffer_data=np.zeros((2, FFT_SIZE)), length=FFT_SIZE, alias: str | None = None) -> None:
+        terminals = {
+            "buffer_data": {"io": "in"},
+            "mid_energy": {"io": "out"},
+            "side_energy": {"io": "out"},
+            "mid_ratio": {"io": "out"},
+            "data": {"io": "out"},
+        }
+        super().__init__(self.nodeName, terminals, alias=alias)
+        self.length = Parameter(self, 'length', length, minimum=1, maximum=4096, integer=True)
+        self.buffer_data = DataElement(self, 'buffer_data', ElementValue(buffer_data))
+        self.mid_energy = DataElement(self, 'mid_energy', ElementValue(np.zeros(1)))
+        self.side_energy = DataElement(self, 'side_energy', ElementValue(np.zeros(1)))
+        self.mid_ratio = DataElement(self, 'mid_ratio', ElementValue(np.zeros(1)))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(2)))
+
+        self.length.valueChanged.connect(self.on_length_change)
+        self.should_process = True
+
+    def on_length_change(self, *_args):
+        self.should_process = False
+
+        try:
+            int_length = int(self.length.value)
+            self.buffer_data.value = np.hstack((
+                self.buffer_data.value[:, :int_length],
+                np.zeros((2, max(0, int_length - self.buffer_data.value.shape[1]))),
+            ))
+            self.data.value = np.zeros(2)
+        except (TypeError, ValueError):
+            return
+        finally:
+            self.should_process = True
+
+    def c_update(self):
+        if not self.should_process:
+            return
+
+        data = np.asarray(self.buffer_data.value, dtype=float)
+        left = data[0]
+        right = data[1]
+
+        mid = (left + right) * 0.5
+        side = (left - right) * 0.5
+        self.mid_energy.value[...] = np.mean(mid ** 2) if mid.size else 0.0
+        self.side_energy.value[...] = np.mean(side ** 2) if side.size else 0.0
+        self.mid_ratio.value[...] = 0. if (t:=(self.mid_energy.value + self.side_energy.value)) == 0 else self.mid_energy.value / t
+        self.data.value[:] = [self.mid_energy.value[0], self.side_energy.value[0]]

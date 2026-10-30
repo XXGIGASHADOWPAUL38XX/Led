@@ -5,11 +5,8 @@ sounddevice
 pyserial
 crcmod
 
-# Used by desktop/debug and visualization entrypoints
-pyqtgraph
-PyQt5
+# Processing graph validation
 networkx
-pyqt-switch
 
 # Native ESP32 firmware build and upload
 platformio
@@ -17,3 +14,11 @@ platformio
 yt-dlp
 static-ffmpeg
 soundfile
+
+python-dotenv
+
+webcolors>=24.8
+
+# Binary realtime API
+websockets>=15
+msgpack>=1

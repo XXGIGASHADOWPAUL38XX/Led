@@ -1,3 +1,10 @@
 /esp32/.pio/
 /.venv/
 /.venv-pio/
+__pycache__/
+*.py[cod]
+
+/frontend/node_modules/
+/frontend/.next/
+/frontend/out/
+/frontend/*.tsbuildinfo

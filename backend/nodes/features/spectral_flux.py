@@ -1,0 +1,37 @@
+from backend.components.elements.parameters import DataElement
+import numpy as np
+
+from backend.pipelines.pipeline import AudioPipeline
+from config import FREQ_BINS
+from backend.components.elements import AnalysableElement
+from backend.components.elements.element_value import ElementValue
+from backend.overrides.CNode import CNode
+
+class SpectralFluxNode(CNode, AudioPipeline):
+    """Measure positive spectrum change for transient detection.
+
+    Input `amplitudes` is a spectrum vector. Output `data` is a nonnegative
+    one-element array of mean positive change since the previous audio
+    update. Keeps the previous spectrum, initially zero."""
+
+    nodeName = "SpectralFlux"
+
+    def __init__(self, amplitudes=np.zeros(FREQ_BINS), alias: str | None = None) -> None:
+        terminals = {
+            "amplitudes": {"io": "in"},
+            "data": {"io": "out"},
+        }
+        super().__init__(self.nodeName, terminals, alias=alias)
+        self.amplitudes = DataElement(self, 'amplitudes', ElementValue(amplitudes))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(1)))
+        self.previous = np.zeros_like(np.asarray(self.amplitudes.value, dtype=float).reshape(-1))
+
+    def c_update(self):
+        amplitudes = np.asarray(self.amplitudes.value, dtype=float).reshape(-1)
+        if amplitudes.size == 0:
+            self.data.value[...] = 0.0
+            return
+        if self.previous.size != amplitudes.size:
+            self.previous = np.zeros_like(amplitudes)
+        self.data.value[...] = np.mean(np.maximum(amplitudes - self.previous, 0.0))
+        self.previous[:] = amplitudes

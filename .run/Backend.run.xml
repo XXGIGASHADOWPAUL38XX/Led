@@ -1,0 +1,17 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Backend" type="PythonConfigurationType" factoryName="Python">
+    <module name="led2" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <option name="SDK_HOME" value="$PROJECT_DIR$/.venv/bin/python" />
+    <option name="IS_MODULE_SDK" value="false" />
+    <envs>
+      <env name="PYTHONUNBUFFERED" value="1" />
+    </envs>
+    <option name="ADD_CONTENT_ROOTS" value="true" />
+    <option name="ADD_SOURCE_ROOTS" value="true" />
+    <option name="SCRIPT_NAME" value="backend.api.server" />
+    <option name="MODULE_MODE" value="true" />
+    <option name="PARAMETERS" value="--port 8000" />
+    <method v="2" />
+  </configuration>
+</component>

@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+:root { color-scheme: dark; }
+body { margin: 0; background: #101116; color: #e5e7eb; font-family: Arial, Helvetica, sans-serif; }
+button { cursor: pointer; }
+.node-canvas {
+  background-image: radial-gradient(#34353f 1px, transparent 1px);
+  background-size: 24px 24px;
+}

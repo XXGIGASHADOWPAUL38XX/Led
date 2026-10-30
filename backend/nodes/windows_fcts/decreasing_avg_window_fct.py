@@ -1,0 +1,37 @@
+from backend.components.elements.parameters import Parameter
+import numpy as np
+
+from backend.nodes.windows_fcts.window_fct import WindowFct
+from backend.overrides.CNode import CNode
+
+class DecreasingAvgWindowFct(WindowFct, CNode):
+    """Produce a decaying peak envelope from a WindowNode history.
+
+    Select or configure `window` and `avg_axis` (usually 0). Output `data`
+    is the maximum of history frames weighted linearly from oldest=0 to
+    newest=1, not an average. The window calls aggregation each audio update;
+    connect Window.data to input `window`, or use the NodeSelector."""
+
+    nodeName = "DecreasingAvgWindowFct"
+
+    def __init__(
+        self,
+        window: CNode | None = None,
+        avg_axis: int | tuple[int, ...] | None = None,
+        alias: str | None = None,
+        parent: CNode | None = None
+    ) -> None:
+        terminals = {
+            "data": {"io": "out"}
+        }
+        CNode.__init__(self, self.nodeName, terminals=terminals, alias=alias, parent=parent)
+        WindowFct.__init__(self, window, self.aggregate)
+        self.avg_axis = Parameter(self, 'avg_axis', avg_axis, kind='axis')
+
+    def aggregate(self, window_data):
+        if window_data.shape[0] <= 1:
+            self.data.value[...] = np.max(window_data, axis=self.avg_axis.value)
+            return
+
+        weights = np.linspace(0.0, 1.0, window_data.shape[0])[:, None]
+        self.data.value[...] = np.max(window_data * weights, axis=self.avg_axis.value)
