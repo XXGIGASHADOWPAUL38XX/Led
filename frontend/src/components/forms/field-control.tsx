@@ -41,12 +41,14 @@ export function ReferenceControl({ nodeId, field, value, onChange, disabled = fa
 
 function TokenControl({ nodeId, field, value, onChange, onCommit }: { nodeId: string; field: FieldDefinition; value: unknown; onChange: (value: unknown) => void; onCommit?: () => void }) {
   const commit = (value: unknown) => { onChange(value); onCommit?.(); };
+  const array = isArrayValue(value) ? value : null;
   const operator = typeof value === "string" && ["+", "-", "*", "/", "**", "<", "<=", "==", ">=", ">", "&", "|", "(", ")"].includes(value);
-  const kind = typeof value === "object" && value !== null ? "source" : typeof value === "number" ? "number" : operator ? "operator" : "text";
+  const kind = array ? "array" : typeof value === "object" && value !== null ? "source" : typeof value === "number" ? "number" : operator ? "operator" : "text";
   return <div className="space-y-2">
-    <SelectElement label="Value type" value={kind} options={["source", "number", "operator", "text"].map((value) => ({ value, label: value }))}
-      onValueChange={(next) => commit(next === "source" ? {} : next === "number" ? 1 : next === "operator" ? "*" : "")} />
-    {kind === "source" ? <ReferenceControl nodeId={nodeId} field={field} value={value as Reference} onChange={commit} />
+    <SelectElement label="Value type" value={kind} options={[...(array ? ["array"] : []), "source", "number", "operator", "text"].map((value) => ({ value, label: value }))}
+      onValueChange={(next) => { if (next !== "array") commit(next === "source" ? {} : next === "number" ? 1 : next === "operator" ? "*" : ""); }} />
+    {array ? <p className="px-1 text-[10px] text-zinc-500">Constant array · {array.shape.join(" × ")}</p>
+      : kind === "source" ? <ReferenceControl nodeId={nodeId} field={field} value={value as Reference} onChange={commit} />
       : kind === "operator" ? <OperatorElement label="Operator" value={String(value)} onValueChange={commit} />
       : kind === "number" ? <SliderElement label="Number" value={Number(value)} onValueChange={onChange} onValueCommit={onCommit} min={-10000} max={10000} step={0.01} />
       : <TextElement label="Token" value={String(value)} onValueChange={onChange} onValueCommit={onCommit} />}

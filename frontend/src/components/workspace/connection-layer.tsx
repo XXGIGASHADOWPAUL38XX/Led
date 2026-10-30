@@ -8,6 +8,8 @@ import { TerminalContext, terminalKey } from "./terminal";
 import { layoutGraph } from "./graph-layout";
 import { isTyping } from "./shortcuts";
 import { MIN_ZOOM, MAX_ZOOM, clampZoom, zoomScroll } from "./viewport";
+import { useTerminalDrag } from "./use-terminal-drag";
+import { connectionPath } from "./connection-path";
 
 /** One registry and SVG for the workspace; live data frames never redraw wires. */
 export function ConnectionLayer({ graph, children }: { graph: Graph; children: ReactNode }) {
@@ -48,6 +50,21 @@ export function ConnectionLayer({ graph, children }: { graph: Graph; children: R
     return () => { element.removeEventListener("wheel", wheel); window.removeEventListener("keydown", key); };
   }, [zoom, changeZoom]);
   const terminals = useRef(new Map<string, HTMLElement>());
+  const { preview, start, move, finish, cancel, disconnect } = useTerminalDrag(graph, container, terminals.current, zoom);
+  const [selected, setSelected] = useState<string | null>(null);
+  useEffect(() => { if (selected && !connections.some((edge) => edge.id === selected)) setSelected(null); }, [connections, selected]);
+  useEffect(() => {
+    const key = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { cancel(); setSelected(null); }
+      if (!selected || isTyping() || document.querySelector("dialog[open]")) return;
+      if (event.key === "Delete" || event.key === "Backspace") {
+        event.preventDefault(); setSelected(null);
+        void backend.command("connection.remove", { connectionId: selected });
+      }
+    };
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, [selected, cancel]);
   const frame = useRef(0);
   const [paths, setPaths] = useState<{ id: string; label: string; d: string }[]>([]);
   const [layout, setLayout] = useState(0);
@@ -75,9 +92,9 @@ export function ConnectionLayer({ graph, children }: { graph: Graph; children: R
     invalidate();
     return () => { terminals.current.delete(key); invalidate(); };
   }, [invalidate]);
-  const registry = useMemo(() => ({ register, invalidate, zoom, linked: new Set(connections.flatMap((edge) => [
+  const registry = useMemo(() => ({ register, invalidate, zoom, start, move, finish, cancel, disconnect, linked: new Set(connections.flatMap((edge) => [
     terminalKey(edge.source, "output"), terminalKey(edge.target, "input"),
-  ])) }), [connections, register, invalidate, zoom]);
+  ])) }), [connections, register, invalidate, zoom, start, move, finish, cancel, disconnect]);
 
   useLayoutEffect(() => {
     const origin = container.current!.getBoundingClientRect();
@@ -90,9 +107,8 @@ export function ConnectionLayer({ graph, children }: { graph: Graph; children: R
       const from = source.getBoundingClientRect(), to = target.getBoundingClientRect();
       const x1 = (from.left + from.width / 2 - origin.left) / zoom, y1 = (from.top + from.height / 2 - origin.top) / zoom;
       const x2 = (to.left + to.width / 2 - origin.left) / zoom, y2 = (to.top + to.height / 2 - origin.top) / zoom;
-      const bend = Math.max(40, Math.abs(x2 - x1) / 2);
       return [{ id: edge.id, label: `${edge.source.nodeId}.${edge.source.element} → ${edge.target.nodeId}.${edge.target.element}`,
-        d: `M ${x1} ${y1} C ${x1 + bend} ${y1}, ${x2 - bend} ${y2}, ${x2} ${y2}` }];
+        d: connectionPath({ x: x1, y: y1 }, { x: x2, y: y2 }) }];
     }));
   }, [connections, layout, zoom]);
   useLayoutEffect(() => {
@@ -108,11 +124,17 @@ export function ConnectionLayer({ graph, children }: { graph: Graph; children: R
         <button type="button" aria-label="Zoom in" disabled={zoom >= MAX_ZOOM} onClick={() => changeZoom(zoom * 1.2)} className="px-3 py-2 disabled:opacity-30">+</button>
       </div>
     </div>
-    <div ref={viewport} className="node-canvas max-h-[75vh] min-h-48 overflow-auto rounded-xl border border-white/5">
+    <p className="text-[10px] text-zinc-500">Drag terminals to connect · Drag a connected input into empty space to unlink · Select a wire and press Delete to remove it</p>
+    <div ref={viewport} onPointerDown={() => setSelected(null)} className="node-canvas max-h-[75vh] min-h-48 overflow-auto rounded-xl border border-white/5">
     <div style={{ width: extent.width * zoom, height: extent.height * zoom }} className="overflow-hidden">
     <div ref={container} style={{ ...extent, transform: `scale(${zoom})`, transformOrigin: "0 0" }} className="relative min-h-48">
       <svg aria-label="Node connections" className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" fill="none">
-        {paths.map((path) => <path key={path.id} d={path.d} stroke="#a78bfa" strokeWidth={2} strokeOpacity={0.65}><title>{path.label}</title></path>)}
+        {paths.map((path) => <g key={path.id}>
+          <path d={path.d} stroke={selected === path.id ? "#e9d5ff" : "#a78bfa"} strokeWidth={selected === path.id ? 3 : 2} strokeOpacity={0.8} />
+          <path d={path.d} stroke="transparent" strokeWidth={12} pointerEvents="stroke" className="cursor-pointer"
+            onPointerDown={(event) => { event.stopPropagation(); setSelected(path.id); }}><title>{path.label} · Delete to disconnect</title></path>
+        </g>)}
+        {preview && <path d={preview} stroke="#c4b5fd" strokeWidth={2} strokeDasharray="5 4" />}
       </svg>
       {children}
     </div>

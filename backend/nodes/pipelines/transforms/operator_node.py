@@ -1,4 +1,4 @@
-from backend.components.elements.parameters import Parameter, SequenceElement
+from backend.components.elements.parameters import Parameter, SequenceElement, DataElement
 import numpy as np
 
 from backend.pipelines.pipeline import AudioPipeline
@@ -73,6 +73,21 @@ class OperatorPipelineNode(CNode, AudioPipeline):
             return f"{node_name}:{arg.name}".lower()
         return str(arg)
 
+    def disconnect_input(self, name, parameters):
+        for index, argument in enumerate(self.arguments):
+            if isinstance(argument, Element) and self.resolve_element_name(argument) == name:
+                parameters["arguments"][index] = np.zeros_like(argument.value)
+        return (f"{name}_out",)
+
+    def connect_input(self, name, source, parameters):
+        for index, argument in enumerate(self.arguments):
+            if isinstance(argument, Element) and self.resolve_element_name(argument) == name:
+                parameters["arguments"][index] = source
+        source_node = next(node for node in self.get_nodes() if node.name() == source["nodeId"])
+        source_element = vars(source_node)[source_node.terminal_element_name(source["element"])]
+        new_name = self.resolve_element_name(source_element)
+        return new_name, {f"{name}_out": f"{new_name}_out"}
+
     def resolve_token(self, token):
         if isinstance(token, Element):
             return self.resolve_token(token.value)
@@ -128,7 +143,7 @@ class OperatorPipelineNode(CNode, AudioPipeline):
             elif isinstance(arg, str):
                 element = Parameter(self, name, arg, kind='text')
             else:
-                element = Parameter(self, name, str(arg), kind='text')
+                element = DataElement(self, name, arg)
             vars(self)[name] = element
             elements.append(element)
 

@@ -11,7 +11,7 @@ export function StreamCanvas({ nodeId, view, settings, title }: {
   nodeId: string; view: ViewDefinition; settings: ViewSettings; title: string;
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
-  const history = useRef<number[]>([]);
+  const history = useRef<number[][]>([]);
   const previous = useRef<unknown>(null);
   useEffect(() => {
     const element = canvas.current!;
@@ -35,10 +35,14 @@ export function StreamCanvas({ nodeId, view, settings, title }: {
       const value = backend.array(nodeId, view.data!);
       if (view.kind === "meter" && value !== null && value !== previous.current) {
         const data = samples(value);
-        history.current.push(Number(data[data.length - 1] ?? 0));
+        history.current = Array.from({ length: view.series?.length ?? 1 }, (_, row) => {
+          const values = history.current[row] ?? [];
+          values.push(Number(data[view.series ? row : data.length - 1] ?? 0));
+          return values;
+        });
         previous.current = value;
       }
-      history.current = history.current.slice(-(settings.historyLength ?? 100));
+      for (const values of history.current) values.splice(0, Math.max(0, values.length - (settings.historyLength ?? 100)));
       schedule();
     };
     const unsubscribe = backend.watchArray(nodeId, view.data!, update);

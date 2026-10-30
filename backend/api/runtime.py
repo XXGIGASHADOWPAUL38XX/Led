@@ -72,6 +72,7 @@ class Runtime:
         for item in specs.values():
             if item["type"] not in self.catalog.classes:
                 raise ValueError(f"Unknown node type: {item['type']}")
+            item["parameters"] = self.catalog.classes[item["type"]].migrate_parameters(item.get("parameters", {}))
             for source in self._references(item.get("parameters", {})):
                 if source not in specs:
                     raise ValueError(f"Unknown source node: {source}")
@@ -345,7 +346,8 @@ class Runtime:
                 continue
             result.append(item)
         return {"id": node.name(), "type": node.nodeName, "elements": result,
-                "ports": [{"name": key, "direction": options["io"], "shape": list(np.shape(vars(node)[node.terminal_element_name(key)].value))}
+                "ports": [{"name": key, "direction": options["io"], "shape": list(np.shape(vars(node)[node.terminal_element_name(key)].value)),
+                           **({"accepts": list(node.input_shapes[key])} if key in node.input_shapes else {})}
                           for key, options in node.pending_terminals.items() if isinstance(vars(node).get(node.terminal_element_name(key)), Element)]}
 
     def _describe_value(self, value):

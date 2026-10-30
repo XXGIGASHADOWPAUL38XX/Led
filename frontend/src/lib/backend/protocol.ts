@@ -14,7 +14,7 @@ export type ElementDescriptor = {
   dtype?: string; defaultType?: string; selectionElements?: string[];
   shape?: number[]; options?: { value: unknown; label: string }[];
 };
-export type NodeDescriptor = { id: string; type: string; elements: ElementDescriptor[]; ports: { name: string; direction: "in" | "out"; shape: number[] }[] };
+export type NodeDescriptor = { id: string; type: string; elements: ElementDescriptor[]; ports: { name: string; direction: "in" | "out"; shape: number[]; accepts?: number[] }[] };
 export type Snapshot = { graph: Graph; nodes: NodeDescriptor[]; catalog: { type: string; description: string }[] };
 export type PlayerState = { nodeId: string; tracks: { id: string; title: string; artist: string; duration: number; loaded: boolean }[]; activeTrackId: string | null; playing: boolean; position: number };
 

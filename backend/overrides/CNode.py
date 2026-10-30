@@ -7,6 +7,7 @@ import numpy as np
 class CNode:
     """Base processing node with named input/output Element attributes."""
     _SERDE_TAG = '__cnode_serde__'
+    input_shapes = {}
 
     def __init__(self, node_name, terminals, parent=None, alias=None, **processing):
         super().__init__(**processing)
@@ -38,8 +39,25 @@ class CNode:
     def validate_parameters(self, changes):
         """Reject coupled changes before mutating processing state."""
 
+    @staticmethod
+    def migrate_parameters(parameters):
+        """Normalize saved constructor parameters before building a node."""
+        return parameters
+
     def parameters_changed(self, name):
         """Rebuild derived state after a parameter change."""
+
+    def disconnect_input(self, name, parameters):
+        """Remove a saved source reference; return any outputs removed with it."""
+        value = parameters.get(name)
+        if type(value) is dict and "nodeId" in value:
+            parameters.pop(name)
+        return ()
+
+    def connect_input(self, name, source, parameters):
+        """Normalize a new binding and any resulting terminal name changes."""
+        self.disconnect_input(name, parameters)
+        return name, {}
 
     def c_update(self):
         return {}

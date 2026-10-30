@@ -1,8 +1,7 @@
-from backend.components.elements.parameters import Parameter, DataElement
+from backend.components.elements.parameters import DataElement
 import numpy as np
 
 from backend.pipelines.pipeline import AudioPipeline
-from config import FFT_SIZE
 from backend.components.elements import AnalysableElement
 from backend.components.elements.element_value import ElementValue
 from backend.overrides.CNode import CNode
@@ -13,11 +12,12 @@ class MidSideEnergyNode(CNode, AudioPipeline):
     Input `buffer_data` has shape (2, samples), channels first. Outputs
     `mid_energy`, `side_energy`, and `mid_ratio` are one-element arrays;
     `data` is [mid_energy, side_energy]. Each audio update averages squared
-    (L + R) / 2 and (L - R) / 2; configure `length` in samples."""
+    (L + R) / 2 and (L - R) / 2 across the full incoming buffer."""
 
     nodeName = "MidSideEnergy"
+    input_shapes = {"buffer_data": (2, 0)}
 
-    def __init__(self, buffer_data=np.zeros((2, FFT_SIZE)), length=FFT_SIZE, alias: str | None = None) -> None:
+    def __init__(self, buffer_data=np.zeros((2, 0)), alias: str | None = None) -> None:
         terminals = {
             "buffer_data": {"io": "in"},
             "mid_energy": {"io": "out"},
@@ -26,35 +26,22 @@ class MidSideEnergyNode(CNode, AudioPipeline):
             "data": {"io": "out"},
         }
         super().__init__(self.nodeName, terminals, alias=alias)
-        self.length = Parameter(self, 'length', length, minimum=1, maximum=4096, integer=True)
         self.buffer_data = DataElement(self, 'buffer_data', ElementValue(buffer_data))
         self.mid_energy = DataElement(self, 'mid_energy', ElementValue(np.zeros(1)))
         self.side_energy = DataElement(self, 'side_energy', ElementValue(np.zeros(1)))
         self.mid_ratio = DataElement(self, 'mid_ratio', ElementValue(np.zeros(1)))
         self.data = AnalysableElement(self, "data", ElementValue(np.zeros(2)))
 
-        self.length.valueChanged.connect(self.on_length_change)
-        self.should_process = True
+    @staticmethod
+    def migrate_parameters(parameters):
+        return {name: value for name, value in parameters.items() if name != "length"}
 
-    def on_length_change(self, *_args):
-        self.should_process = False
-
-        try:
-            int_length = int(self.length.value)
-            self.buffer_data.value = np.hstack((
-                self.buffer_data.value[:, :int_length],
-                np.zeros((2, max(0, int_length - self.buffer_data.value.shape[1]))),
-            ))
-            self.data.value = np.zeros(2)
-        except (TypeError, ValueError):
-            return
-        finally:
-            self.should_process = True
+    def validate_parameters(self, changes):
+        data = np.asarray(changes.get("buffer_data", self.buffer_data.value))
+        if data.ndim != 2 or data.shape[0] != 2:
+            raise ValueError("Mid/Side Energy requires a stereo buffer shaped (2, samples)")
 
     def c_update(self):
-        if not self.should_process:
-            return
-
         data = np.asarray(self.buffer_data.value, dtype=float)
         left = data[0]
         right = data[1]

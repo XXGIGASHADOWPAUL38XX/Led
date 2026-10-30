@@ -97,6 +97,16 @@ class Handlers:
     async def connection_add(self, session, payload):
         graph = deepcopy(self.runtime.graph)
         edge = {"id": payload.get("connectionId", str(uuid4())), "source": payload["source"], "target": payload["target"]}
+        self._disconnect(graph, {existing["id"] for existing in graph["connections"] if existing["id"] == edge["id"] or existing["target"] == edge["target"]}, edge["target"])
+        target = edge["target"]
+        node = self.runtime.nodes[target["nodeId"]]
+        spec = next(item for item in graph["nodes"] if item["id"] == target["nodeId"])
+        target["element"], renamed = node.connect_input(target["element"], edge["source"], spec.setdefault("parameters", {}))
+        for existing in graph["connections"]:
+            source = existing["source"]
+            if source["nodeId"] == target["nodeId"] and source["element"] in renamed:
+                source["element"] = renamed[source["element"]]
+        graph["connections"] = [existing for existing in graph["connections"] if existing["target"] != target]
         graph["connections"].append(edge)
         await self._load(graph)
         return edge
@@ -105,8 +115,22 @@ class Handlers:
         graph = deepcopy(self.runtime.graph)
         if not any(edge["id"] == payload["connectionId"] for edge in graph["connections"]):
             raise ValueError("Unknown connection")
-        graph["connections"] = [edge for edge in graph["connections"] if edge["id"] != payload["connectionId"]]
+        self._disconnect(graph, {payload["connectionId"]})
         return await self._load(graph)
+
+    def _disconnect(self, graph, connection_ids, keep_target=None):
+        nodes = {node["id"]: node for node in graph["nodes"]}
+        removed_outputs = set()
+        for edge in graph["connections"]:
+            if edge["id"] not in connection_ids or edge["target"] == keep_target:
+                continue
+            parameters = nodes[edge["target"]["nodeId"]].setdefault("parameters", {})
+            node = self.runtime.nodes[edge["target"]["nodeId"]]
+            removed_outputs.update((node.name(), name) for name in node.disconnect_input(edge["target"]["element"], parameters))
+        downstream = {edge["id"] for edge in graph["connections"] if (edge["source"]["nodeId"], edge["source"]["element"]) in removed_outputs}
+        if downstream:
+            self._disconnect(graph, downstream, keep_target)
+        graph["connections"] = [edge for edge in graph["connections"] if edge["id"] not in connection_ids]
 
     async def element_set(self, session, payload):
         result = self.runtime.set_element(payload["nodeId"], payload["element"], payload["value"])

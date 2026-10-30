@@ -9,11 +9,6 @@ export default {
     {
       "name": "buffer_data",
       "control": "port"
-    },
-    {
-      "name": "length",
-      "control": "slider",
-      "rebuild": true
     }
   ],
   "views": [
@@ -36,10 +31,14 @@ export default {
       "open": false
     },
     {
-      "kind": "bars",
+      "kind": "meter",
       "data": "data",
-      "label": "Data",
-      "open": true
+      "label": "Mid / Side energy",
+      "open": true,
+      "series": [
+        "Mid",
+        "Side"
+      ]
     }
   ]
 } satisfies NodeDefinition;
