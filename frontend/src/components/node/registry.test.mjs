@@ -4,7 +4,7 @@ import { nodeDefinitions } from './registry.ts';
 import { completeConfiguration, compatiblePorts } from '../../lib/nodes/configuration.ts';
 
 test('each node definition covers unique controls and existing visual outputs', () => {
-  assert.equal(Object.keys(nodeDefinitions).length, 65);
+  assert.equal(Object.keys(nodeDefinitions).length, 66);
   for (const [type, node] of Object.entries(nodeDefinitions)) {
     assert.equal(node.type, type);
     assert.ok(node.description && node.category && node.title);

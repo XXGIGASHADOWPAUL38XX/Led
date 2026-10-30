@@ -162,12 +162,13 @@ class Handlers:
 
     def player_state(self, node):
         with node._data_lock:
-            tracks = [{"id": self._track_id(entry), **node._entry_metadata(entry), "loaded": index < len(node._tracks) and node._tracks[index] is not None}
+            tracks = [{"id": self._track_id(entry), **node._entry_metadata(entry), "duration": node.track_duration(index), "loaded": node._tracks[index] is not None}
                       for index, entry in enumerate(node._entries)]
             index = node._current_track_index
         return {"nodeId": node.name(), "tracks": tracks,
                 "activeTrackId": tracks[index]["id"] if 0 <= index < len(tracks) else None,
-                "playing": node._is_playing, "position": max(0.0, node._current_position()) if index >= 0 else 0.0}
+                "playing": node._is_playing, "position": max(0.0, node._current_position()) if index >= 0 else 0.0,
+                "duration": node.track_duration(index) if 0 <= index < len(tracks) else 0.0}
 
     async def _player_update(self, node):
         state = self.player_state(node)

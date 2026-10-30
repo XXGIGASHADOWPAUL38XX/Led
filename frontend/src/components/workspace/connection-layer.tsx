@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, type Ref, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Graph } from "@/lib/backend/protocol";
 import { backend } from "@/lib/backend/store";
 import { useBackendStatus, useTemplateRevision } from "@/lib/backend/hooks";
@@ -10,15 +10,18 @@ import { isTyping } from "./shortcuts";
 import { MIN_ZOOM, MAX_ZOOM, clampZoom, zoomScroll } from "./viewport";
 import { useTerminalDrag } from "./use-terminal-drag";
 import { connectionPath } from "./connection-path";
+import { useCanvasViewport, type CanvasHandle } from "./use-canvas-viewport";
 
 /** One registry and SVG for the workspace; live data frames never redraw wires. */
-export function ConnectionLayer({ graph, children }: { graph: Graph; children: ReactNode }) {
+export function ConnectionLayer({ graph, children, ref }: { graph: Graph; children: ReactNode; ref?: Ref<CanvasHandle> }) {
   const { connections } = graph;
   const status = useBackendStatus();
   const templateRevision = useTemplateRevision();
   const container = useRef<HTMLDivElement>(null);
   const viewport = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
+  const { toCanvas, insertionPosition, rememberPointer, startNodeDrag, moveNodeDrag, endNodeDrag, cancelNodeDrag } = useCanvasViewport(viewport, container, zoom);
+  useImperativeHandle(ref, () => ({ insertionPosition }), [insertionPosition]);
   const anchor = useRef<{ left: number; top: number } | null>(null);
   const changeZoom = useCallback((next: number, point?: { x: number; y: number }) => {
     const element = viewport.current!;
@@ -68,7 +71,14 @@ export function ConnectionLayer({ graph, children }: { graph: Graph; children: R
   const frame = useRef(0);
   const [paths, setPaths] = useState<{ id: string; label: string; d: string }[]>([]);
   const [layout, setLayout] = useState(0);
-  const [extent, setExtent] = useState({ width: 0, height: 192 });
+  const [bounds, setBounds] = useState({ left: 0, top: 0, right: 0, bottom: 192 });
+  const extent = { width: bounds.right - bounds.left, height: bounds.bottom - bounds.top };
+  const previousOrigin = useRef({ left: 0, top: 0 });
+  useLayoutEffect(() => {
+    viewport.current!.scrollLeft += (previousOrigin.current.left - bounds.left) * zoom;
+    viewport.current!.scrollTop += (previousOrigin.current.top - bounds.top) * zoom;
+    previousOrigin.current = { left: bounds.left, top: bounds.top };
+  }, [bounds.left, bounds.top, zoom]);
   const [arranging, setArranging] = useState(false);
   const autoArranged = useRef("");
   const automaticKey = JSON.stringify([templateRevision, graph.nodes.map((node) => node.id), connections]);
@@ -92,14 +102,22 @@ export function ConnectionLayer({ graph, children }: { graph: Graph; children: R
     invalidate();
     return () => { terminals.current.delete(key); invalidate(); };
   }, [invalidate]);
-  const registry = useMemo(() => ({ register, invalidate, zoom, start, move, finish, cancel, disconnect, linked: new Set(connections.flatMap((edge) => [
+  const registry = useMemo(() => ({ register, invalidate, zoom, start, move, finish, cancel, disconnect, toCanvas, startNodeDrag, moveNodeDrag, endNodeDrag, cancelNodeDrag, linked: new Set(connections.flatMap((edge) => [
     terminalKey(edge.source, "output"), terminalKey(edge.target, "input"),
-  ])) }), [connections, register, invalidate, zoom, start, move, finish, cancel, disconnect]);
+  ])) }), [connections, register, invalidate, zoom, start, move, finish, cancel, disconnect, toCanvas, startNodeDrag, moveNodeDrag, endNodeDrag, cancelNodeDrag]);
 
   useLayoutEffect(() => {
     const origin = container.current!.getBoundingClientRect();
     const nodes = [...container.current!.querySelectorAll<HTMLElement>("[data-node-id]")].map((node) => node.getBoundingClientRect());
-    setExtent({ width: Math.ceil(Math.max(0, ...nodes.map((node) => (node.right - origin.left) / zoom + 24))), height: Math.ceil(Math.max(192, ...nodes.map((node) => (node.bottom - origin.top) / zoom + 24))) });
+    setBounds((previous) => {
+      const next = {
+        left: Math.floor(Math.min(previous.left, ...nodes.map((node) => (node.left - origin.left) / zoom - 24))),
+        top: Math.floor(Math.min(previous.top, ...nodes.map((node) => (node.top - origin.top) / zoom - 24))),
+        right: Math.ceil(Math.max(previous.right, ...nodes.map((node) => (node.right - origin.left) / zoom + 24))),
+        bottom: Math.ceil(Math.max(previous.bottom, ...nodes.map((node) => (node.bottom - origin.top) / zoom + 24))),
+      };
+      return next.left === previous.left && next.top === previous.top && next.right === previous.right && next.bottom === previous.bottom ? previous : next;
+    });
     setPaths(connections.flatMap((edge) => {
       const source = terminals.current.get(terminalKey(edge.source, "output"));
       const target = terminals.current.get(terminalKey(edge.target, "input"));
@@ -125,9 +143,9 @@ export function ConnectionLayer({ graph, children }: { graph: Graph; children: R
       </div>
     </div>
     <p className="text-[10px] text-zinc-500">Drag terminals to connect · Drag a connected input into empty space to unlink · Select a wire and press Delete to remove it</p>
-    <div ref={viewport} onPointerDown={() => setSelected(null)} className="node-canvas max-h-[75vh] min-h-48 overflow-auto rounded-xl border border-white/5">
+    <div ref={viewport} onPointerDown={() => setSelected(null)} onPointerMove={(event) => rememberPointer(event.clientX, event.clientY)} className="node-canvas max-h-[75vh] min-h-48 overflow-auto rounded-xl border border-white/5 [overflow-anchor:none]">
     <div style={{ width: extent.width * zoom, height: extent.height * zoom }} className="overflow-hidden">
-    <div ref={container} style={{ ...extent, transform: `scale(${zoom})`, transformOrigin: "0 0" }} className="relative min-h-48">
+    <div ref={container} style={{ ...extent, transform: `translate(${-bounds.left * zoom}px, ${-bounds.top * zoom}px) scale(${zoom})`, transformOrigin: "0 0" }} className="relative min-h-48">
       <svg aria-label="Node connections" className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" fill="none">
         {paths.map((path) => <g key={path.id}>
           <path d={path.d} stroke={selected === path.id ? "#e9d5ff" : "#a78bfa"} strokeWidth={selected === path.id ? 3 : 2} strokeOpacity={0.8} />

@@ -1,19 +1,19 @@
 from backend.components.elements.parameters import Parameter, DataElement
 import numpy as np
 
-from backend.updatable.updatable import AudioUpdatable
 from backend.components.elements import AnalysableElement
 from backend.components.elements.element_value import ElementValue
 
 from backend.overrides.CNode import CNode
 
-class AmplitudesLevelFunction(CNode, AudioUpdatable):
+class AmplitudesLevelFunction(CNode):
     """Provide a frequency-index gain curve to an amplitude transformer.
 
     Configure `number_points`, `offset`, and sigmoid `drop`/`rise` magnitudes,
-    centers, and widths. Calling `fct(amplitudes_data)` multiplies a matching
-    vector by the curve and returns `data` shaped (number_points,).
-    Processing requires a caller; the declared data terminal is not linked."""
+    centers, and widths. Output `data` is the gain curve shaped
+    (number_points,), regenerated on parameter changes. Calling
+    `fct(amplitudes_data)` returns a matching vector multiplied by the curve
+    without changing the curve itself."""
 
     nodeName = "AmplitudeLevelFunction"
 
@@ -48,10 +48,18 @@ class AmplitudesLevelFunction(CNode, AudioUpdatable):
         self.rise_center = Parameter(self, 'rise_center', rise_center, minimum=number_points // 2, maximum=number_points, integer=True)
         self.rise_width = Parameter(self, 'rise_width', rise_width, minimum=1, maximum=max(10, number_points // 5), integer=True)
 
-    def fct(self, amplitudes_data):
-        self.data.value[:] = amplitudes_data * (
+        for parameter in (self.number_points, self.offset, self.drop, self.drop_center,
+                          self.drop_width, self.rise, self.rise_center, self.rise_width):
+            parameter.valueChanged.connect(self._refresh_data)
+        self._refresh_data()
+
+    def _refresh_data(self, *_args):
+        self.arange.value = np.arange(self.number_points.value)
+        self.data.value = (
             self.offset.value
             - self.drop.value / (1 + np.exp(-(self.arange.value - self.drop_center.value) / self.drop_width.value))
             + self.rise.value / (1 + np.exp(-(self.arange.value - self.rise_center.value) / self.rise_width.value))
         )
-        return self.data.value
+
+    def fct(self, amplitudes_data):
+        return amplitudes_data * self.data.value

@@ -19,11 +19,11 @@ export type PlaylistPlayerProps = Omit<MusicPlayerProps, "track" | "onPlay"> & {
 export function PlaylistPlayer({ tracks, activeTrackId, onPlay, onAdd, onRemove, query, onQueryChange, onSearch, results, searching = false, error, ...player }: PlaylistPlayerProps) {
   const activeTrack = tracks.find((track) => track.id === activeTrackId) ?? null;
   return (
-    <div className="space-y-3">
-      <MusicPlayer {...player} track={activeTrack} onPlay={() => { if (activeTrack) onPlay(activeTrack.id); }} />
-      <form role="search" onSubmit={(event) => { event.preventDefault(); onSearch(query.trim()); }} className="flex gap-1.5">
+    <div className="min-w-0 w-full space-y-3">
+      <MusicPlayer key={activeTrackId} {...player} track={activeTrack} onPlay={() => { if (activeTrack) onPlay(activeTrack.id); }} />
+      <form role="search" onSubmit={(event) => { event.preventDefault(); onSearch(query.trim()); }} className="flex flex-wrap gap-1.5">
         <input type="search" aria-label="Search music" placeholder="Find a track or artist…" value={query} onChange={(event) => onQueryChange(event.target.value)}
-          className="h-8 min-w-0 flex-1 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs text-zinc-200 outline-none placeholder:text-zinc-600 focus:border-violet-400/70 focus:ring-2 focus:ring-violet-400/10" />
+          className="h-8 min-w-32 flex-1 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs text-zinc-200 outline-none placeholder:text-zinc-600 focus:border-violet-400/70 focus:ring-2 focus:ring-violet-400/10" />
         <button type="submit" disabled={searching || !query.trim()}
           className="rounded-md border border-white/10 bg-white/5 px-2.5 text-[10px] text-zinc-300 transition-colors hover:bg-violet-400/15 focus-visible:outline-2 focus-visible:outline-violet-400 disabled:opacity-35">
           {searching ? "Searching…" : "Search"}
@@ -55,7 +55,7 @@ export function PlaylistPlayer({ tracks, activeTrackId, onPlay, onAdd, onRemove,
               className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-2.5 text-left focus-visible:outline-2 focus-visible:outline-violet-400">
               <span aria-hidden="true" className={`w-4 shrink-0 text-center font-mono text-[10px] ${selected ? "text-violet-300" : "text-zinc-600"}`}>{playing ? "Ⅱ" : String(index + 1).padStart(2, "0")}</span>
               <span className="min-w-0 flex-1"><span className={`block truncate text-xs ${selected ? "text-violet-100" : "text-zinc-300"}`}>{track.title}</span><span className="mt-0.5 block truncate text-[10px] text-zinc-500">{track.artist}</span></span>
-              <span className="font-mono text-[9px] tabular-nums text-zinc-500">{formatTime(track.duration)}</span>
+              <span className="shrink-0 whitespace-nowrap font-mono text-[9px] tabular-nums text-zinc-500">{track.duration > 0 ? formatTime(track.duration) : "—:—"}</span>
             </button>
             <button type="button" onClick={() => onRemove(track.id)} aria-label={`Remove ${track.title}`}
               className="mr-1 rounded p-1.5 text-xs text-zinc-600 transition-colors hover:bg-rose-400/10 hover:text-rose-300 focus-visible:outline-2 focus-visible:outline-violet-400">×</button>

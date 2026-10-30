@@ -16,7 +16,7 @@ export type ElementDescriptor = {
 };
 export type NodeDescriptor = { id: string; type: string; elements: ElementDescriptor[]; ports: { name: string; direction: "in" | "out"; shape: number[]; accepts?: number[] }[] };
 export type Snapshot = { graph: Graph; nodes: NodeDescriptor[]; catalog: { type: string; description: string }[] };
-export type PlayerState = { nodeId: string; tracks: { id: string; title: string; artist: string; duration: number; loaded: boolean }[]; activeTrackId: string | null; playing: boolean; position: number };
+export type PlayerState = { nodeId: string; tracks: { id: string; title: string; artist: string; duration: number; loaded: boolean }[]; activeTrackId: string | null; playing: boolean; position: number; duration: number };
 
 const arrays = {
   "|b1": Uint8Array, "|u1": Uint8Array, "|i1": Int8Array,

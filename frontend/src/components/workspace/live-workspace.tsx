@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { backend } from "@/lib/backend/store";
 import { useBackendStatus, useGraph, useTemplateRevision } from "@/lib/backend/hooks";
 import { SelectElement } from "../elements";
@@ -11,12 +11,14 @@ import { TemplateControls } from "../templates/template-controls";
 import { ConnectionLayer } from "./connection-layer";
 import { AddNodeDialog } from "../dialogs/add-node-dialog";
 import { isTyping } from "./shortcuts";
+import type { CanvasHandle } from "./use-canvas-viewport";
 
 export function LiveWorkspace() {
   const status = useBackendStatus();
   const snapshot = useGraph();
   const templateRevision = useTemplateRevision();
-  const [adding, setAdding] = useState(false);
+  const canvas = useRef<CanvasHandle>(null);
+  const [adding, setAdding] = useState<[number, number] | null>(null);
   const [source, setSource] = useState("");
   const [target, setTarget] = useState("");
   useEffect(() => { backend.connection.start(); return () => backend.connection.stop(); }, []);
@@ -25,7 +27,7 @@ export function LiveWorkspace() {
     const key = (event: KeyboardEvent) => {
       begin();
       if (document.querySelector("dialog[open]")) return;
-      if (event.ctrlKey && !event.metaKey && event.key.toLowerCase() === "a") { event.preventDefault(); if (backend.status.connection === "connected") setAdding(true); return; }
+      if (event.ctrlKey && !event.metaKey && event.key.toLowerCase() === "a") { event.preventDefault(); if (backend.status.connection === "connected") setAdding(canvas.current!.insertionPosition()); return; }
       if (isTyping()) return;
       if (event.metaKey && !event.shiftKey && event.key.toLowerCase() === "z") { event.preventDefault(); if (backend.status.canUndo) void backend.command("graph.undo"); }
     };
@@ -41,10 +43,10 @@ export function LiveWorkspace() {
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div><h2 className="text-sm font-medium">Live workspace</h2><p role="status" className="mt-1 text-xs text-zinc-500">{status.connection} · revision {status.revision} · 50 ms frames</p></div>
       <div className="flex items-center gap-2"><button type="button" disabled={status.connection !== "connected" || !status.canUndo} onClick={() => { void backend.command("graph.undo"); }} className="rounded border border-white/10 px-3 py-2 text-xs text-zinc-300 disabled:opacity-40">Undo ⌘Z</button>
-        <button type="button" disabled={status.connection !== "connected"} onClick={() => setAdding(true)} className="rounded bg-violet-400/15 px-3 py-2 text-xs text-violet-200 disabled:opacity-40">Add node ⌃A</button></div>
+        <button type="button" disabled={status.connection !== "connected"} onClick={() => setAdding(canvas.current!.insertionPosition())} className="rounded bg-violet-400/15 px-3 py-2 text-xs text-violet-200 disabled:opacity-40">Add node ⌃A</button></div>
     </div>
     <TemplateControls />
-    {adding && <AddNodeDialog onClose={() => setAdding(false)} />}
+    {adding && <AddNodeDialog position={adding} onClose={() => setAdding(null)} />}
     {status.connection !== "connected" && <p className="text-xs text-zinc-500">Start Python with <code>.venv/bin/python -m backend.api.server</code>. Component previews below work offline.</p>}
     {status.error && <p role="alert" className="rounded border border-rose-400/20 bg-rose-400/5 p-3 text-xs text-rose-300">{status.error}</p>}
     {snapshot && <details className="rounded border border-white/10 p-3"><summary className="cursor-pointer text-xs text-zinc-400">Connections ({snapshot.graph.connections.length})</summary>
@@ -56,6 +58,6 @@ export function LiveWorkspace() {
       {snapshot.graph.connections.map((edge) => <div key={edge.id} className="mt-2 flex justify-between gap-2 text-xs text-zinc-400"><span>{edge.source.nodeId}.{edge.source.element} → {edge.target.nodeId}.{edge.target.element}</span>
         <button type="button" onClick={() => { void backend.command("connection.remove", { connectionId: edge.id }); }} className="text-rose-300">Disconnect</button></div>)}
     </details>}
-    {snapshot && <ConnectionLayer graph={snapshot.graph}>{snapshot.graph.nodes.map((node) => <LiveNode key={`${templateRevision}:${node.id}`} id={node.id} />)}</ConnectionLayer>}
+    {snapshot && <ConnectionLayer ref={canvas} graph={snapshot.graph}>{snapshot.graph.nodes.map((node) => <LiveNode key={`${templateRevision}:${node.id}`} id={node.id} />)}</ConnectionLayer>}
   </section>;
 }

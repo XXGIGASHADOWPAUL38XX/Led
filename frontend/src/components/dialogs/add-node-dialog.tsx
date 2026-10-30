@@ -9,7 +9,7 @@ import { FieldControl, ReferenceControl } from "../forms/field-control";
 import { completeConfiguration } from "../../lib/nodes/configuration";
 import { nodeDefinitions } from "../node/registry";
 
-export function AddNodeDialog({ onClose }: { onClose: () => void }) {
+export function AddNodeDialog({ onClose, position }: { onClose: () => void; position: [number, number] }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const search = useRef<HTMLInputElement>(null);
   const snapshot = useGraph();
@@ -51,7 +51,7 @@ export function AddNodeDialog({ onClose }: { onClose: () => void }) {
       return source ? [{ id: crypto.randomUUID(), source, target: { nodeId, element: field.name } }] : [];
     });
     try {
-      const result = await backend.command("node.add", { nodeId, nodeType: type, parameters: values, connections, position: [24, 24] });
+      const result = await backend.command("node.add", { nodeId, nodeType: type, parameters: values, connections, position });
       if (result) dialog.current!.close();
       else setError(backend.status.error);
     } finally { setBusy(false); }

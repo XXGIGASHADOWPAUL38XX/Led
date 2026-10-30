@@ -52,8 +52,8 @@ function LivePlaylist({ nodeId }: { nodeId: string }) {
   const send = (type: string, payload: Record<string, unknown> = {}) => backend.command(type, { nodeId, ...payload });
   return <div className="space-y-2">
     <button type="button" onClick={() => { void send("player.play"); }} className="rounded bg-violet-400/15 px-3 py-1.5 text-xs text-violet-200">Load playlist / play</button>
-    <PlaylistPlayer tracks={player?.tracks ?? []} activeTrackId={player?.activeTrackId ?? null} playing={player?.playing ?? false} position={player?.position ?? 0}
-      onPlay={(trackId) => { void send("player.play", { trackId }); }} onPause={() => { void send("player.pause"); }} onSeek={(position) => { void send("player.seek", { position }); }}
+    <PlaylistPlayer tracks={player?.tracks ?? []} activeTrackId={player?.activeTrackId ?? null} playing={player?.playing ?? false} position={player?.position ?? 0} duration={player?.duration ?? 0}
+      onPlay={(trackId) => { void send("player.play", { trackId }); }} onPause={() => { void send("player.pause"); }} onSeek={(position) => send("player.seek", { position })}
       onAdd={(track) => { void send("playlist.add", { trackId: track.id }); }} onRemove={(trackId) => { void send("playlist.remove", { trackId }); }}
       query={query} onQueryChange={setQuery} searching={searching} results={results?.tracks ?? null}
       onSearch={(query) => { setSearching(true); void send("player.search", { query }).finally(() => setSearching(false)); }} />

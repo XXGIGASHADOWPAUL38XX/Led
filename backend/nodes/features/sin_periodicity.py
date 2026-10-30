@@ -27,5 +27,6 @@ class SinPeriodicityNode(CNode, AudioPipeline):
         if data.size == 0:
             self.data.value[...] = 0.0
             return
-        print(data)
-        self.data.value[...] = data
+        polarity = np.where(data.mean(axis=0) >= 0, 1, -1)
+
+        self.data.value[...] = np.count_nonzero(np.diff(polarity))

@@ -2,9 +2,10 @@
 
 import { createContext, useCallback, useContext } from "react";
 import type { Endpoint } from "@/lib/backend/protocol";
+import type { CanvasDrag } from "./use-canvas-viewport";
 
 export const terminalKey = (endpoint: Endpoint, direction: "input" | "output") => JSON.stringify([endpoint.nodeId, endpoint.element, direction]);
-export const TerminalContext = createContext<{
+export const TerminalContext = createContext<CanvasDrag & {
   linked: ReadonlySet<string>;
   register: (key: string, element: HTMLElement) => () => void;
   invalidate: () => void;
@@ -43,5 +44,7 @@ export function Terminal({ endpoint, direction, className = "" }: {
     }}
     onPointerCancel={() => registry?.cancel()} onLostPointerCapture={() => registry?.cancel()}
     onKeyDown={(event) => { if (key && (event.key === "Delete" || event.key === "Backspace")) { event.preventDefault(); event.stopPropagation(); registry?.disconnect(key); } }}
-    className={`z-10 inline-block h-3 w-3 shrink-0 touch-none cursor-crosshair rounded-full border-2 outline-none focus-visible:ring-2 focus-visible:ring-white/60 ${direction === "input" ? "border-sky-400 data-[linked]:bg-sky-400" : "border-violet-400 data-[linked]:bg-violet-400"} bg-[#1c1d26] ${className}`} />;
+    className={`group/terminal z-10 inline-block h-3 w-3 shrink-0 touch-none cursor-crosshair rounded-full border-2 outline-none focus:ring-2 focus:ring-white/70 ${direction === "input" ? "border-sky-400 data-[linked]:bg-sky-400" : "border-violet-400 data-[linked]:bg-violet-400"} bg-[#1c1d26] ${className}`}>
+    <span aria-hidden="true" className="relative block h-full w-full"><span className="absolute -inset-2 rounded-full transition-colors hover:bg-violet-400/20 group-focus/terminal:bg-violet-400/15 group-focus/terminal:ring-2 group-focus/terminal:ring-violet-300/60" /></span>
+  </span>;
 }

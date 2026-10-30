@@ -36,17 +36,32 @@ export function Node({ id, title, description, inputs = [], outputs = [], childr
     <article ref={article} aria-label={`${title} node`} data-node-id={id}
       style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
       className={`${absolute ? "absolute left-0 top-0" : "relative"} w-72 rounded-xl border border-violet-400/50 bg-[#1c1d26] shadow-2xl shadow-black/40`}>
-      <button type="button" aria-label={`Drag ${title}`} className="flex w-full touch-none select-none items-center gap-3 rounded-t-xl border-b border-white/10 px-4 py-3 text-left active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-violet-400"
+      <button type="button" aria-label={`Drag ${title}`} className="flex w-full touch-none select-none items-center gap-3 rounded-t-xl border-b border-white/10 px-4 py-3 text-left cursor-grab active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-violet-400"
         onPointerDown={(event) => {
+          if (event.button !== 0) return;
+          event.preventDefault();
+          event.currentTarget.focus({ preventScroll: true });
           event.currentTarget.setPointerCapture(event.pointerId);
-          drag.current = { x: event.clientX / zoom - position.x, y: event.clientY / zoom - position.y };
+          const point = workspace?.toCanvas(event.clientX, event.clientY) ?? { x: event.clientX / zoom, y: event.clientY / zoom };
+          drag.current = { x: point.x - position.x, y: point.y - position.y };
+          workspace?.startNodeDrag(event.clientX, event.clientY, (point) => setPosition({ x: point.x - drag.current.x, y: point.y - drag.current.y }));
         }}
         onPointerMove={(event) => {
           if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-            setPosition({ x: event.clientX / zoom - drag.current.x, y: event.clientY / zoom - drag.current.y });
+            if (workspace) workspace.moveNodeDrag(event.clientX, event.clientY);
+            else setPosition({ x: event.clientX / zoom - drag.current.x, y: event.clientY / zoom - drag.current.y });
           }
         }}
-        onPointerUp={(event) => { event.currentTarget.releasePointerCapture(event.pointerId); onPositionCommit?.(position); }}
+        onPointerUp={(event) => {
+          if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+          const point = workspace?.endNodeDrag(event.clientX, event.clientY) ?? { x: event.clientX / zoom, y: event.clientY / zoom };
+          const next = { x: point.x - drag.current.x, y: point.y - drag.current.y };
+          setPosition(next);
+          event.currentTarget.releasePointerCapture(event.pointerId);
+          onPositionCommit?.(next);
+        }}
+        onPointerCancel={() => { workspace?.cancelNodeDrag(); setPosition({ x: initialX, y: initialY }); }}
+        onLostPointerCapture={() => workspace?.cancelNodeDrag()}
         onKeyDown={(event) => {
           const delta = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] }[event.key];
           if (delta) {

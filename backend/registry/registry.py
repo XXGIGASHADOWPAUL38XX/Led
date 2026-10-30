@@ -18,6 +18,7 @@ from backend.nodes.features import (
     SpectralCentroidNode,
     SpectralFluxNode,
     ZeroCrossingRateNode,
+    SinPeriodicityNode,
 )
 from backend.nodes.function import FunctionNode
 from backend.group_nodes import (
@@ -93,6 +94,7 @@ nodes = [
     RMSPipelineNode,
     MidSideEnergyNode,
     ZeroCrossingRateNode,
+    SinPeriodicityNode,
     CrestFactorNode,
     EntropyNode,
     SpectralFluxNode,

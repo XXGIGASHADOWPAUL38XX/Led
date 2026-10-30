@@ -25,6 +25,7 @@ import bandFilterDefinition from "./auditory/band-filter-node.ts";
 import rmsDefinition from "./auditory/rms-node.ts";
 import midSideEnergyDefinition from "./features/mid-side-energy-node.ts";
 import zeroCrossingRateDefinition from "./features/zero-crossing-rate-node.ts";
+import sinPeriodicityDefinition from "./features/sin-periodicity-node.ts";
 import crestFactorDefinition from "./features/crest-factor-node.ts";
 import entropyDefinition from "./features/entropy-node.ts";
 import spectralFluxDefinition from "./features/spectral-flux-node.ts";
@@ -93,6 +94,7 @@ export const nodeDefinitions: Record<string, NodeDefinition> = {
   "RMS": rmsDefinition,
   "MidSideEnergy": midSideEnergyDefinition,
   "ZeroCrossingRate": zeroCrossingRateDefinition,
+  "SinPeriodicity": sinPeriodicityDefinition,
   "CrestFactor": crestFactorDefinition,
   "Entropy": entropyDefinition,
   "SpectralFlux": spectralFluxDefinition,

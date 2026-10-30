@@ -11,7 +11,8 @@ class GradiantNode(CNode):
     """Generate a spatial RGB gradient by interpolating in HSV color space.
 
     Output `data` has shape (n_points, 3), integer channels in [0, 255].
-    Configure `n_points`, RGB `color_in`/`color_out`, and extra hue `cycle`;
+    Configure `n_points`, RGB `color_in`/`color_out`, and `cycle`, which scales
+    the HSV transition: 0 stays at `color_in`, 1 reaches `color_out`;
     changes regenerate the gradient. No input terminals are declared."""
 
     nodeName = "Gradiant"
@@ -30,10 +31,10 @@ class GradiantNode(CNode):
         }
         super().__init__(self.nodeName, terminals=terminals, parent=parent, alias=alias)
 
-        self.n_points = Parameter(self, 'n_points', n_points, minimum=1, maximum=4096, integer=True)
+        self.n_points = Parameter(self, 'n_points', n_points, minimum=1, maximum=500, integer=True)
         self.color_in = Parameter(self, 'color_in', color_in, kind='color')
         self.color_out = Parameter(self, 'color_out', color_out, kind='color')
-        self.cycle = Parameter(self, 'cycle', cycle, minimum=0, maximum=10)
+        self.cycle = Parameter(self, 'cycle', cycle, minimum=-10, maximum=10)
         self.data = DataElement(self, 'data', ElementValue(np.zeros((int(self.n_points.value), 3), dtype=int)))
 
         self.n_points.valueChanged.connect(self.refresh_gradiant)
@@ -58,7 +59,8 @@ class GradiantNode(CNode):
         hsv_in = np.array(colorsys.rgb_to_hsv(*(np.asarray(color_in, dtype=float) / 255.0)))
         hsv_out = np.array(colorsys.rgb_to_hsv(*(np.asarray(color_out, dtype=float) / 255.0)))
         offsets = np.linspace(0, 1, n_points)[:, None]
-        hsv = hsv_in + (hsv_out - hsv_in) * offsets
-        hsv[:, 0] = (hsv_in[0] + offsets[:, 0] * ((hsv_out[0] - hsv_in[0]) + cycle)) % 1.0
+        hsv = hsv_in + (hsv_out - hsv_in) * offsets * cycle
+        hsv[:, 0] %= 1.0
+        hsv[:, 1:] = np.clip(hsv[:, 1:], 0, 1)
         rgb = np.array([colorsys.hsv_to_rgb(*point) for point in hsv]) * 255
         return np.clip(np.rint(rgb), 0, 255).astype(int)

@@ -7,3 +7,4 @@ from backend.nodes.features.pitch_class_chroma import PitchClassChromaNode
 from backend.nodes.features.spectral_centroid import SpectralCentroidNode
 from backend.nodes.features.spectral_flux import SpectralFluxNode
 from backend.nodes.features.zero_crossing_rate import ZeroCrossingRateNode
+from backend.nodes.features.sin_periodicity import SinPeriodicityNode

@@ -116,6 +116,32 @@ class FrontendNodeTests(unittest.TestCase):
         self.assertEqual(self.runtime.nodes['curve'].points.value.shape, (3, 2))
         self.assertGreater(self.runtime.nodes['curve'].data.value[90], 0.99)
 
+    def test_amplitude_curve_is_visible_without_a_caller_and_stays_independent(self):
+        self.runtime.load({'nodes': [
+            {'id': 'curve', 'type': 'AmplitudeLevelFunction', 'parameters': {'number_points': 180, 'rise_center': 135}},
+        ], 'connections': []})
+        curve = self.runtime.nodes['curve']
+        initial = self.runtime.frame([('curve', 'data')])[0]['value'].copy()
+        self.assertGreater(initial.max(), 0)
+        self.assertGreater(np.ptp(initial), 0.1)
+        self.runtime.set_element('curve', 'offset', 1.0)
+        np.testing.assert_allclose(curve.data.value, initial + 0.15)
+        expected = curve.data.value.copy()
+        self.runtime.load({'nodes': [*self.runtime.graph['nodes'],
+            {'id': 'transform', 'type': 'FctAmplitudesTransformer', 'parameters': {
+                'input_data': np.full(180, 0.5), 'log': 2,
+                'amplitudes_level_fct': {'nodeId': 'curve'},
+            }},
+        ], 'connections': []})
+        self.assertEqual(self.runtime.tick(), [])
+        np.testing.assert_allclose(self.runtime.nodes['transform'].data.value, (expected * 0.5) ** 2)
+        np.testing.assert_array_equal(curve.data.value, expected)
+        self.runtime.load({'nodes': [self.runtime.graph['nodes'][0]], 'connections': []})
+        self.runtime.configure('curve', {'number_points': 300, 'rise_center': 225})
+        frame = self.runtime.frame([('curve', 'data')])[0]['value']
+        self.assertEqual(frame.shape, (300,))
+        self.assertTrue(np.isfinite(frame).all())
+
     def test_all_default_nodes_can_be_added_before_connections(self):
         for name in self.runtime.catalog.classes:
             if name in {'ESP32', 'SCPlaylistPlayer'}:

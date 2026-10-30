@@ -23,7 +23,7 @@ export function PlaylistPreview() {
 
   return (
     <Node id="playlist-1" title="Playlist" description="UI preview · sample tracks, no audio connected." outputs={["audio", "sample_rate", "enqueue_token"]}>
-      <PlaylistPlayer tracks={tracks} activeTrackId={activeTrackId} playing={playing} position={position}
+      <PlaylistPlayer tracks={tracks} activeTrackId={activeTrackId} playing={playing} position={position} duration={tracks.find((track) => track.id === activeTrackId)?.duration ?? 0}
         onPlay={(id) => { if (id !== activeTrackId) setPosition(0); setActiveTrackId(id); setPlaying(true); }}
         onPause={() => setPlaying(false)} onSeek={setPosition}
         onAdd={(track) => setTracks((current) => [...current, track])}

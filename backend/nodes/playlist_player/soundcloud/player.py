@@ -212,6 +212,8 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
         with self._data_lock:
             track = self._tracks[index]
             ratio = self._seek_ratios[index]
+            if ratio >= 1:
+                ratio = self._seek_ratios[index] = 0.0
             self._current_track_index = index
         if track is None:
             return
@@ -238,30 +240,37 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
         with self._data_lock:
             self._seek_ratios[index] = float(ratio)
             track = self._tracks[index]
-        if index != self._current_track_index or not self._is_playing or track is None:
+        if index != self._current_track_index or track is None:
             return
         audio, sample_rate = track
         start = int(float(ratio) * audio.shape[0])
         self._track_start_position = start / float(sample_rate or SAMPLE_RATE)
         self._track_started_at = time.monotonic()
+        self.update_offline_pipeline_position(index, self._track_start_position)
+        if not self._is_playing:
+            return
         self.audio.value = audio[start:]
         self.sample_rate.value = int(sample_rate)
         self.enqueue_token.value = int(self.enqueue_token.value) + 1
-        self.update_offline_pipeline_position(index, self._track_start_position)
+
+    def track_duration(self, index):
+        track = self._tracks[index]
+        if track is None:
+            return float(self._entries[index].get("duration") or 0)
+        audio, sample_rate = track
+        return audio.shape[0] / float(sample_rate or SAMPLE_RATE)
 
     def _current_position_ratio(self):
         if self._current_track_index < 0:
             return 0.0
-        with self._data_lock:
-            track = self._tracks[self._current_track_index]
-        if track is None:
-            return 0.0
-        audio, sample_rate = track
-        duration = audio.shape[0] / float(sample_rate or SAMPLE_RATE)
+        duration = self.track_duration(self._current_track_index)
         return min(1.0, self._current_position() / duration) if duration else 0.0
 
     def _current_position(self):
-        return self._track_start_position if not self._is_playing else self._track_start_position + time.monotonic() - self._track_started_at
+        if self._current_track_index < 0:
+            return 0.0
+        position = self._track_start_position + (time.monotonic() - self._track_started_at if self._is_playing else 0)
+        return min(self.track_duration(self._current_track_index), position)
 
     def _update_playback_position(self):
         if self._current_track_index < 0 or not self._is_playing:
@@ -271,6 +280,8 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
         with self._data_lock:
             self._seek_ratios[self._current_track_index] = ratio
         self.update_offline_pipeline_position(self._current_track_index, position)
+        if ratio >= 1:
+            self.on_pause_requested(self._current_track_index)
 
     def get_offline_pipeline_nodes(self):
         return [node for node in self.get_nodes() if isinstance(node, OfflineCNode)]
