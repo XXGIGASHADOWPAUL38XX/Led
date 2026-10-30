@@ -1,4 +1,4 @@
-from backend.components.elements.parameters import Parameter, DataElement
+from backend.components.elements.parameters import Parameter, DataElement, RGBParameter
 import colorsys
 import numpy as np
 
@@ -13,7 +13,9 @@ class GradiantNode(CNode):
     Output `data` has shape (n_points, 3), integer channels in [0, 255].
     Configure `n_points`, RGB `color_in`/`color_out`, and `cycle`, which scales
     the HSV transition: 0 stays at `color_in`, 1 reaches `color_out`;
-    changes regenerate the gradient. No input terminals are declared."""
+    `color_in`/`color_out` accept RGB vectors; their `_red`, `_green`, `_blue`
+    inputs accept one-element arrays that override individual channels.
+    Changes regenerate the gradient."""
 
     nodeName = "Gradiant"
 
@@ -25,21 +27,29 @@ class GradiantNode(CNode):
         cycle=1,
         parent: CNode | None = None,
         alias: str | None = None,
+        color_in_red=None,
+        color_in_green=None,
+        color_in_blue=None,
+        color_out_red=None,
+        color_out_green=None,
+        color_out_blue=None,
     ) -> None:
         terminals = {
+            "color_in": {"io": "in"},
+            "color_out": {"io": "in"},
             "data": {"io": "out"},
         }
         super().__init__(self.nodeName, terminals=terminals, parent=parent, alias=alias)
 
         self.n_points = Parameter(self, 'n_points', n_points, minimum=1, maximum=500, integer=True)
-        self.color_in = Parameter(self, 'color_in', color_in, kind='color')
-        self.color_out = Parameter(self, 'color_out', color_out, kind='color')
+        self.color_in = RGBParameter(self, 'color_in', color_in, (color_in_red, color_in_green, color_in_blue))
+        self.color_out = RGBParameter(self, 'color_out', color_out, (color_out_red, color_out_green, color_out_blue))
         self.cycle = Parameter(self, 'cycle', cycle, minimum=-10, maximum=10)
         self.data = DataElement(self, 'data', ElementValue(np.zeros((int(self.n_points.value), 3), dtype=int)))
 
         self.n_points.valueChanged.connect(self.refresh_gradiant)
-        self.color_in.valueChanged.connect(self.refresh_gradiant)
-        self.color_out.valueChanged.connect(self.refresh_gradiant)
+        self.color_in.connect(self.refresh_gradiant)
+        self.color_out.connect(self.refresh_gradiant)
         self.cycle.valueChanged.connect(self.refresh_gradiant)
         self.refresh_gradiant()
 

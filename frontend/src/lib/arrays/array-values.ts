@@ -1,5 +1,12 @@
 export type NumericArray = (number | NumericArray)[];
 
+export function parseArrayShape(text: string): number[] {
+  const shape = JSON.parse(text);
+  if (!Array.isArray(shape) || !shape.length || shape.length > 16 || shape.some((size) => !Number.isInteger(size) || size < 1 || size > 65536)) throw Error("Use 1–16 positive integer dimensions, at most 65536 each.");
+  if (shape.reduce((product, size) => product * size, 1) > 4_194_304) throw Error("Shape exceeds 4,194,304 elements.");
+  return shape;
+}
+
 export function arrayShape(value: unknown): number[] {
   if (typeof value === "number" && Number.isFinite(value)) return [];
   if (!Array.isArray(value)) throw Error("Use finite numbers and rectangular arrays only.");

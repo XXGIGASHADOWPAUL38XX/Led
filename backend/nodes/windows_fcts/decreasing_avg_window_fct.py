@@ -33,5 +33,5 @@ class DecreasingAvgWindowFct(WindowFct, CNode):
             self.data.value[...] = np.max(window_data, axis=self.avg_axis.value)
             return
 
-        weights = np.linspace(0.0, 1.0, window_data.shape[0])[:, None]
+        weights = np.linspace(0.0, 1.0, window_data.shape[0]).reshape((-1,) + (1,) * (window_data.ndim - 1))
         self.data.value[...] = np.max(window_data * weights, axis=self.avg_axis.value)

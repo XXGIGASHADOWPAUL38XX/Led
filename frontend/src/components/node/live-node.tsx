@@ -19,11 +19,11 @@ export function LiveNode({ id }: { id: string }) {
     .map((port) => ({ kind: node.type === "StemsRecognition" ? "trigger" as const : "bars" as const, data: port.name, label: port.name, open: false }))];
   const shown = new Set([...definition.fields.map((field) => field.name), ...views.map((view) => view.data)]);
   return <Node absolute id={id} title={definition.title} description={definition.description} initialPosition={{ x: position[0], y: position[1] }}
-    inputs={node.ports.filter((port) => port.direction === "in" && !shown.has(port.name)).map((port) => port.name)}
+    inputs={node.ports.filter((port) => port.direction === "in" && !shown.has(port.name) && !definition.fields.some((field) => field.portsPrefix && port.name.startsWith(field.portsPrefix))).map((port) => port.name)}
     onPositionCommit={({ x, y }) => { void backend.command("node.move", { nodeId: id, position: [x, y] }); }}>
     <div className="flex items-center justify-between text-[10px] text-zinc-500"><span>{definition.category} · {id}</span>
       <button type="button" onClick={() => { void backend.command("node.remove", { nodeId: id }); }} aria-label={`Remove ${id}`} className="rounded px-2 py-1 text-rose-300 hover:bg-rose-400/10">Remove</button></div>
-    <NodeFields key={node.id + JSON.stringify(snapshot?.graph.nodes.find((item) => item.id === id)?.parameters)} node={node} definition={definition} />
+    <NodeFields key={node.id} node={node} definition={definition} />
     {definition.actions && <div className="flex gap-2">{definition.actions.map((action) => <button key={action} type="button"
       onClick={() => { void backend.command(`node.${action}`, { nodeId: id }); }} className="flex-1 rounded bg-violet-400/15 py-2 text-xs capitalize text-violet-200">{action}</button>)}</div>}
     {views.map((view, index) => <NodeView key={`${view.data ?? view.kind}-${index}`} node={node} view={view} />)}

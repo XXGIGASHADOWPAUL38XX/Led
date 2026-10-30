@@ -5,6 +5,16 @@ import numpy as np
 from backend.components.elements.element import Element
 
 
+def validate_shape(shape, minimum=1):
+    values = np.asarray(shape)
+    if values.ndim != 1 or not 1 <= values.size <= 16 or values.dtype.kind not in 'iuf' or not np.isfinite(values).all() or np.any((values < minimum) | (values > 65536) | (values != np.floor(values))):
+        raise ValueError(f'Input shape must contain 1–16 integer dimensions between {minimum} and 65536')
+    dimensions = tuple(int(value) for value in values)
+    if np.prod(dimensions, dtype=object) > 4_194_304:
+        raise ValueError('Input shape exceeds 4,194,304 elements')
+    return dimensions
+
+
 class DataElement(Element):
     """Signal input/output: connect a source rather than author its samples."""
 
@@ -95,3 +105,47 @@ class Parameter(Element):
         elif self.kind in {"enum", "choice"} and value not in self.choices.values():
             return False, "Invalid choice"
         return True, None
+
+
+class RGBParameter(Parameter):
+    """RGB value with optional per-channel signal inputs in [0, 255]."""
+
+    def __init__(self, node, name, value, channels):
+        self.channels = []
+        self.overrides = set()
+        super().__init__(node, name, value, kind='color')
+        valid, error = self.check_value(Element.value.fget(self))
+        if not valid:
+            raise ValueError(error)
+        for index, (suffix, source) in enumerate(zip(('red', 'green', 'blue'), channels)):
+            channel_name = f'{name}_{suffix}'
+            channel = DataElement(node, channel_name, np.array([self.value[index]]) if source is None else source)
+            if np.shape(channel.value) != (1,) or not np.isfinite(channel.value).all():
+                raise ValueError('RGB channel inputs require one finite value')
+            self.channels.append(channel)
+            if source is not None:
+                self.overrides.add(channel_name)
+            vars(node)[channel_name] = channel
+            node.pending_terminals[channel_name] = {'io': 'in'}
+
+    @property
+    def value(self):
+        value = np.clip(np.array(Element.value.fget(self), dtype=float), 0, 255)
+        for index, channel in enumerate(self.channels):
+            if channel._value_source is not None or channel.name in self.overrides:
+                value[index] = np.clip(channel.value[0], 0, 255)
+        return value
+
+    @value.setter
+    def value(self, value):
+        Element.value.fset(self, value)
+
+    def connect(self, callback):
+        self.valueChanged.connect(callback)
+        for channel in self.channels:
+            channel.valueChanged.connect(callback)
+
+    def check_value(self, value):
+        if np.shape(value) != (3,):
+            return False, 'Expected three RGB channels'
+        return super().check_value(value)

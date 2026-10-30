@@ -29,7 +29,12 @@ class Handlers:
 
     async def node_add(self, session, payload):
         graph = deepcopy(self.runtime.graph)
-        node_id = payload.get("nodeId", str(uuid4()))
+        node_id = payload.get("nodeId", payload["nodeType"])
+        if "nodeId" not in payload:
+            suffix = 2
+            while node_id in self.runtime.nodes:
+                node_id = f"{payload['nodeType']} {suffix}"
+                suffix += 1
         graph["nodes"].append({"id": node_id, "type": payload["nodeType"], "position": payload.get("position", [0, 0]), "parameters": payload.get("parameters", {})})
         graph["connections"].extend(payload.get("connections", []))
         await self._load(graph)

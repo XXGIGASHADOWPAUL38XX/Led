@@ -3,7 +3,7 @@ import type { NodeDefinition } from "../definition.ts";
 export default {
   "type": "Function",
   "title": "Function",
-  "description": "Generate an editable piecewise-linear spatial curve.",
+  "description": "Generate a curve with editable points, segment slopes, and live control inputs.",
   "category": "function",
   "fields": [
     {
@@ -18,8 +18,12 @@ export default {
     },
     {
       "name": "points",
-      "control": "curve"
-    }
+      "control": "curve",
+      "portsPrefix": "point_"
+    },
+    { "name": "slopes", "control": "array", "hidden": true },
+    { "name": "point_ids", "control": "managed", "hidden": true },
+    { "name": "controls", "control": "managed", "hidden": true }
   ],
   "views": [
     {

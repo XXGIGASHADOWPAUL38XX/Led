@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useGraph } from "@/lib/backend/hooks";
 import { isArrayValue, type ArrayValue, type ElementDescriptor, type NodeDescriptor } from "@/lib/backend/protocol";
 import type { FieldDefinition } from "../node/definition";
+import { FunctionCurveControl } from "./function-curve-control";
+import { ColorControl } from "./color-control";
 import { ArrayElement, AxisElement, ColorElement, CurveElement, DataElement, IntervalElement, OptionalSliderElement, OperatorElement,
   ReferenceElement, SelectElement, SequenceElement, SliderElement, SwitchElement, TextElement, type Color, type CurvePoint, type NumericArray } from "../elements";
 
@@ -55,11 +57,11 @@ function TokenControl({ nodeId, field, value, onChange, onCommit }: { nodeId: st
   </div>;
 }
 
-export function FieldControl({ node, field, element, value, onChange, onCommit, disabled = false }: { node: NodeDescriptor; field: FieldDefinition; element: ElementDescriptor; value: unknown; onChange: (value: unknown) => void; onCommit?: () => void; disabled?: boolean }) {
+export function FieldControl({ node, field, element, value, onChange, onCommit, parameters = {}, onParametersChange, disabled = false }: { node: NodeDescriptor; field: FieldDefinition; element: ElementDescriptor; value: unknown; onChange: (value: unknown) => void; onCommit?: () => void; parameters?: Record<string, unknown>; onParametersChange?: (values: Record<string, unknown>) => void; disabled?: boolean }) {
   const commit = (value: unknown) => { onChange(value); onCommit?.(); };
   const label = field.label ?? element.label;
   const common = { label, disabled: element.disabled || disabled };
-  if (field.control === "port" || element.disabled && isArrayValue(value)) return <DataElement label={label} direction="input" endpoint={{ nodeId: node.id, element: field.name }} shape={element.shape ?? (isArrayValue(value) ? value.shape : [])} unit={field.unit} />;
+  if (field.control === "port" || field.control !== "color" && element.disabled && isArrayValue(value)) return <DataElement label={label} direction="input" endpoint={{ nodeId: node.id, element: field.name }} shape={element.shape ?? (isArrayValue(value) ? value.shape : [])} unit={field.unit} />;
   switch (field.control) {
     case "slider": {
       const props = { ...common, min: element.min ?? 0, max: element.max ?? 1, step: element.integer ? 1 : 0.01, onValueCommit: onCommit, scale: (element.min ?? 0) > 0 ? field.scale : "linear" as const, unit: field.unit };
@@ -68,10 +70,22 @@ export function FieldControl({ node, field, element, value, onChange, onCommit, 
     case "switch": return <SwitchElement {...common} checked={Boolean(value)} onCheckedChange={commit} />;
     case "select": return <SelectElement {...common} value={String(value)} onValueChange={commit} options={(element.options ?? []).map((option) => ({ ...option, value: String(option.value) }))} />;
     case "axis": return <AxisElement {...common} value={value as number | number[] | null} onValueChange={commit} />;
-    case "color": return <ColorElement {...common} value={value as Color} onValueChange={onChange} onValueCommit={onCommit} />;
+    case "color": {
+      const color = (isArrayValue(value) ? plainArray(value) : value) as Color;
+      const props = { ...common, value: color, onValueChange: onChange, onValueCommit: onCommit };
+      return field.channels ? <ColorControl {...props} nodeId={node.id} colorPort={field.name} channels={field.channels} /> : <ColorElement {...props} />;
+    }
     case "interval": return <IntervalElement {...common} value={value as [number, number]} onValueChange={onChange} onValueCommit={onCommit} min={field.min ?? -10000} max={field.max ?? 10000} />;
     case "array": return <ArrayElement {...common} value={isArrayValue(value) ? plainArray(value) : value as NumericArray} onValueChange={commit} min={element.min} max={element.max} integer={element.dtype ? /[iu]/.test(element.dtype) : false} />;
-    case "curve": return <CurveElement {...common} value={(isArrayValue(value) ? plainArray(value) : value) as CurvePoint[]} onValueChange={onChange} onValueCommit={onCommit} />;
+    case "shape": return <ArrayElement {...common} shape value={value as number[]} onValueChange={commit} />;
+    case "curve": {
+      const points = (isArrayValue(value) ? plainArray(value) : value) as CurvePoint[];
+      if (!field.portsPrefix) return <CurveElement {...common} value={points} onValueChange={onChange} onValueCommit={onCommit} />;
+      const slopes = parameters.slopes ?? node.elements.find((item) => item.name === "slopes")!.value;
+      const ids = parameters.point_ids ?? node.elements.find((item) => item.name === "point_ids")!.value;
+      return <FunctionCurveControl {...common} nodeId={node.id} curve={{ points, slopes: (isArrayValue(slopes) ? plainArray(slopes) : slopes) as number[], ids: ids as string[] }}
+        onChange={(curve) => onParametersChange!({ points: curve.points, slopes: curve.slopes, point_ids: curve.ids })} onCommit={onCommit} />;
+    }
     case "reference": return <ReferenceControl nodeId={node.id} field={field} value={value as Reference} onChange={commit} disabled={common.disabled} />;
     case "node-reference": return <ReferenceControl nodeId={node.id} field={field} value={value as Reference} onChange={commit} disabled={common.disabled} nodeOnly />;
     case "sequence": return <SequenceElement {...common} value={value as unknown[]} onValueChange={onChange} onValueCommit={onCommit}

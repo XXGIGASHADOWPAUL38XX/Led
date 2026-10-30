@@ -11,6 +11,7 @@ import { MIN_ZOOM, MAX_ZOOM, clampZoom, zoomScroll } from "./viewport";
 import { useTerminalDrag } from "./use-terminal-drag";
 import { connectionPath } from "./connection-path";
 import { useCanvasViewport, type CanvasHandle } from "./use-canvas-viewport";
+import { useObjectSelection } from "./object-selection";
 
 /** One registry and SVG for the workspace; live data frames never redraw wires. */
 export function ConnectionLayer({ graph, children, ref }: { graph: Graph; children: ReactNode; ref?: Ref<CanvasHandle> }) {
@@ -54,20 +55,20 @@ export function ConnectionLayer({ graph, children, ref }: { graph: Graph; childr
   }, [zoom, changeZoom]);
   const terminals = useRef(new Map<string, HTMLElement>());
   const { preview, start, move, finish, cancel, disconnect } = useTerminalDrag(graph, container, terminals.current, zoom);
-  const [selected, setSelected] = useState<string | null>(null);
-  useEffect(() => { if (selected && !connections.some((edge) => edge.id === selected)) setSelected(null); }, [connections, selected]);
+  const selection = useObjectSelection()!;
+  const selected = selection.value.kind === "wire" ? [...selection.value.ids][0] : null;
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { cancel(); setSelected(null); }
+      if (event.key === "Escape") { cancel(); selection.clear(); }
       if (!selected || isTyping() || document.querySelector("dialog[open]")) return;
       if (event.key === "Delete" || event.key === "Backspace") {
-        event.preventDefault(); setSelected(null);
+        event.preventDefault(); selection.clear();
         void backend.command("connection.remove", { connectionId: selected });
       }
     };
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [selected, cancel]);
+  }, [selected, cancel, selection]);
   const frame = useRef(0);
   const [paths, setPaths] = useState<{ id: string; label: string; d: string }[]>([]);
   const [layout, setLayout] = useState(0);
@@ -143,14 +144,14 @@ export function ConnectionLayer({ graph, children, ref }: { graph: Graph; childr
       </div>
     </div>
     <p className="text-[10px] text-zinc-500">Drag terminals to connect · Drag a connected input into empty space to unlink · Select a wire and press Delete to remove it</p>
-    <div ref={viewport} onPointerDown={() => setSelected(null)} onPointerMove={(event) => rememberPointer(event.clientX, event.clientY)} className="node-canvas max-h-[75vh] min-h-48 overflow-auto rounded-xl border border-white/5 [overflow-anchor:none]">
+    <div ref={viewport} tabIndex={-1} onPointerDown={(event) => { if (!(event.target as Element).closest("[data-node-id], [data-terminal]")) { selection.clear(); event.currentTarget.focus({ preventScroll: true }); } }} onPointerMove={(event) => rememberPointer(event.clientX, event.clientY)} className="node-canvas max-h-[75vh] min-h-48 overflow-auto rounded-xl border border-white/5 outline-none [overflow-anchor:none]">
     <div style={{ width: extent.width * zoom, height: extent.height * zoom }} className="overflow-hidden">
     <div ref={container} style={{ ...extent, transform: `translate(${-bounds.left * zoom}px, ${-bounds.top * zoom}px) scale(${zoom})`, transformOrigin: "0 0" }} className="relative min-h-48">
       <svg aria-label="Node connections" className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" fill="none">
         {paths.map((path) => <g key={path.id}>
           <path d={path.d} stroke={selected === path.id ? "#e9d5ff" : "#a78bfa"} strokeWidth={selected === path.id ? 3 : 2} strokeOpacity={0.8} />
           <path d={path.d} stroke="transparent" strokeWidth={12} pointerEvents="stroke" className="cursor-pointer"
-            onPointerDown={(event) => { event.stopPropagation(); setSelected(path.id); }}><title>{path.label} · Delete to disconnect</title></path>
+            onPointerDown={(event) => { event.stopPropagation(); selection.select("wire", path.id); }}><title>{path.label} · Delete to disconnect</title></path>
         </g>)}
         {preview && <path d={preview} stroke="#c4b5fd" strokeWidth={2} strokeDasharray="5 4" />}
       </svg>

@@ -12,6 +12,7 @@ import { ConnectionLayer } from "./connection-layer";
 import { AddNodeDialog } from "../dialogs/add-node-dialog";
 import { isTyping } from "./shortcuts";
 import type { CanvasHandle } from "./use-canvas-viewport";
+import { ObjectSelectionProvider } from "./object-selection";
 
 export function LiveWorkspace() {
   const status = useBackendStatus();
@@ -58,6 +59,6 @@ export function LiveWorkspace() {
       {snapshot.graph.connections.map((edge) => <div key={edge.id} className="mt-2 flex justify-between gap-2 text-xs text-zinc-400"><span>{edge.source.nodeId}.{edge.source.element} → {edge.target.nodeId}.{edge.target.element}</span>
         <button type="button" onClick={() => { void backend.command("connection.remove", { connectionId: edge.id }); }} className="text-rose-300">Disconnect</button></div>)}
     </details>}
-    {snapshot && <ConnectionLayer ref={canvas} graph={snapshot.graph}>{snapshot.graph.nodes.map((node) => <LiveNode key={`${templateRevision}:${node.id}`} id={node.id} />)}</ConnectionLayer>}
+    {snapshot && <ObjectSelectionProvider graph={snapshot.graph} revision={templateRevision}><ConnectionLayer ref={canvas} graph={snapshot.graph}>{snapshot.graph.nodes.map((node) => <LiveNode key={`${templateRevision}:${node.id}`} id={node.id} />)}</ConnectionLayer></ObjectSelectionProvider>}
   </section>;
 }

@@ -11,16 +11,16 @@ export default {
       "control": "port"
     },
     {
-      "name": "output_value_interval",
+      "name": "input_value_interval",
       "control": "interval",
-      "label": "Output range",
+      "label": "Input range",
       "min": -10000,
       "max": 10000
     },
     {
-      "name": "input_value_interval",
+      "name": "output_value_interval",
       "control": "interval",
-      "label": "Input range",
+      "label": "Output range",
       "min": -10000,
       "max": 10000
     }

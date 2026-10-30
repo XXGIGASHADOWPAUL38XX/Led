@@ -48,6 +48,15 @@ class HistoryTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(self.runtime.graph["connections"]), 1)
         self.assertIs(self.runtime.nodes["amp"], original)
 
+    async def test_automatic_node_names_are_readable_unique_and_undoable(self):
+        for expected in ('ConstantArray', 'ConstantArray 2'):
+            message = await self.command('node.add', nodeType='ConstantArray')
+            self.assertEqual(message['payload']['result']['nodeId'], expected)
+        await self.command('graph.undo')
+        self.assertNotIn('ConstantArray 2', self.runtime.nodes)
+        message = await self.command('node.add', nodeType='ConstantArray')
+        self.assertEqual(message['payload']['result']['nodeId'], 'ConstantArray 2')
+
     async def test_rejected_edit_does_not_enter_history_and_failed_undo_is_retained(self):
         self.assertEqual((await self.command("element.set", nodeId="amp", element="powering", value=100))["type"], "error")
         self.assertFalse(self.router.history.entries)

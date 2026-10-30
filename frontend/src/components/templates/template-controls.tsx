@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { backend } from "@/lib/backend/store";
 import { useBackendStatus } from "@/lib/backend/hooks";
 import { MAX_TEMPLATE_BYTES } from "@/lib/backend/template";
+import { saveFile } from "@/lib/files/save-file";
 
 export function TemplateControls() {
   const status = useBackendStatus();
@@ -17,14 +18,12 @@ export function TemplateControls() {
   async function save() {
     setBusy("save"); setError(""); setMessage("");
     try {
-      const bytes = await backend.exportTemplate();
-      const url = URL.createObjectURL(new Blob([Uint8Array.from(bytes)], { type: "application/octet-stream" }));
-      const link = document.createElement("a");
-      link.href = url; link.download = filename;
-      document.body.append(link); link.click(); link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      setMessage(`Exported ${filename}`);
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not save template."); }
+      const name = await saveFile(filename, () => backend.exportTemplate());
+      setFilename(name);
+      setMessage(`Saved ${name}`);
+    } catch (reason) {
+      if (!(reason instanceof DOMException && reason.name === "AbortError")) setError(reason instanceof Error ? reason.message : "Could not save template.");
+    }
     finally { setBusy(null); }
   }
   async function load(file?: File) {

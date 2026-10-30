@@ -1,20 +1,27 @@
 "use client";
 
-import { useId } from "react";
+import { type ReactNode, useId } from "react";
 import { CoreElement } from "./core-element";
 import { SliderElement } from "./slider-element";
 
 export type Color = readonly [number, number, number] | readonly [number, number, number, number];
-export type ColorElementProps = { label: string; value: Color; onValueChange: (value: Color) => void; onValueCommit?: () => void; disabled?: boolean };
+export type ColorElementProps = { label: string; value: Color; onValueChange: (value: Color) => void; onValueCommit?: () => void; disabled?: boolean; channelDisabled?: (index: number) => boolean; renderTerminal?: (index: number) => ReactNode };
 
-export function ColorElement({ label, value, onValueChange, onValueCommit, disabled = false }: ColorElementProps) {
+export function ColorElement({ label, value, onValueChange, onValueCommit, disabled = false, channelDisabled = () => false, renderTerminal }: ColorElementProps) {
   const id = useId();
-  const hex = `#${value.slice(0, 3).map((channel) => channel.toString(16).padStart(2, "0")).join("")}`;
+  const hex = `#${value.slice(0, 3).map((channel) => Math.round(channel).toString(16).padStart(2, "0")).join("")}`;
   const alpha = value.length === 4 ? value[3] / 255 : 1;
 
   function update(channels: readonly number[]) {
     onValueChange(value.length === 4 ? [channels[0], channels[1], channels[2], channels[3]] : [channels[0], channels[1], channels[2]]);
   }
+
+  const channels = <div className="space-y-1.5 p-2 pt-0">{value.map((channel, index) => (
+    <div key={index} className="relative">{renderTerminal?.(index)}
+      <SliderElement label={["Red", "Green", "Blue", "Alpha"][index]} value={channel} min={0} max={255} disabled={disabled || channelDisabled(index)}
+        onValueChange={(next) => update(value.map((current, at) => at === index ? next : current))} onValueCommit={onValueCommit} />
+    </div>
+  ))}</div>;
 
   return (
     <div className="space-y-1">
@@ -33,13 +40,10 @@ export function ColorElement({ label, value, onValueChange, onValueCommit, disab
           </span>
         </span>
       </CoreElement>
-      <details className="rounded-md border border-white/5 bg-black/10">
+      {renderTerminal ? channels : <details className="rounded-md border border-white/5 bg-black/10">
         <summary className="cursor-pointer px-3 py-1.5 text-[10px] text-zinc-500 outline-violet-400">{value.length === 4 ? "RGBA" : "RGB"} channels</summary>
-        <div className="space-y-1.5 p-2 pt-0">{value.map((channel, index) => (
-          <SliderElement key={index} label={["Red", "Green", "Blue", "Alpha"][index]} value={channel} min={0} max={255} disabled={disabled}
-            onValueChange={(next) => update(value.map((current, at) => at === index ? next : current))} onValueCommit={onValueCommit} />
-        ))}</div>
-      </details>
+        {channels}
+      </details>}
     </div>
   );
 }

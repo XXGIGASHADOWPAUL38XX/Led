@@ -43,7 +43,7 @@ class WindowFct:
                 self.data.value = np.zeros(shape)
 
     def _output_shape(self, history):
-        return (history.shape[-1],)
+        return history.shape[1:]
 
     def close(self):
         if self._registered_window is not None:

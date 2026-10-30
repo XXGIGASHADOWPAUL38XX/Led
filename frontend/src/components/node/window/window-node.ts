@@ -3,12 +3,18 @@ import type { NodeDefinition } from "../definition.ts";
 export default {
   "type": "Window",
   "title": "Window",
-  "description": "Keep recent vector frames for temporal aggregation.",
+  "description": "Keep recent array frames with an editable input shape for temporal aggregation.",
   "category": "window",
   "fields": [
     {
       "name": "input_data",
       "control": "port"
+    },
+    {
+      "name": "shape",
+      "control": "shape",
+      "label": "Input shape",
+      "rebuild": true
     },
     {
       "name": "length",

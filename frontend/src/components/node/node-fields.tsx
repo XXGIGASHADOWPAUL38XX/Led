@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { backend } from "@/lib/backend/store";
 import { isArrayValue, type NodeDescriptor } from "@/lib/backend/protocol";
 import type { NodeDefinition } from "./definition";
@@ -13,6 +13,7 @@ export function NodeFields({ node, definition }: { node: NodeDescriptor; definit
   const [saving, setSaving] = useState(false);
   const changes = useRef(draft);
   const pending = useRef(false);
+  useEffect(() => { changes.current = {}; setDraft({}); }, [node]);
   const complete = completeConfiguration(definition.fields, draft);
   async function commit() {
     const parameters = changes.current;
@@ -28,14 +29,14 @@ export function NodeFields({ node, definition }: { node: NodeDescriptor; definit
     } finally { pending.current = false; setSaving(false); }
   }
   return <div className="space-y-2">
-    {definition.fields.filter((field) => field.control !== "port" || !definition.views.some((view) => view.data === field.name)).map((field) => {
+    {definition.fields.filter((field) => !field.hidden && (field.control !== "port" || !definition.views.some((view) => view.data === field.name))).map((field) => {
       const element = node.elements.find((element) => element.name === field.name);
       if (!element) return null;
       const count = field.bounds ? Number(draft[field.bounds.from] ?? node.elements.find((item) => item.name === field.bounds!.from)?.value) : 0;
       const constrained = field.bounds ? { ...element, min: Math.floor(count * field.bounds.min), max: Math.floor(count * field.bounds.max) } : element;
       return <div key={field.name} data-node-field={field.name} className="relative">
-      {field.control !== "port" && !(element.disabled && isArrayValue(element.value)) && node.ports.some((port) => port.name === field.name && port.direction === "in") && <Terminal endpoint={{ nodeId: node.id, element: field.name }} direction="input" className="absolute -left-5 top-3" />}
-      <FieldControl node={node} field={field} element={constrained} disabled={saving} onCommit={() => { void commit(); }} value={Object.hasOwn(draft, field.name) ? draft[field.name] : element.value}
+      {field.control !== "port" && (field.control === "color" || !(element.disabled && isArrayValue(element.value))) && node.ports.some((port) => port.name === field.name && port.direction === "in") && <Terminal endpoint={{ nodeId: node.id, element: field.name }} direction="input" className="absolute -left-5 top-3" />}
+      <FieldControl node={node} field={field} element={constrained} disabled={saving} parameters={draft} onParametersChange={(values) => { if (pending.current) return; const next = { ...changes.current, ...values }; changes.current = next; setDraft(next); }} onCommit={() => { void commit(); }} value={Object.hasOwn(draft, field.name) ? draft[field.name] : element.value}
         onChange={(value) => {
           if (pending.current) return;
           const next = { ...changes.current, [field.name]: value };

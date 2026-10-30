@@ -2,6 +2,7 @@
 
 import { type ReactNode, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Terminal, TerminalContext } from "../workspace/terminal";
+import { useObjectSelection } from "../workspace/object-selection";
 
 export type NodeProps = {
   children?: ReactNode;
@@ -21,6 +22,9 @@ export function Node({ id, title, description, inputs = [], outputs = [], childr
   useEffect(() => { setPosition({ x: initialX, y: initialY }); }, [initialX, initialY]);
   const drag = useRef({ x: 0, y: 0 });
   const article = useRef<HTMLElement>(null);
+  const selecting = useRef(false);
+  const selection = useObjectSelection();
+  const selected = selection?.value.kind === "node" && selection.value.ids.has(id);
   const workspace = useContext(TerminalContext);
   const invalidate = workspace?.invalidate;
   const zoom = workspace?.zoom ?? 1;
@@ -33,9 +37,20 @@ export function Node({ id, title, description, inputs = [], outputs = [], childr
   }, [invalidate]);
 
   return (
-    <article ref={article} aria-label={`${title} node`} data-node-id={id}
+    <article ref={article} aria-label={`${title} node`} data-node-id={id} data-selected={selected || undefined} tabIndex={0}
+      onPointerDownCapture={(event) => {
+        if ((event.button !== 0 && !event.ctrlKey) || (event.target as Element).closest("[data-terminal]")) return;
+        selection?.select("node", id, event.ctrlKey || event.metaKey);
+        if (event.ctrlKey || event.metaKey || event.target === event.currentTarget) {
+          event.preventDefault();
+          selecting.current = true; event.currentTarget.focus({ preventScroll: true }); selecting.current = false;
+          if (event.ctrlKey || event.metaKey) event.stopPropagation();
+        }
+      }}
+      onFocus={(event) => { if (event.target === event.currentTarget && !selecting.current) selection?.focus("node", id); }}
+      onContextMenu={(event) => { if (event.ctrlKey) event.preventDefault(); }}
       style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
-      className={`${absolute ? "absolute left-0 top-0" : "relative"} w-72 rounded-xl border border-violet-400/50 bg-[#1c1d26] shadow-2xl shadow-black/40`}>
+      className={`${absolute ? "absolute left-0 top-0" : "relative"} w-72 rounded-xl border border-violet-400/50 bg-[#1c1d26] shadow-2xl shadow-black/40 outline-none focus-visible:ring-2 focus-visible:ring-violet-200 data-[selected]:border-violet-200 data-[selected]:ring-2 data-[selected]:ring-violet-400/70`}>
       <button type="button" aria-label={`Drag ${title}`} className="flex w-full touch-none select-none items-center gap-3 rounded-t-xl border-b border-white/10 px-4 py-3 text-left cursor-grab active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-violet-400"
         onPointerDown={(event) => {
           if (event.button !== 0) return;

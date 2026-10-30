@@ -8,6 +8,7 @@ import { TextElement } from "../elements";
 import { FieldControl, ReferenceControl } from "../forms/field-control";
 import { completeConfiguration } from "../../lib/nodes/configuration";
 import { nodeDefinitions } from "../node/registry";
+import { availableNodeName } from "../../lib/nodes/node-name";
 
 export function AddNodeDialog({ onClose, position }: { onClose: () => void; position: [number, number] }) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -30,6 +31,7 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
     folders.get(folder)!.push({ type: item.type, index });
   });
   const definition = nodeDefinitions[type];
+  const automaticName = type ? availableNodeName(definition.title, snapshot?.graph.nodes.map((node) => node.id) ?? []) : "";
   useEffect(() => { dialog.current!.showModal(); search.current!.focus(); }, []);
   useEffect(() => { dialog.current?.querySelector("[data-selected=true]")?.scrollIntoView({ block: "nearest" }); }, [selected, type, query]);
   useEffect(() => {
@@ -43,7 +45,7 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
   }, [type]);
   async function create() {
     setBusy(true); setError("");
-    const nodeId = name.trim() || crypto.randomUUID();
+    const nodeId = name.trim() || automaticName;
     const values = { ...parameters };
     const connections = definition.fields.filter((field) => field.control === "port").flatMap((field) => {
       const source = values[field.name] as Endpoint | null;
@@ -73,15 +75,15 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
         {!choices.length && <p className="p-3 text-xs text-zinc-500">No matching nodes.</p>}</div>
     </> : <form onSubmit={(event) => { event.preventDefault(); void create(); }} className="space-y-3">
       <p className="text-xs text-zinc-400">{definition.description}</p>
-      <TextElement label="Name" value={name} onValueChange={setName} placeholder="Automatic" />
-      {!node ? <p className="text-xs text-zinc-500">Loading parameters…</p> : definition.fields.filter((field) => field.control !== "managed").map((field) => {
+      <TextElement label="Name" value={name} onValueChange={setName} placeholder={automaticName} />
+      {!node ? <p className="text-xs text-zinc-500">Loading parameters…</p> : definition.fields.filter((field) => !field.hidden && field.control !== "managed").map((field) => {
         const element = node.elements.find((item) => item.name === field.name);
         if (!element) return null;
         const value = Object.hasOwn(parameters, field.name) ? parameters[field.name] : element.value;
         const onChange = (value: unknown) => setParameters((previous) => ({ ...previous, [field.name]: value }));
         const count = field.bounds ? Number(parameters[field.bounds.from] ?? node.elements.find((item) => item.name === field.bounds!.from)?.value) : 0;
         return <div key={field.name}>{field.control === "port" ? <ReferenceControl nodeId={node.id} field={field} value={(parameters[field.name] ?? null) as Endpoint | null} onChange={onChange} />
-          : <FieldControl node={node} field={field} element={field.bounds ? { ...element, min: Math.floor(count * field.bounds.min), max: Math.floor(count * field.bounds.max) } : element} value={value} onChange={onChange} />}</div>;
+          : <FieldControl node={node} field={field} parameters={parameters} onParametersChange={(values) => setParameters((previous) => ({ ...previous, ...values }))} element={field.bounds ? { ...element, min: Math.floor(count * field.bounds.min), max: Math.floor(count * field.bounds.max) } : element} value={value} onChange={onChange} />}</div>;
       })}
       {error && <p role="alert" className="text-xs text-rose-300">{error}</p>}
       <div className="flex justify-between gap-2 pt-2"><button type="button" disabled={busy} onClick={() => { setType(""); setName(""); }} className="text-xs text-zinc-400">Back</button>
