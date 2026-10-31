@@ -40,7 +40,8 @@ export function Node({ id, title, description, inputs = [], outputs = [], childr
     <article ref={article} aria-label={`${title} node`} data-node-id={id} data-selected={selected || undefined} tabIndex={0}
       onPointerDownCapture={(event) => {
         if ((event.button !== 0 && !event.ctrlKey) || (event.target as Element).closest("[data-terminal]")) return;
-        selection?.select("node", id, event.ctrlKey || event.metaKey);
+        if (event.ctrlKey || event.metaKey) selection?.select("node", id, true);
+        else selection?.focus("node", id);
         if (event.ctrlKey || event.metaKey || event.target === event.currentTarget) {
           event.preventDefault();
           selecting.current = true; event.currentTarget.focus({ preventScroll: true }); selecting.current = false;
@@ -59,7 +60,8 @@ export function Node({ id, title, description, inputs = [], outputs = [], childr
           event.currentTarget.setPointerCapture(event.pointerId);
           const point = workspace?.toCanvas(event.clientX, event.clientY) ?? { x: event.clientX / zoom, y: event.clientY / zoom };
           drag.current = { x: point.x - position.x, y: point.y - position.y };
-          workspace?.startNodeDrag(event.clientX, event.clientY, (point) => setPosition({ x: point.x - drag.current.x, y: point.y - drag.current.y }));
+          workspace?.beginNodeMove(id);
+          workspace?.startNodeDrag(event.clientX, event.clientY, (point) => workspace.updateNodeMove({ x: point.x - drag.current.x, y: point.y - drag.current.y }));
         }}
         onPointerMove={(event) => {
           if (event.currentTarget.hasPointerCapture(event.pointerId)) {
@@ -71,19 +73,19 @@ export function Node({ id, title, description, inputs = [], outputs = [], childr
           if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
           const point = workspace?.endNodeDrag(event.clientX, event.clientY) ?? { x: event.clientX / zoom, y: event.clientY / zoom };
           const next = { x: point.x - drag.current.x, y: point.y - drag.current.y };
-          setPosition(next);
+          if (workspace) void workspace.commitNodeMove(next);
+          else { setPosition(next); onPositionCommit?.(next); }
           event.currentTarget.releasePointerCapture(event.pointerId);
-          onPositionCommit?.(next);
         }}
-        onPointerCancel={() => { workspace?.cancelNodeDrag(); setPosition({ x: initialX, y: initialY }); }}
-        onLostPointerCapture={() => workspace?.cancelNodeDrag()}
+        onPointerCancel={() => { workspace?.cancelNodeDrag(); workspace?.cancelNodeMove(); setPosition({ x: initialX, y: initialY }); }}
+        onLostPointerCapture={() => { workspace?.cancelNodeDrag(); workspace?.cancelNodeMove(); }}
         onKeyDown={(event) => {
           const delta = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] }[event.key];
           if (delta) {
             event.preventDefault();
             const next = { x: position.x + delta[0], y: position.y + delta[1] };
-            setPosition(next);
-            onPositionCommit?.(next);
+            if (workspace) { workspace.beginNodeMove(id); void workspace.commitNodeMove(next); }
+            else { setPosition(next); onPositionCommit?.(next); }
           }
         }}>
         <span className="h-2 w-2 rounded-full bg-violet-400" />

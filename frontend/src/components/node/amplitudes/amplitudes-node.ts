@@ -3,9 +3,10 @@ import type { NodeDefinition } from "../definition.ts";
 export default {
   "type": "Amplitudes",
   "title": "Amplitudes",
-  "description": "Convert a stereo audio window to a logarithmically spaced spectrum.",
+  "description": "Convert an audio window to a logarithmically spaced spectrum.",
   "category": "amplitudes",
   "fields": [
+    { "name": "shape", "control": "shape", "label": "Input shape", "rebuild": true },
     {
       "name": "buffer",
       "control": "port"
@@ -25,6 +26,7 @@ export default {
     },
     {
       "name": "fft_size",
+      "hidden": true,
       "control": "slider",
       "label": "FFT size",
       "rebuild": true

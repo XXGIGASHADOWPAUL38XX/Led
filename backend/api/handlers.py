@@ -5,6 +5,7 @@ import math
 from uuid import uuid4
 
 from .protocol import event
+from .clipboard import copy_nodes, paste_nodes
 
 
 class Handlers:
@@ -19,6 +20,15 @@ class Handlers:
     async def graph_get(self, session, payload):
         await session.send(event("graph.snapshot", self.runtime.snapshot(), self.runtime.revision))
         return {"graph": self.runtime.graph}
+
+    async def graph_copy(self, session, payload):
+        return {"graph": copy_nodes(self.runtime, payload['nodeIds'])}
+
+    async def graph_paste(self, session, payload):
+        copied, names = paste_nodes(payload['graph'], self.runtime.nodes, payload['position'])
+        graph = {key: [*self.runtime.graph[key], *copied[key]] for key in ('nodes', 'connections')}
+        await self._load(graph)
+        return {"nodeIds": list(names.values())}
 
     async def graph_load(self, session, payload):
         if "connects" in payload["graph"]:

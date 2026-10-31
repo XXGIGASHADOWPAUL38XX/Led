@@ -1,21 +1,19 @@
-"""Generate saved Led graph variations with Jev."""
+"""Build native Led graphs incrementally using weighted Jev choices."""
+import asyncio
 import inspect
 import json
 import logging
 import os
-from contextlib import contextmanager
 from copy import deepcopy
 from random import choices
-from unittest.mock import patch
-from time import sleep
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-import networkx as nx
 import numpy as np
+import networkx as nx
 from dotenv import load_dotenv
-from .adapter import adapt, apply_parameters, compatible, prepare_parameters, serialize, summary
+from .adapter import prepare_parameters, serialize, summary
 
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
@@ -29,8 +27,16 @@ GENERATION_RULES = (
     "Create an audio-reactive RGBA output of shape (180, 4) before adding the chart. "
     "Connect that output to the chart's brushes and leave its data input disconnected."
 )
+EDIT_RULES = (
+    "Edit the current lighting graph according to the user's prompt. "
+    "Keep existing nodes, values, connections and positions unless a change is needed. "
+    "Choose small targeted edits; add, configure, reconnect or remove nodes, then finish. "
+    "Preserve the existing playback pipeline and express lighting intensity through brushes alpha. "
+    "Keep existing BarGraphChart heights fixed. Do not rebuild the graph from scratch."
+)
 
 logger = logging.getLogger("led.jev")
+INVALID_GRAPH = (ValueError, TypeError, KeyError, IndexError, OverflowError)
 logger.setLevel(logging.INFO)
 logger.propagate = False
 if not logger.handlers:
@@ -39,34 +45,26 @@ if not logger.handlers:
     logger.addHandler(handler)
 
 
-def jev(state, questions):
-    """Keep requests small; split rejected batches without dropping choices."""
-    items = list(questions.items())
-    answers = {}
+async def jev(state, questions, deterministic=False):
+    """Cancellable batches; only the in-flight HTTP call runs in a worker."""
+    items, answers = list(questions.items()), {}
     for start in range(0, len(items), 8):
         logger.info("Batch %d/%d", start // 8 + 1, (len(items) + 7) // 8)
-        answers.update(_jev_batch(state, items[start:start + 8]))
+        answers.update(await _jev_batch(state, items[start:start + 8], deterministic))
     return answers
 
 
-def _jev_batch(state, items):
-    try:
-        return _jev_request(state, dict(items))
-    except HTTPError as error:
-        detail = error.read().decode()
-        if error.code == 400 and '"max_tokens_exceeded"' in detail and len(items) > 1:
-            middle = len(items) // 2
-            return {**_jev_batch(state, items[:middle]), **_jev_batch(state, items[middle:])}
-        raise RuntimeError(f"Jev HTTP {error.code}: {detail}") from error
-
-
-def _jev_request(state, questions):
+async def _jev_batch(state, items, deterministic):
     for attempt in range(4):
         try:
-            return _jev_request_once(state, questions)
+            return await asyncio.to_thread(_jev_request_once, state, dict(items), deterministic)
         except HTTPError as error:
+            detail = error.read().decode()
+            if error.code == 400 and '"max_tokens_exceeded"' in detail and len(items) > 1:
+                middle = len(items) // 2
+                return {**await _jev_batch(state, items[:middle], deterministic), **await _jev_batch(state, items[middle:], deterministic)}
             if error.code not in (429, 500, 502, 503, 504) or attempt == 3:
-                raise
+                raise RuntimeError(f"Jev HTTP {error.code}: {detail}") from error
             reason = str(error)
         except (URLError, ConnectionError, TimeoutError) as error:
             if attempt == 3:
@@ -74,345 +72,349 @@ def _jev_request(state, questions):
             reason = str(error)
         delay = 2 ** attempt
         logger.warning("Batch failed: %s; retry %d/3 in %ds", reason, attempt + 1, delay)
-        sleep(delay)
+        await asyncio.sleep(delay)
 
 
-def _jev_request_once(state, questions):
+def _jev_request_once(state, questions, deterministic):
     request = Request(
-        "https://opencode.ai/zen/v1/systemone",
+        "https://opencode.ai/inference/systemone/v1/systemone",
         data=json.dumps({"model": "jev-1.13-free", "state": state, "questions": questions}).encode(),
         headers={
             "Authorization": f"Bearer {os.environ['OPENCODE_API_KEY']}",
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "User-Agent": "JevTests/1.0",
+            "User-Agent": "Led/1.0",
         },
     )
     logger.info("API batch: %d questions, %d bytes", len(questions), len(request.data))
     with urlopen(request, timeout=30) as response:
-        return normalize_answers(json.load(response)["answers"], questions)
+        return normalize_answers(json.load(response)["answers"], questions, deterministic)
 
 
-def normalize_answers(answers, questions):
+def normalize_answers(answers, questions, deterministic=False):
     """Decode choices and sample returned probabilities before validation."""
     result = {}
     for name, question in questions.items():
         value = answers[name]["probabilities"]
-        value = choices(list(value), weights=list(value.values()))[0]
+        weights = np.asarray(list(value.values()), dtype=float)
+        if not value or value.keys() - question["criteria"].keys() or not np.isfinite(weights).all() or np.any(weights < 0) or weights.sum() <= 0:
+            raise ValueError(f"Invalid Jev probabilities for {name}")
+        value = max(value, key=lambda option: value[option]) if deterministic else choices(list(value), weights=list(value.values()))[0]
         if str(value) not in question["criteria"]:
             raise ValueError(f"Invalid Jev choice for {name}: {value!r}")
         result[name] = {**answers[name], "choice": str(value)}
     return result
 
 
-@contextmanager
-def preview_nodes():
-    """Disable workers and preserve update registries while inspecting nodes."""
-    from backend.updatable.updatable import audio_updatable_objects, visual_updatable_objects
-    audio, visual = list(audio_updatable_objects), list(visual_updatable_objects)
-    try:
-        with patch("threading.Thread.start"):
-            yield
-    finally:
-        audio_updatable_objects[:] = audio
-        visual_updatable_objects[:] = visual
 
 
-class NodeCatalog:
-    """Inspect registered node constructors and their Elements at runtime."""
-    def __init__(self):
-        from backend.registry.registry import nodes
-        from backend.nodes.simple.constant_array import ConstantArrayNode
-        from backend.components.elements.parameters import Parameter
+class Generator:
+    """Build a private graph; only the caller can commit the validated result."""
 
-        self.classes = {cls.nodeName: cls for cls in nodes}
-        self.defaults, self.descriptions = {}, {}
-        self.prototypes = []
-        with preview_nodes():
-            support = ConstantArrayNode(alias="ConstantArray.support")
-            self.prototypes.append(support)
-            for name, cls in self.classes.items():
-                kwargs = {}
-                if name == "Gathering":
-                    kwargs.update(input_datas=[support.data], input_booleans=[support.length])
-                if name == "AmplitudeLevelFunction":
-                    kwargs["number_points"] = 300
-                node = cls(**kwargs)
-                self.prototypes.append(node)
-                if name == "ESP32":
-                    node.close()
-                fields = []
-                for parameter in inspect.signature(cls).parameters:
-                    if parameter in ("alias", "parent", "terminals", "node_selector"):
-                        continue
-                    element = vars(node)[parameter]
-                    # Build every adapter now, so catalog fields use actual Element constraints.
-                    adapt(element)
-                    if type(element) is Parameter:
-                        details = element.kind
-                        if element.kind == "number":
-                            details += f" [{element.minimum}, {element.maximum}], integer={element.integer}, optional={element.optional}"
-                    else:
-                        details = type(element).__name__
-                    fields.append(f"{parameter}: {details}")
-                # Recreate constructor defaults, rather than copying references
-                # to private child nodes owned by the inspection prototype.
-                self.defaults[name] = {key: serialize(value) for key, value in kwargs.items()
-                                       if key not in ("input_datas", "input_booleans")}
-                self.descriptions[name] = f"{inspect.getdoc(cls) or name} Parameters: {', '.join(fields)}"
-            self.defaults["SCPlaylistPlayer"]["playlist_url"] = inspect.signature(
-                self.classes["SCPlaylistPlayer"]).parameters["playlist_url"].default
-
-    def begin(self, source_state):
-        self.state = deepcopy(source_state)
-        self.state.update(nodes=[], connects=[])
-        self.selected = []
-        self.steps = 0
-
-    def context(self, prompt, pending=False):
-        return json.dumps({"instructions": GENERATION_RULES, "prompt": prompt, "catalog": self.descriptions,
-                           "current_graph": self.pending if pending else self.state})
+    def __init__(self, catalog):
+        from backend.api.runtime import Runtime
+        self.runtime = Runtime(catalog, preview=True)
+        self.error = ""
+        self.observations = {}
+        self.accepted = {}
 
     def outputs(self):
-        return [(node, terminal, vars(node).get(node.terminal_element_name(terminal)))
-                for node in self.selected for terminal, options in node.pending_terminals.items()
-                if options["io"] == "out"]
+        return [self.runtime.element(node.name(), name) for node in self.runtime.nodes.values()
+                for name, port in node.pending_terminals.items() if port["io"] == "out"]
 
-    def questions(self):
-        criteria = {name: f"Add a {name} node" for name in self.classes
-                    if name != "Gathering" or any("data" in node.pending_terminals
-                    and node.pending_terminals["data"]["io"] == "out" for node in self.selected)}
-        if not self.state["nodes"]:
-            criteria = {"SCPlaylistPlayer": "Start with the default SoundCloud playlist"}
-        elif self.state["nodes"][-1]["class"] == "BarGraphChart":
-            criteria = {"finish": "Validate and load the completed festival lighting graph"}
-        else:
-            criteria.pop("SCPlaylistPlayer")
-            if not any(element is not None and np.shape(element.value) == (180, 4)
-                       for _, _, element in self.outputs()):
-                criteria.pop("BarGraphChart")
-        if self.steps >= int(os.environ.get("JEV_MAX_STEPS", "128")):
-            raise ValueError("Generation reached JEV_MAX_STEPS without finishing")
-        return {"next_node": {
-            "type": "choice",
-            "instructions": "Choose the next node to add, or finish when complete. Build sources before consumers so inputs can connect to existing outputs. Do not duplicate a role already fulfilled by the current graph.",
-            "criteria": criteria,
-        }}
+    async def ask(self, questions, deterministic=False):
+        if all(len(question["criteria"]) == 1 for question in questions.values()):
+            return {key: {"choice": next(iter(question["criteria"]))} for key, question in questions.items()}
+        state = json.dumps({"instructions": EDIT_RULES if self.mode == "edit" else GENERATION_RULES, "prompt": self.prompt,
+            "catalog": self.runtime.catalog.descriptions, "current_graph": self.current,
+            "draft_graph": self.runtime.graph, "validation_error": self.error, "audition": self.observations,
+            "outputs": {f"{source.node.name()}.{source.name}": summary(source.value) for source in self.outputs()}}, default=summary)
+        return await jev(state, questions, deterministic)
 
-    def get_nodes(self):
-        return self.selected
+    async def review(self, change):
+        proposed = await self.audition.measure(self.runtime.graph, self.runtime.catalog)
+        self.observations = {"change": change, "previous_accepted": self.accepted, "proposed": proposed,
+                             "proposed_parameters": {item["id"]: item["parameters"] for item in self.runtime.graph["nodes"] if item["id"] in change}}
+        answer = await self.ask({"review": {"type": "choice",
+            "instructions": "Evaluate this change against the user's prompt at the CURRENT stage using the silent song audition. Judge the node's role and signal behavior, not whether an unfinished graph already produces finished lights. Constant sources, colors and curves may be correct. Compare with previous accepted observations. Revise if the change contradicts the request, breaks useful behavior, or cannot perform its intended role. For finish, require the whole request to be fulfilled.",
+            "criteria": {"revise": "Reject this change and revise parameters/connections or choose another node/action",
+                         "accept": "This change supports the request at the current stage"}}}, deterministic=True)
+        if answer["review"]["choice"] != "accept":
+            raise ValueError(f"Jev rejected {change} after the silent song audition; use the observations to revise it")
+        self.accepted = proposed
 
-    def prepare_add(self, node_type):
-        self.steps += 1
-        state = deepcopy(self.state)
-        index = sum(node["class"] == node_type for node in state["nodes"])
-        name = f"{node_type}.{index}"
-        kwargs = dict(self.defaults[node_type])
-        if node_type == "Gathering":
-            sources = [node for node in self.selected if "data" in node.pending_terminals
-                       and node.pending_terminals["data"]["io"] == "out"]
-            if not sources:
-                raise ValueError("Gathering requires an existing data source")
-            kwargs.update(input_datas=[serialize(sources[0].data)],
-                          input_booleans=[serialize(sources[0].data)])
-        if node_type == "BarGraphChart":
-            kwargs.update(number_points=180, data=serialize(np.ones(180)),
-                          brushes=serialize(np.zeros((180, 4))))
-        state["nodes"].append({"class": node_type, "name": name,
-                               "pos": [len(state["nodes"]) * 300, 0],
-                               "state": {"ctor_kwargs": kwargs}})
-        self.selected = self.validate(state)
-        self.pending = state
-        sources = [element for node in self.selected for element in node.elements
-                   if any(cls.__name__ == "Element" for cls in type(element).__mro__)]
-        questions, resolve = prepare_parameters([self.selected[-1]], sources)
-        omitted = {}
-        target = self.selected[-1]
-        locked = {"playlist_url"} if node_type == "SCPlaylistPlayer" else set()
-        if node_type == "BarGraphChart":
-            locked = set(vars(target))
-        for terminal, options in target.pending_terminals.items():
-            if options["io"] != "in":
+    async def choose(self, name, instructions, options):
+        question = {name: {"type": "choice", "instructions": instructions,
+                           "criteria": {key: summary(value) for key, value in options.items()}}}
+        return options[(await self.ask(question))[name]["choice"]]
+
+    @staticmethod
+    def spec(graph, node_id):
+        return next(node for node in graph["nodes"] if node["id"] == node_id)
+
+    def links(self, graph, node):
+        """Expose constructor references as ordinary visible graph connections."""
+        graph["connections"] = [edge for edge in graph["connections"] if edge["target"]["nodeId"] != node.name()]
+        for name, port in node.pending_terminals.items():
+            if port["io"] != "in":
                 continue
-            element_name = target.terminal_element_name(terminal)
-            classes = {cls.__name__ for cls in type(vars(target)[element_name]).__mro__}
-            if classes & {"DataElement", "NodeSelector"} and "ArrayElement" not in classes:
-                locked.add(element_name)
-        prefixes = tuple(f"Choose {target.name()}.{parameter}." for parameter in locked)
-        for key in list(questions):
-            if questions[key]["instructions"].startswith(prefixes):
-                omitted[key] = {"choice": "original"}
-                del questions[key]
-        return questions, lambda answers: apply_parameters(state, resolve({**omitted, **answers}), self.selected)
+            source = self.runtime.element(node.name(), name)._value_source
+            if source is not None:
+                graph["connections"].append({"id": f"{node.name()}:{name}", "source": serialize(source),
+                                            "target": {"nodeId": node.name(), "element": name}})
 
-    def prepare_wiring(self, state):
-        self.selected = self.validate(state)
-        return self.prepare_connections(state, self.selected[-1])
+    async def parameters(self, node_id):
+        from backend.components.elements.parameters import DataElement, ArrayElement
+        node = self.runtime.nodes[node_id]
+        sources = [source for source in self.outputs() if source.node is not node]
+        locked = {name for name, element in self.runtime._parameters(node)
+                  if element._value_source is not None or isinstance(element, DataElement) and not isinstance(element, ArrayElement)}
+        if node.nodeName == "SCPlaylistPlayer":
+            locked.add("playlist_url")
+        if node.nodeName == "BarGraphChart":
+            return
+        if node.nodeName == "Gathering":
+            arrays = [source for source in sources if isinstance(source.value, np.ndarray)]
+            groups = {f"source_{i}": [source] for i, source in enumerate(arrays)}
+            for source in arrays:
+                shape = source.value.shape
+                groups[f"all_shape_{shape}"] = [item for item in arrays if item.value.shape == shape]
+            if not groups:
+                raise ValueError("Gathering requires an existing array source")
+            selected = await self.choose("sources", "Select matching data sources for Gathering; enable inputs are connected next.", groups)
+            graph = deepcopy(self.runtime.graph)
+            self.spec(graph, node_id)["parameters"].update(input_datas=serialize(selected), input_booleans=[None] * len(selected))
+            self.runtime.load(graph)
+            return
+        questions, resolve = prepare_parameters([node], sources, locked, editing=self.mode == "edit")
+        graph = deepcopy(self.runtime.graph)
+        self.spec(graph, node_id)["parameters"].update(resolve(await self.ask(questions)).get(node_id, {}))
+        try:
+            self.runtime.load(graph)
+        except INVALID_GRAPH as error:
+            raise ValueError(f"{error}; rejected parameters: {summary(self.spec(graph, node_id)['parameters'])}") from error
 
-    def accept(self, state):
-        self.selected = self.validate(state)
-        self.state = state
-        logger.info("Graph now has %d nodes, %d connections", len(state["nodes"]), len(state["connects"]))
+    def connection_options(self, node_id, name):
+        from backend.components.elements.node_selector.node_selector import NodeSelector
+        from backend.components.elements.parameters import validate_shape
+        node = self.runtime.nodes[node_id]
+        target = self.runtime.element(node_id, name)
+        options = {"none": None}
+        for source in self.outputs():
+            if source.node is node:
+                continue
+            if isinstance(target, NodeSelector) and target.selection_elements.value and source.name not in target.selection_elements.value:
+                continue
+            if isinstance(target, NodeSelector) and source.node not in target.selection_nodes.value:
+                continue
+            try:
+                if node.pending_terminals[name].get("adaptiveShape"):
+                    validate_shape(np.shape(source.value))
+                    if np.asarray(source.value).dtype.kind not in "biuf":
+                        continue
+                else:
+                    self.runtime._check_connection(source.value, target.value)
+            except ValueError:
+                continue
+            options[f"{source.node.name()}.{source.name}"] = source
+        return options
+
+    async def wire(self, node_id):
+        node = self.runtime.nodes[node_id]
+        graph = deepcopy(self.runtime.graph)
+        self.links(graph, node)
+        self.runtime.load(graph)
+        # Parameters create dynamic ports first, then each port gets compatible choices.
+        for name, port in list(node.pending_terminals.items()):
+            if port["io"] != "in" or node.nodeName == "BarGraphChart" and name != "brushes":
+                continue
+            node = self.runtime.nodes[node_id]
+            target = self.runtime.element(node_id, name)
+            if target._value_source is not None:
+                continue
+            options = self.connection_options(node_id, name)
+            if node.nodeName == "BarGraphChart":
+                del options["none"]
+            if not options:
+                raise ValueError(f"No compatible source for {node_id}.{name}")
+            if len(options) == 1 and "none" in options:
+                continue
+            while options:
+                source = await self.choose("source", f"Connect {node_id}.{name}. {inspect.getdoc(type(node))} Use none only for an intended constant/default.", options)
+                if source is None:
+                    break
+                graph = deepcopy(self.runtime.graph)
+                try:
+                    parameters = self.spec(graph, node_id)["parameters"]
+                    terminal, _ = node.connect_input(name, serialize(source), parameters)
+                    graph["connections"].append({"id": f"{node_id}:{terminal}", "source": serialize(source),
+                                                "target": {"nodeId": node_id, "element": terminal}})
+                    self.runtime.load(graph)
+                    break
+                except INVALID_GRAPH as error:
+                    self.error = f"Cannot connect {source.node.name()}.{source.name} to {node_id}.{name}: {error}"
+                    logger.warning("%s; trying another source", self.error)
+                    del options[f"{source.node.name()}.{source.name}"]
+            else:
+                raise ValueError(f"No valid source for {node_id}.{name}: {self.error}")
 
     def complete(self):
-        nodes = self.validate(self.state)
+        nodes = [self.runtime.nodes[item["id"]] for item in self.runtime.graph["nodes"]]
         first, last = nodes[0], nodes[-1]
-        default_url = self.defaults["SCPlaylistPlayer"]["playlist_url"]
-        if first.nodeName != "SCPlaylistPlayer" or first.playlist_url.value != default_url:
-            raise ValueError("Festival lighting must start with the default SoundCloud playlist")
-        if last.nodeName != "BarGraphChart" or last.number_points.value != 180:
-            raise ValueError("Festival lighting must end with a 180-bar chart")
-        if not np.array_equal(last.data.value, np.ones(180)):
-            raise ValueError("Festival bar heights must stay fixed at 1")
-        incoming = [edge[3] for edge in self.state["connects"] if edge[2] == last.name()]
-        if "data" in incoming or "brushes" not in incoming:
-            raise ValueError("Connect lighting to chart brushes only, leaving bar heights fixed")
-        return self.state
+        if first.nodeName != "SCPlaylistPlayer" or first.playlist_url.value != self.runtime.catalog.defaults["SCPlaylistPlayer"]["playlist_url"]:
+            raise ValueError("Start with the default SoundCloud playlist")
+        if last.nodeName != "BarGraphChart" or last.number_points.value != 180 or not np.array_equal(last.data.value, np.ones(180)):
+            raise ValueError("End with 180 bars at fixed height 1")
+        if last.data._value_source is not None or last.brushes._value_source is None:
+            raise ValueError("Connect lighting to chart brushes; keep heights fixed")
+        dependencies = nx.DiGraph((edge["source"]["nodeId"], edge["target"]["nodeId"])
+                                  for edge in self.runtime.graph["connections"])
+        dependencies.add_edges_from((source, item["id"]) for item in self.runtime.graph["nodes"]
+                                    for source in self.runtime._references(item["parameters"]))
+        if first.name() not in dependencies or not nx.has_path(dependencies, first.name(), last.name()):
+            raise ValueError("Lighting must react to the playlist's playback/analysis pipeline")
+        return deepcopy(self.runtime.graph)
 
-    def validate(self, state):
-        """Construct a side-effect-free preview before replacing the live graph."""
-        from backend.overrides.CNode import CNode
-        saved = {node["name"]: node for node in state["nodes"]}
-        if not saved or len(saved) != len(state["nodes"]):
-            raise ValueError("Graph must contain uniquely named nodes")
-        dependencies = nx.DiGraph()
-        dependencies.add_nodes_from(saved)
+    async def add(self, node_type, node_id, position):
+        graph = deepcopy(self.runtime.graph)
+        parameters = dict(self.runtime.catalog.defaults[node_type])
+        if node_type == "BarGraphChart":
+            parameters.update(number_points=180, data=np.ones(180), brushes=np.zeros((180, 4)))
+        index = len(graph["nodes"])
+        if self.mode == "edit" and graph["nodes"] and graph["nodes"][-1]["type"] == "BarGraphChart":
+            index -= 1
+        graph["nodes"].insert(index, {"id": node_id, "type": node_type, "position": position, "parameters": parameters})
+        self.runtime.load(graph)
+        await self.parameters(node_id)
+        await self.wire(node_id)
 
-        def references(value):
-            if type(value) is dict:
-                if "__element_ref__" in value:
-                    yield value["__element_ref__"]
+    async def generate(self, prompt, current, report, preview, mode="generate"):
+        self.prompt, self.current, self.mode = prompt, current, mode
+        rejected = set()
+        try:
+            from .audition import Audition
+            await report("running", "Loading song for silent evaluation")
+            self.audition = await asyncio.to_thread(Audition)
+            if mode == "edit":
+                self.runtime.load(current)
+                await preview(self.runtime)
+                return await self.edit(report, preview)
+            for step in range(int(os.environ.get("JEV_MAX_STEPS", "128"))):
+                types = {name: name for name in self.runtime.catalog.classes
+                         if name not in {"SCPlaylistPlayer", "BarGraphChart"} | rejected}
+                if not self.runtime.nodes:
+                    types = {"SCPlaylistPlayer": "SCPlaylistPlayer"}
+                elif "BarGraphChart" not in rejected and any(np.shape(source.value) == (180, 4) for source in self.outputs()):
+                    types["BarGraphChart"] = "BarGraphChart"
+                if not self.outputs():
+                    types.pop("Gathering", None)
+                if not types:
+                    raise ValueError(f"No usable node types remain: {self.error}")
+                await report("running", f"Choosing node {step + 1}", step)
+                node_type = await self.choose("next_node", "Choose the next node type. Build sources before consumers, avoid duplicate roles, and finish with BarGraphChart once the effect is complete.", types)
+                node_id = f"{node_type} {step + 1}"
+                previous = deepcopy(self.runtime.graph)
+                for attempt in range(3):
+                    try:
+                        await report("running", f"Configuring {node_id} · attempt {attempt + 1}/3", len(previous["nodes"]) + 1)
+                        await self.add(node_type, node_id, [step * 340, 0])
+                        completed = self.complete() if node_type == "BarGraphChart" else None
+                        await report("running", f"Evaluating {node_id} on the song", len(self.runtime.nodes))
+                        await self.review("finish" if node_type == "BarGraphChart" else f"Added {node_id}")
+                        await preview(self.runtime)
+                        if node_type == "BarGraphChart":
+                            return completed
+                        self.error = ""
+                        rejected.clear()
+                        break
+                    except INVALID_GRAPH as error:
+                        self.error = f"{node_id}: {error}; revise its parameters/connections or choose another node."
+                        logger.warning("%s", self.error)
+                        self.runtime.load(previous)
                 else:
-                    for child in value.values():
-                        yield from references(child)
-            elif type(value) in (list, tuple):
-                for child in value:
-                    yield from references(child)
+                    rejected.add(node_type)
+                    await report("running", f"Skipping {node_id}: {self.error}", len(previous["nodes"]))
+            raise ValueError("Generation reached JEV_MAX_STEPS without finishing")
+        finally:
+            self.runtime.close()
 
-        for name, node in saved.items():
-            if node["class"] not in self.classes:
-                raise ValueError(f"Unknown node class: {node['class']}")
-            for ref in references(node["state"]):
-                if ref["node_name"] not in saved:
-                    raise ValueError(f"Unknown reference: {ref['node_name']}")
-                dependencies.add_edge(ref["node_name"], name)
-        if not nx.is_directed_acyclic_graph(dependencies):
-            raise ValueError("Constructor references must be acyclic")
-        live = {}
+    async def edit(self, report, preview):
+        from backend.api.handlers import Handlers
 
-        def resolve(value):
-            if type(value) is dict:
-                if "__element_ref__" in value:
-                    ref = value["__element_ref__"]
-                    source = live[ref["node_name"]]
-                    element = source.terminal_element_name(ref["element_name"])
-                    return vars(source)[element]
-                if "__cnode_serde__" in value:
-                    return CNode.deserialize_state_value(value)
-                return {key: resolve(child) for key, child in value.items()}
-            if type(value) in (list, tuple):
-                return type(value)(resolve(child) for child in value)
-            return value
+        async def quiet(_message):
+            pass
 
-        with preview_nodes():
-            for name in nx.topological_sort(dependencies):
-                node = saved[name]
-                cls = self.classes[node["class"]]
-                values = resolve(node["state"].get("ctor_kwargs", {}))
-                values.update(resolve(node["state"].get("init_refs", {})))
-                if "arguments" in node["state"]:
-                    values["arguments"] = resolve(node["state"]["arguments"])
-                parameters = inspect.signature(cls).parameters
-                if values.keys() - parameters.keys():
-                    raise ValueError(f"Unknown parameters for {name}")
-                if "alias" in parameters:
-                    values["alias"] = name
-                instance = cls(**values)
-                if node["class"] == "ESP32":
-                    instance.close()
-                instance.rename(name)
-                instance.alias = name
-                instance.parent = self
-                live[name] = instance
-            connected = set()
-            for source, output, target, input_name in state["connects"]:
-                src, dst = live[source], live[target]
-                if src.pending_terminals[output]["io"] != "out" or dst.pending_terminals[input_name]["io"] != "in":
-                    raise ValueError("Connections must run from output to input")
-                key = (target, input_name)
-                if key in connected:
-                    raise ValueError(f"Multiple sources for {target}.{input_name}")
-                connected.add(key)
-                src_element = vars(src)[src.terminal_element_name(output)]
-                dst_element = vars(dst)[dst.terminal_element_name(input_name)]
-                if not compatible(src_element, dst_element):
-                    raise ValueError(f"Incompatible connection: {source}.{output} -> {target}.{input_name}")
-                dst_element.value = src_element
-        return [live[name] for name in saved]
-
-    def prepare_connections(self, state, node):
-        questions = {}
-        connections = {}
-        outputs = self.outputs()
-        parameters = inspect.signature(type(node)).parameters
-        for terminal, options in node.pending_terminals.items():
-            if options.get("io") != "in" or (node.nodeName == "BarGraphChart" and terminal == "data"):
-                continue
-            target = vars(node).get(node.terminal_element_name(terminal))
-            if target is None:
-                continue
-            candidates = {"none": None}
-            criteria = {"none": "Leave disconnected and use the configured parameter value"}
-            for source_node, source_terminal, element in outputs:
-                if element is None or source_node is node or not compatible(element, target):
+        handlers = Handlers(self.runtime, quiet)
+        rejected = set()
+        for step in range(int(os.environ.get("JEV_MAX_STEPS", "128"))):
+            actions = {"add": "add", "finish": "finish"}
+            if self.runtime.graph["connections"]:
+                actions["disconnect"] = "disconnect"
+            for node_id, node in self.runtime.nodes.items():
+                actions[f"parameters:{node_id}"] = f"parameters:{node_id}"
+                if any(port["io"] == "in" and not (node.nodeName == "BarGraphChart" and name != "brushes")
+                       for name, port in node.pending_terminals.items()):
+                    actions[f"connect:{node_id}"] = f"connect:{node_id}"
+                if not any(node_id in self.runtime._references(item["parameters"])
+                           for item in self.runtime.graph["nodes"] if item["id"] != node_id):
+                    actions[f"remove:{node_id}"] = f"remove:{node_id}"
+            actions = {key: value for key, value in actions.items() if key not in rejected}
+            await report("running", f"Choosing edit {step + 1}", len(self.runtime.nodes))
+            action = await self.choose("edit", "Choose a targeted edit required by the prompt. Parameters edits values; connect adds/replaces an input; disconnect removes a wire; remove deletes a node. Finish once the requested changes are complete.", actions)
+            if action == "finish":
+                try:
+                    await self.review("finish")
+                    return deepcopy(self.runtime.graph)
+                except INVALID_GRAPH as error:
+                    self.error = str(error)
+                    rejected.add(action)
                     continue
-                key = f"source_{len(candidates)}"
-                candidates[key] = (source_node.name(), source_terminal)
-                criteria[key] = f"{source_node.name()}.{source_terminal}: {summary(element.value)}"
-            if len(candidates) == 1:
-                continue
-            if node.nodeName == "BarGraphChart":
-                del candidates["none"]
-                del criteria["none"]
-            key = f"connection_{len(connections)}"
-            connections[key] = (node.name(), terminal, terminal in parameters, candidates)
-            questions[key] = {
-                "type": "choice",
-                "instructions": f"Connect the input {node.name()}.{terminal} to fulfill its role in the NEW graph. {inspect.getdoc(type(node)) or ''} Choose none only if this input should use its default.",
-                "criteria": criteria,
-            }
-
-        def resolve(answers):
-            result = deepcopy(state)
-            saved = {node["name"]: node["state"] for node in result["nodes"]}
-            for key, (name, terminal, constructor_parameter, candidates) in connections.items():
-                source = candidates[answers[key]["choice"]]
-                result["connects"] = [edge for edge in result["connects"]
-                                      if tuple(edge[2:]) != (name, terminal)]
-                saved[name].setdefault("init_refs", {}).pop(terminal, None)
-                if source is None:
-                    continue
-                source_name, source_terminal = source
-                result["connects"].append((source_name, source_terminal, name, terminal))
-                if constructor_parameter:
-                    saved[name].setdefault("ctor_kwargs", {}).pop(terminal, None)
-                    saved[name].setdefault("init_refs", {})[terminal] = {
-                        "__element_ref__": {"node_name": source_name, "element_name": source_terminal}}
-            if node.nodeName == "OperatorPipeline":
-                node_state = saved[node.name()]
-                kwargs = node_state.setdefault("ctor_kwargs", {})
-                for argument in node_state.get("arguments", kwargs.get("arguments", [])):
-                    if type(argument) is not dict or "__element_ref__" not in argument:
-                        continue
-                    ref = argument["__element_ref__"]
-                    terminal = f"{ref['node_name']}:{ref['element_name']}".lower()
-                    edge = (ref["node_name"], ref["element_name"], node.name(), terminal)
-                    if edge not in map(tuple, result["connects"]):
-                        result["connects"].append(edge)
-                    if kwargs.get("length", 0) == 0:
-                        source = next(item for item in self.selected if item.name() == ref["node_name"])
-                        element = vars(source)[source.terminal_element_name(ref["element_name"])]
-                        kwargs["length"] = int(np.size(element.value))
-            return result
-
-        return questions, resolve
+            previous = deepcopy(self.runtime.graph)
+            kind, _, node_id = action.partition(":")
+            for attempt in range(3):
+                try:
+                    await report("running", f"{action} · attempt {attempt + 1}/3", len(self.runtime.nodes))
+                    if kind == "add":
+                        types = {name: name for name in self.runtime.catalog.classes
+                                 if name not in {item["type"] for item in previous["nodes"] if item["type"] in {"SCPlaylistPlayer", "BarGraphChart"}}}
+                        node_type = await self.choose("node_type", "Choose a node needed for this edit.", types)
+                        suffix = 1
+                        while f"{node_type} {suffix}" in self.runtime.nodes:
+                            suffix += 1
+                        node_id = f"{node_type} {suffix}"
+                        await self.add(node_type, node_id, [len(previous["nodes"]) * 340, 0])
+                    elif kind == "parameters":
+                        await self.parameters(node_id)
+                        graph = deepcopy(self.runtime.graph)
+                        self.links(graph, self.runtime.nodes[node_id])
+                        self.runtime.load(graph)
+                    elif kind == "connect":
+                        node = self.runtime.nodes[node_id]
+                        ports = {name: name for name, port in node.pending_terminals.items()
+                                 if port["io"] == "in" and not (node.nodeName == "BarGraphChart" and name != "brushes")}
+                        terminal = await self.choose("input", f"Choose the input to connect on {node_id}.", ports)
+                        sources = self.connection_options(node_id, terminal)
+                        sources.pop("none")
+                        if not sources:
+                            raise ValueError(f"No compatible source for {node_id}.{terminal}")
+                        source = await self.choose("source", f"Choose a source for {node_id}.{terminal}.", sources)
+                        await handlers.connection_add(None, {"source": serialize(source), "target": {"nodeId": node_id, "element": terminal}})
+                    elif kind == "disconnect":
+                        edges = {edge["id"]: edge["id"] for edge in previous["connections"]}
+                        edge_id = await self.choose("connection", "Choose the connection to remove; endpoints are in the draft graph.", edges)
+                        await handlers.connection_remove(None, {"connectionId": edge_id})
+                    else:
+                        await handlers.node_remove(None, {"nodeId": node_id})
+                    await report("running", f"Evaluating {action} on the song", len(self.runtime.nodes))
+                    await self.review(f"{action} {node_id}")
+                    await preview(self.runtime)
+                    self.error = ""
+                    rejected.clear()
+                    break
+                except INVALID_GRAPH as error:
+                    self.error = f"{action}: {error}; revise the edit or choose another action."
+                    logger.warning("%s", self.error)
+                    self.runtime.load(previous)
+            else:
+                rejected.add(action)
+        raise ValueError("Editing reached JEV_MAX_STEPS without finishing")

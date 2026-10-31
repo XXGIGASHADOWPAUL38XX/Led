@@ -1,4 +1,4 @@
-from backend.components.elements.parameters import Parameter, DataElement
+from backend.components.elements.parameters import Parameter
 import numpy as np
 from scipy.signal import butter
 
@@ -6,13 +6,15 @@ from config import SAMPLE_RATE, FFT_SIZE
 
 from backend.components.elements import AnalysableElement
 from backend.components.elements.element_value import ElementValue
-from backend.overrides.CNode import CNode
+from backend.overrides.array_input_node import ArrayInputNode
 from backend.nodes.pipelines.auditory.filter.filter import Filter
 
-class LowFilterPipelineNode(CNode, Filter):
+class LowFilterPipelineNode(ArrayInputNode, Filter):
     """Apply a first-order Butterworth low-pass filter to audio.
 
-    Input `buffer_data` and output `data` have shape (channels, samples).
+    Input `buffer_data` adopts its source shape on connection. Editable
+    `shape` must match connected data; output `data` preserves that shape.
+    Mono or multichannel arrays are filtered along the last (sample) axis.
     Configure `lowpass_freq` in Hz, within (0, SAMPLE_RATE / 2).
     Each audio update filters along the sample axis at SAMPLE_RATE;
     filter state is reset for each block.
@@ -22,16 +24,17 @@ class LowFilterPipelineNode(CNode, Filter):
 
     def __init__(
         self,
-        buffer_data: np.ndarray = np.zeros((2, FFT_SIZE)),
+        buffer_data: np.ndarray | None = None,
         lowpass_freq: float = 1000.0,
         alias: str | None = None,
+        shape=None,
     ) -> None:
         terminals = {
             "buffer_data": {"io": "in"},
             "data": {"io": "out"},
         }
         super().__init__(self.nodeName, terminals, alias=alias)
-        self.buffer_data = DataElement(self, 'buffer_data', ElementValue(buffer_data))
+        self.init_array_input('buffer_data', buffer_data, shape, (2, FFT_SIZE))
         Filter.__init__(self, buffer_data=self.buffer_data)
 
         self.lowpass_freq = Parameter(self, 'lowpass_freq', lowpass_freq, minimum=20, maximum=1000)

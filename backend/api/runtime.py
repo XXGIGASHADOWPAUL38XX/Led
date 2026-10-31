@@ -6,7 +6,7 @@ import inspect
 import networkx as nx
 import numpy as np
 
-from ai.template_generator.agent import NodeCatalog, preview_nodes
+from backend.registry.catalog import NodeCatalog, preview_nodes
 from backend.components.elements.element import Element
 from backend.components.elements.signal import drain_signals
 from backend.components.elements.parameters import DataElement, ArrayElement, SequenceElement, Parameter, NodeReferenceElement, ReferenceElement
@@ -17,8 +17,9 @@ from .protocol import encode
 
 
 class Runtime:
-    def __init__(self):
-        self.catalog = NodeCatalog()
+    def __init__(self, catalog=None, *, preview=False):
+        self.catalog = catalog if catalog is not None else NodeCatalog()
+        self.preview = preview
         self.nodes = {}
         self.graph = {"nodes": [], "connections": []}
         self.revision = 0
@@ -200,7 +201,7 @@ class Runtime:
         self.port_signatures = {key: self._port_signature(node) for key, node in live.items()}
         # Explicit playback starts playlist loading; unrelated edits preserve it.
         for node in live.values():
-            if node.nodeName == "ESP32" and previous.get(node.name()) is not node:
+            if not self.preview and node.nodeName == "ESP32" and previous.get(node.name()) is not node:
                 node.worker.start()
         return self.snapshot()
 
@@ -324,7 +325,7 @@ class Runtime:
             elif isinstance(element, ReferenceElement):
                 item.update(kind="managed", value=None, disabled=True)
             elif isinstance(element, SequenceElement):
-                item.update(kind="sequence", value=self._describe_value(value))
+                item.update(kind="sequence", value=self._describe_value(value), itemPorts=list(element.input_ports))
             elif isinstance(element, Parameter):
                 item.update(kind=element.kind, min=element.minimum, max=element.maximum, integer=element.integer, optional=element.optional)
                 if element.choices:
@@ -347,11 +348,17 @@ class Runtime:
             result.append(item)
         return {"id": node.name(), "type": node.nodeName, "elements": result,
                 "ports": [{"name": key, "direction": options["io"], "shape": list(np.shape(vars(node)[node.terminal_element_name(key)].value)),
+                           **({"adaptiveShape": True} if options.get("adaptiveShape") else {}),
+                           **({"variadic": True} if options.get("variadic") else {}),
                            **({"accepts": list(node.input_shapes[key])} if key in node.input_shapes else {})}
                           for key, options in node.pending_terminals.items() if isinstance(vars(node).get(node.terminal_element_name(key)), Element)]}
 
     def _describe_value(self, value):
         if isinstance(value, Element):
+            outputs = [name for name, port in value.node.pending_terminals.items()
+                       if port['io'] == 'out' and value.node.terminal_element_name(name) == value.name]
+            if outputs:
+                return {"nodeId": value.node.name(), "element": outputs[0]}
             source = value._value_source
             if source is not None:
                 return self._describe_value(source)
@@ -394,6 +401,7 @@ class Runtime:
         graph = deepcopy(self.graph)
         spec = next(item for item in graph["nodes"] if item["id"] == node_id)
         spec.setdefault("parameters", {}).update(parameters)
+        node.configure_graph(graph, spec["parameters"])
         return self.load(graph)
 
     def snapshot(self):

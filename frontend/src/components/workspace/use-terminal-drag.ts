@@ -6,6 +6,8 @@ import type { Connection, Endpoint, Graph } from "@/lib/backend/protocol";
 import { compatiblePorts } from "@/lib/nodes/configuration";
 import { terminalKey } from "./terminal";
 import { connectionPath, type Point } from "./connection-path";
+import type { CanvasDrag } from "./use-canvas-viewport";
+import { compatibleTerminals } from "./terminal-compatibility";
 
 function port(key: string) {
   const [nodeId, element, direction] = JSON.parse(key) as [string, string, "input" | "output"];
@@ -13,30 +15,36 @@ function port(key: string) {
 }
 
 /** Keep dragging local; submit one validated graph edit when the pointer is released. */
-export function useTerminalDrag(graph: Graph, container: RefObject<HTMLDivElement | null>, terminals: Map<string, HTMLElement>, zoom: number) {
+export function useTerminalDrag(graph: Graph, container: RefObject<HTMLDivElement | null>, terminals: Map<string, HTMLElement>, zoom: number, { toCanvas: point, startNodeDrag, moveNodeDrag, cancelNodeDrag }: CanvasDrag) {
   const [preview, setPreview] = useState("");
+  const [compatible, setCompatible] = useState<Set<string> | null>(null);
+  const [dragging, setDragging] = useState<string | null>(null);
   const active = useRef<{ key: string; anchor: Point; forward: boolean; start: Point; edge?: Connection } | null>(null);
-  const point = useCallback((x: number, y: number) => {
-    const rect = container.current!.getBoundingClientRect();
-    return { x: (x - rect.left) / zoom, y: (y - rect.top) / zoom };
-  }, [container, zoom]);
-  const cancel = useCallback(() => { active.current = null; setPreview(""); }, []);
+  const cancel = useCallback(() => {
+    if (active.current) cancelNodeDrag();
+    active.current = null; setPreview(""); setCompatible(null); setDragging(null);
+  }, [cancelNodeDrag]);
   useEffect(() => { cancel(); }, [graph, zoom, cancel]);
-  const move = useCallback((x: number, y: number) => {
+  const update = useCallback((cursor: Point) => {
     const drag = active.current;
-    if (!drag) return;
-    const cursor = point(x, y);
-    setPreview(drag.forward ? connectionPath(drag.anchor, cursor) : connectionPath(cursor, drag.anchor));
-  }, [point]);
+    if (drag) setPreview(drag.forward ? connectionPath(drag.anchor, cursor) : connectionPath(cursor, drag.anchor));
+  }, []);
+  const move = useCallback((x: number, y: number) => {
+    if (active.current) moveNodeDrag(x, y);
+  }, [moveNodeDrag]);
   const start = useCallback((key: string, x: number, y: number) => {
     if (backend.status.connection !== "connected") return;
     const terminal = port(key);
     const edge = terminal.direction === "input" ? graph.connections.find((edge) => terminalKey(edge.target, "input") === key) : undefined;
     const anchorKey = edge ? terminalKey(edge.source, "output") : key;
     const rect = terminals.get(anchorKey)!.getBoundingClientRect();
+    const nodes = graph.nodes.flatMap((node) => backend.node(node.id) ?? []);
+    setCompatible(compatibleTerminals(nodes, edge?.source ?? terminal.endpoint, edge ? "output" : terminal.direction));
+    setDragging(key);
     active.current = { key, anchor: point(rect.left + rect.width / 2, rect.top + rect.height / 2), forward: Boolean(edge) || terminal.direction === "output", start: { x, y }, edge };
-    move(x, y);
-  }, [graph, terminals, point, move]);
+    startNodeDrag(x, y, update);
+    update(point(x, y));
+  }, [graph, terminals, point, startNodeDrag, update]);
   const finish = useCallback((x: number, y: number) => {
     const drag = active.current;
     cancel();
@@ -64,5 +72,5 @@ export function useTerminalDrag(graph: Graph, container: RefObject<HTMLDivElemen
       void backend.command("connection.remove", { connectionId: edge.id });
     }
   }, [graph]);
-  return { preview, start, move, finish, cancel, disconnect };
+  return { preview, compatible, dragging, start, move, finish, cancel, disconnect };
 }

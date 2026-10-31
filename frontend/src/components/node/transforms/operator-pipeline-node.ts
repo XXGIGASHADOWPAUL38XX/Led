@@ -6,13 +6,16 @@ export default {
   "description": "Evaluate an expression assembled from Elements and literal tokens.",
   "category": "transforms",
   "fields": [
+    { "name": "input_names", "control": "managed", "hidden": true },
     {
       "name": "arguments",
-      "control": "sequence",
+      "control": "expression",
+      "addPort": "add_element",
       "item": "token"
     },
     {
       "name": "length",
+      "hidden": true,
       "control": "slider",
       "rebuild": true
     }
@@ -22,7 +25,7 @@ export default {
       "kind": "bars",
       "data": "data",
       "label": "Data",
-      "open": true
+      "open": false
     }
   ]
 } satisfies NodeDefinition;

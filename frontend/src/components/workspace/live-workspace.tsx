@@ -8,6 +8,7 @@ import { LiveNode } from "../node/live-node";
 import { nodeDefinitions } from "../node/registry";
 import { compatiblePorts } from "../../lib/nodes/configuration";
 import { TemplateControls } from "../templates/template-controls";
+import { JevControls } from "../templates/jev-controls";
 import { ConnectionLayer } from "./connection-layer";
 import { AddNodeDialog } from "../dialogs/add-node-dialog";
 import { isTyping } from "./shortcuts";
@@ -47,6 +48,7 @@ export function LiveWorkspace() {
         <button type="button" disabled={status.connection !== "connected"} onClick={() => setAdding(canvas.current!.insertionPosition())} className="rounded bg-violet-400/15 px-3 py-2 text-xs text-violet-200 disabled:opacity-40">Add node ⌃A</button></div>
     </div>
     <TemplateControls />
+    <JevControls />
     {adding && <AddNodeDialog position={adding} onClose={() => setAdding(null)} />}
     {status.connection !== "connected" && <p className="text-xs text-zinc-500">Start Python with <code>.venv/bin/python -m backend.api.server</code>. Component previews below work offline.</p>}
     {status.error && <p role="alert" className="rounded border border-rose-400/20 bg-rose-400/5 p-3 text-xs text-rose-300">{status.error}</p>}

@@ -3,7 +3,7 @@ import type { NodeDefinition } from "../definition.ts";
 export default {
   "type": "Buffer",
   "title": "Buffer",
-  "description": "Keep a rolling stereo audio window for FFT or other audio analysis.",
+  "description": "Keep a rolling mono or multichannel audio window; input shape adapts when linked.",
   "category": "buffer",
   "fields": [
     {
@@ -11,9 +11,16 @@ export default {
       "control": "port"
     },
     {
+      "name": "shape",
+      "control": "shape",
+      "label": "Input shape",
+      "rebuild": true
+    },
+    {
       "name": "chunk_size",
       "control": "slider",
-      "rebuild": true
+      "rebuild": true,
+      "hidden": true
     },
     {
       "name": "length",

@@ -48,7 +48,7 @@ class RuntimeTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.runtime.load(invalid)
         self.assertIs(self.runtime.nodes['amp'], original)
-        invalid = {'nodes': [{'id': 'source', 'type': 'ConstantArray', 'parameters': {}}, {'id': 'amp', 'type': 'Amplitudes', 'parameters': {}}],
+        invalid = {'nodes': [{'id': 'source', 'type': 'ConstantArray', 'parameters': {'length': 8}}, {'id': 'amp', 'type': 'Amplitudes', 'parameters': {}}],
                    'connections': [{'id': 'bad', 'source': {'nodeId': 'source', 'element': 'data'}, 'target': {'nodeId': 'amp', 'element': 'buffer'}}]}
         with self.assertRaises(ValueError):
             self.runtime.load(invalid)

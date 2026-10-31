@@ -13,9 +13,11 @@ export type ElementDescriptor = {
   optional?: boolean;
   dtype?: string; defaultType?: string; selectionElements?: string[];
   shape?: number[]; options?: { value: unknown; label: string }[];
+  itemPorts?: (string | null)[];
 };
-export type NodeDescriptor = { id: string; type: string; elements: ElementDescriptor[]; ports: { name: string; direction: "in" | "out"; shape: number[]; accepts?: number[] }[] };
+export type NodeDescriptor = { id: string; type: string; elements: ElementDescriptor[]; ports: { name: string; direction: "in" | "out"; shape: number[]; accepts?: number[]; adaptiveShape?: boolean; variadic?: boolean }[] };
 export type Snapshot = { graph: Graph; nodes: NodeDescriptor[]; catalog: { type: string; description: string }[] };
+export type GenerationPreview = { graph: Graph; nodes: Pick<NodeDescriptor, "id" | "type" | "ports">[] };
 export type PlayerState = { nodeId: string; tracks: { id: string; title: string; artist: string; duration: number; loaded: boolean }[]; activeTrackId: string | null; playing: boolean; position: number; duration: number };
 
 const arrays = {

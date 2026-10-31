@@ -40,6 +40,8 @@ class ArrayElement(DataElement):
 class SequenceElement(Element):
     """Ordered values or references, described recursively by the generator."""
 
+    input_ports = ()
+
     def __iter__(self):
         return iter(self.value)
 

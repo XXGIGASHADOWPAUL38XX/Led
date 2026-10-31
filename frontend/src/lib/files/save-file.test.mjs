@@ -28,3 +28,20 @@ test('cancelling the picker does not export or write a template', async () => {
     assert.equal(exported, false);
   } finally { delete globalThis.window; }
 });
+
+test('replace opens a selectable .led picker before exporting and writes the selected file', async () => {
+  const calls = [];
+  globalThis.window = { showOpenFilePicker: async (options) => {
+    calls.push('picker');
+    assert.deepEqual(options.types[0].accept['application/octet-stream'], ['.led']);
+    assert.equal(options.excludeAcceptAllOption, true);
+    assert.equal(options.multiple, false);
+    return [{ name: 'existing.led', createWritable: async () => ({
+      write: async () => { calls.push('write'); }, close: async () => { calls.push('close'); },
+    }) }];
+  } };
+  try {
+    assert.equal(await saveFile('new.led', async () => { calls.push('export'); return new Uint8Array([42]); }, true), 'existing.led');
+    assert.deepEqual(calls, ['picker', 'export', 'write', 'close']);
+  } finally { delete globalThis.window; }
+});

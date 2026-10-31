@@ -12,6 +12,9 @@ import { useTerminalDrag } from "./use-terminal-drag";
 import { connectionPath } from "./connection-path";
 import { useCanvasViewport, type CanvasHandle } from "./use-canvas-viewport";
 import { useObjectSelection } from "./object-selection";
+import { useNodeMovement } from "./use-node-movement";
+import { useBoxSelection } from "./use-box-selection";
+import { useNodeClipboard } from "./use-node-clipboard";
 
 /** One registry and SVG for the workspace; live data frames never redraw wires. */
 export function ConnectionLayer({ graph, children, ref }: { graph: Graph; children: ReactNode; ref?: Ref<CanvasHandle> }) {
@@ -23,6 +26,7 @@ export function ConnectionLayer({ graph, children, ref }: { graph: Graph; childr
   const [zoom, setZoom] = useState(1);
   const { toCanvas, insertionPosition, rememberPointer, startNodeDrag, moveNodeDrag, endNodeDrag, cancelNodeDrag } = useCanvasViewport(viewport, container, zoom);
   useImperativeHandle(ref, () => ({ insertionPosition }), [insertionPosition]);
+  useNodeClipboard(insertionPosition);
   const anchor = useRef<{ left: number; top: number } | null>(null);
   const changeZoom = useCallback((next: number, point?: { x: number; y: number }) => {
     const element = viewport.current!;
@@ -54,12 +58,13 @@ export function ConnectionLayer({ graph, children, ref }: { graph: Graph; childr
     return () => { element.removeEventListener("wheel", wheel); window.removeEventListener("keydown", key); };
   }, [zoom, changeZoom]);
   const terminals = useRef(new Map<string, HTMLElement>());
-  const { preview, start, move, finish, cancel, disconnect } = useTerminalDrag(graph, container, terminals.current, zoom);
+  const { preview, compatible, dragging, start, move, finish, cancel, disconnect } = useTerminalDrag(graph, container, terminals.current, zoom, { toCanvas, startNodeDrag, moveNodeDrag, endNodeDrag, cancelNodeDrag });
   const selection = useObjectSelection()!;
+  const boxSelection = useBoxSelection(container, { toCanvas, startNodeDrag, moveNodeDrag, endNodeDrag, cancelNodeDrag });
   const selected = selection.value.kind === "wire" ? [...selection.value.ids][0] : null;
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { cancel(); selection.clear(); }
+      if (event.key === "Escape") { cancel(); boxSelection.cancel(); movement.cancelNodeMove(); selection.clear(); }
       if (!selected || isTyping() || document.querySelector("dialog[open]")) return;
       if (event.key === "Delete" || event.key === "Backspace") {
         event.preventDefault(); selection.clear();
@@ -103,9 +108,10 @@ export function ConnectionLayer({ graph, children, ref }: { graph: Graph; childr
     invalidate();
     return () => { terminals.current.delete(key); invalidate(); };
   }, [invalidate]);
-  const registry = useMemo(() => ({ register, invalidate, zoom, start, move, finish, cancel, disconnect, toCanvas, startNodeDrag, moveNodeDrag, endNodeDrag, cancelNodeDrag, linked: new Set(connections.flatMap((edge) => [
+  const movement = useNodeMovement(graph, container, selection.value, invalidate);
+  const registry = useMemo(() => ({ ...movement, compatible, dragging, register, invalidate, zoom, start, move, finish, cancel, disconnect, toCanvas, startNodeDrag, moveNodeDrag, endNodeDrag, cancelNodeDrag, linked: new Set(connections.flatMap((edge) => [
     terminalKey(edge.source, "output"), terminalKey(edge.target, "input"),
-  ])) }), [connections, register, invalidate, zoom, start, move, finish, cancel, disconnect, toCanvas, startNodeDrag, moveNodeDrag, endNodeDrag, cancelNodeDrag]);
+  ])) }), [movement.beginNodeMove, movement.updateNodeMove, movement.commitNodeMove, movement.cancelNodeMove, compatible, dragging, connections, register, invalidate, zoom, start, move, finish, cancel, disconnect, toCanvas, startNodeDrag, moveNodeDrag, endNodeDrag, cancelNodeDrag]);
 
   useLayoutEffect(() => {
     const origin = container.current!.getBoundingClientRect();
@@ -143,8 +149,8 @@ export function ConnectionLayer({ graph, children, ref }: { graph: Graph; childr
         <button type="button" aria-label="Zoom in" disabled={zoom >= MAX_ZOOM} onClick={() => changeZoom(zoom * 1.2)} className="px-3 py-2 disabled:opacity-30">+</button>
       </div>
     </div>
-    <p className="text-[10px] text-zinc-500">Drag terminals to connect · Drag a connected input into empty space to unlink · Select a wire and press Delete to remove it</p>
-    <div ref={viewport} tabIndex={-1} onPointerDown={(event) => { if (!(event.target as Element).closest("[data-node-id], [data-terminal]")) { selection.clear(); event.currentTarget.focus({ preventScroll: true }); } }} onPointerMove={(event) => rememberPointer(event.clientX, event.clientY)} className="node-canvas max-h-[75vh] min-h-48 overflow-auto rounded-xl border border-white/5 outline-none [overflow-anchor:none]">
+    <p className="text-[10px] text-zinc-500">Drag empty space to select nodes · Ctrl/Cmd-click to extend selection · Drag a selected node to move the group · Drag terminals to connect</p>
+    <div ref={viewport} tabIndex={-1} onPointerDown={boxSelection.onPointerDown} onPointerUp={boxSelection.onPointerUp} onPointerCancel={boxSelection.cancel} onLostPointerCapture={boxSelection.cancel} onPointerMove={(event) => { rememberPointer(event.clientX, event.clientY); boxSelection.onPointerMove(event); }} className="node-canvas max-h-[75vh] min-h-48 touch-none overflow-auto rounded-xl border border-white/5 outline-none [overflow-anchor:none]">
     <div style={{ width: extent.width * zoom, height: extent.height * zoom }} className="overflow-hidden">
     <div ref={container} style={{ ...extent, transform: `translate(${-bounds.left * zoom}px, ${-bounds.top * zoom}px) scale(${zoom})`, transformOrigin: "0 0" }} className="relative min-h-48">
       <svg aria-label="Node connections" className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" fill="none">
@@ -156,6 +162,7 @@ export function ConnectionLayer({ graph, children, ref }: { graph: Graph; childr
         {preview && <path d={preview} stroke="#c4b5fd" strokeWidth={2} strokeDasharray="5 4" />}
       </svg>
       {children}
+      {boxSelection.box && <div aria-hidden="true" data-selection-box style={boxSelection.box} className="pointer-events-none absolute z-20 rounded border border-violet-300 bg-violet-400/15" />}
     </div>
     </div>
     </div>

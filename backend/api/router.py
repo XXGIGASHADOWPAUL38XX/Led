@@ -4,6 +4,7 @@ import asyncio
 
 from .protocol import event
 from .history import History
+from .generation import Generation
 
 
 class Router:
@@ -11,7 +12,10 @@ class Router:
         self.handlers = handlers
         self.history = History(handlers.runtime)
         self.edit_lock = asyncio.Lock()
+        self.generation = Generation(self)
         self.routes = {
+            "graph.copy": handlers.graph_copy, "graph.paste": handlers.graph_paste,
+            "jev.generate": self.generation.start, "jev.cancel": self.generation.cancel,
             "graph.get": handlers.graph_get, "graph.load": handlers.graph_load, "graph.move": handlers.graph_move,
             "graph.restore": handlers.graph_restore, "node.describe": handlers.node_describe,
             "node.add": handlers.node_add, "node.remove": handlers.node_remove, "node.move": handlers.node_move,

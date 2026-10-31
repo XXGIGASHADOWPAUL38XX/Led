@@ -17,6 +17,7 @@ type SelectionContext = {
   value: ObjectSelection;
   select: (kind: ObjectKind, id: string, extend?: boolean) => void;
   focus: (kind: ObjectKind, id: string) => void;
+  setNodes: (ids: Iterable<string>) => void;
   clear: () => void;
 };
 const Context = createContext<SelectionContext | null>(null);
@@ -28,6 +29,11 @@ export function ObjectSelectionProvider({ children, graph, revision }: { childre
   const select = useCallback((kind: ObjectKind, id: string, extend = false) => setValue((previous) => selectObject(previous, kind, id, extend)), []);
   const focus = useCallback((kind: ObjectKind, id: string) => setValue((previous) => previous.kind === kind && previous.ids.has(id) ? previous : selectObject(previous, kind, id, false)), []);
   const clear = useCallback(() => setValue(emptySelection), []);
+  const setNodes = useCallback((ids: Iterable<string>) => {
+    const selected = new Set(ids);
+    setValue((previous) => previous.kind === "node" && previous.ids.size === selected.size && [...selected].every((id) => previous.ids.has(id))
+      ? previous : selected.size ? { kind: "node", ids: selected } : emptySelection);
+  }, []);
   useEffect(clear, [clear, revision]);
   useEffect(() => {
     setValue((previous) => {
@@ -40,6 +46,6 @@ export function ObjectSelectionProvider({ children, graph, revision }: { childre
       return ids.size === previous.ids.size ? previous : ids.size ? { ...previous, ids } : emptySelection;
     });
   }, [graph]);
-  const context = useMemo(() => ({ value, select, focus, clear }), [value, select, focus, clear]);
+  const context = useMemo(() => ({ value, select, focus, setNodes, clear }), [value, select, focus, setNodes, clear]);
   return <Context.Provider value={context}>{children}</Context.Provider>;
 }

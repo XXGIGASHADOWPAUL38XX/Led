@@ -4,7 +4,7 @@ from copy import deepcopy
 
 
 class History:
-    structural = {"node.add", "node.remove", "node.configure", "connection.add", "connection.remove", "graph.load", "graph.restore"}
+    structural = {"node.add", "node.remove", "node.configure", "connection.add", "connection.remove", "graph.load", "graph.restore", "graph.paste"}
     commands = structural | {"element.set", "node.move", "graph.move"}
 
     def __init__(self, runtime):

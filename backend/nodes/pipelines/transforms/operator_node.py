@@ -8,22 +8,26 @@ from backend.components.elements.element_value import ElementValue
 from backend.components.elements.node_selector.node_selector import NodeSelector
 
 from backend.overrides.CNode import CNode
+from .expression import FUNCTIONS, compile_expression
 
 class OperatorPipelineNode(CNode, AudioPipeline):
-    """Evaluate an expression assembled from Elements and literal tokens.
+    """Evaluate a numeric expression over linked arrays and constants.
 
-    Configure ordered `arguments`, such as [source.data, "*", 0.5], and
-    output `length`. Element arguments create named inputs and corresponding
-    `_out` passthrough terminals; `data` contains the expression result each
-    audio update. Boolean scalars become one-element arrays. Uses Python eval;
-    supply trusted expressions whose results fit the output buffer."""
+    `arguments` stores expression fragments interleaved with source references.
+    The UI presents named inputs and a single expression; existing saved token
+    expressions retain their meaning. Inputs expose `_out` passthroughs. NumPy
+    broadcasting determines result shape. Expressions are compiled once and
+    restricted to numeric operators and the supported NumPy functions.
+    """
 
     nodeName = "OperatorPipeline"
-    operations_string = ['(', '+', '-', '*', '**', '/', ')', '<', '<=', '=>', '>', '&']
+    operations_string = ['(', '+', '-', '*', '**', '/', ')', '<', '<=', '==', '>=', '>', '&', '|']
 
-    def __init__(self, arguments: list[object] = [], length: int = 0, parent=None, alias: str | None = None) -> None:
+    def __init__(self, arguments: list[object] | None = None, length: int = 0, parent=None, alias: str | None = None, input_names=None) -> None:
+        arguments = list(arguments or [])
         self.terminals_dict = {
-            "data": {"io": "out"}
+            "data": {"io": "out"},
+            "add_element": {"io": "in", "variadic": True},
         }
 
         self.terminal_element_names = {}
@@ -33,19 +37,23 @@ class OperatorPipelineNode(CNode, AudioPipeline):
 
         super().__init__(node_name=self.nodeName, terminals=self.terminals_dict.copy(), parent=parent, alias=alias)
 
+        self.input_names = SequenceElement(self, "input_names", list(input_names or []), register_in_node=False)
         self.length = Parameter(self, 'length', length, minimum=0, maximum=4096, integer=True)
+        self.add_element = DataElement(self, 'add_element', None, register_in_node=False)
         self.arguments = SequenceElement(self, "arguments", arguments, register_in_node=False)
+        self.arguments.input_ports = [name if isinstance(arg, Element) and name not in self.operation_element_names[:index] else None
+                                      for index, (name, arg) in enumerate(zip(self.operation_element_names, arguments))]
         self.operation_elements = self.define_operation_elements(arguments)
         self.built_evaluation = None
         self.build_evaluation_arguments()
 
-        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(self.length.value)))
+        self.data = AnalysableElement(self, "data", ElementValue(
+            np.atleast_1d(self.evaluate_arguments()) if arguments else np.zeros(self.length.value)))
 
     def c_update(self):
         if not self.operation_elements:
             return self.data
-        self.build_evaluation_arguments()
-        result = np.asarray(self.evaluate_arguments())
+        result = np.atleast_1d(self.evaluate_arguments())
         if result.shape != self.data.value.shape or result.dtype != self.data.value.dtype:
             self.data.value = result
         else:
@@ -80,35 +88,57 @@ class OperatorPipelineNode(CNode, AudioPipeline):
         return (f"{name}_out",)
 
     def connect_input(self, name, source, parameters):
+        if name == 'add_element':
+            arguments = parameters.setdefault('arguments', [])
+            if arguments and not (type(arguments[-1]) is str and arguments[-1] in self.operations_string and arguments[-1] != ')'):
+                arguments.append('+')
+            arguments.append(source)
         for index, argument in enumerate(self.arguments):
             if isinstance(argument, Element) and self.resolve_element_name(argument) == name:
                 parameters["arguments"][index] = source
         source_node = next(node for node in self.get_nodes() if node.name() == source["nodeId"])
         source_element = vars(source_node)[source_node.terminal_element_name(source["element"])]
         new_name = self.resolve_element_name(source_element)
-        return new_name, {f"{name}_out": f"{new_name}_out"}
-
-    def resolve_token(self, token):
-        if isinstance(token, Element):
-            return self.resolve_token(token.value)
-        if callable(token):
-            return self.resolve_token(token())
-        if isinstance(token, np.ndarray):
-            return f"np.array({repr(token.tolist())})"
-        return str(token)
+        return new_name, {} if name == 'add_element' else {f"{name}_out": f"{new_name}_out"}
 
     def build_evaluation_arguments(self):
-        expression = []
-
-        for element in self.operation_elements:
-            expression.append(self.resolve_token(element))
-        self.built_evaluation = " ".join(expression)
+        # Bind arrays directly instead of converting every sample to Python text.
+        self.variables = {f'v{index}': element for index, element in enumerate(self.operation_elements)
+                          if type(self.arguments.value[index]) is not str}
+        self.built_evaluation = " ".join(
+            f'v{index}' if f'v{index}' in self.variables else str(argument)
+            for index, argument in enumerate(self.arguments)) or '0'
+        self.compiled = compile_expression(self.built_evaluation, self.variables)
 
     def evaluate_arguments(self):
-        result = eval(self.built_evaluation)
-        if isinstance(result, bool):
-            return np.array([result])
-        return result
+        return eval(self.compiled, {"__builtins__": {}, **FUNCTIONS},
+                    {name: element.value for name, element in self.variables.items()})
+
+    def validate_parameters(self, changes):
+        if self.operation_elements:
+            try:
+                with np.errstate(all='ignore'):
+                    self.evaluate_arguments()
+            except (ValueError, TypeError, IndexError) as error:
+                raise ValueError(f'Expression: {error}') from error
+
+    def configure_graph(self, graph, parameters):
+        # References and their visible wires are one binding, including edits.
+        sources = [value for value in parameters.get('arguments', [])
+                   if type(value) is dict and 'nodeId' in value]
+        bindings = {}
+        for source in sources:
+            node = next(node for node in self.get_nodes() if node.name() == source['nodeId'])
+            bindings[self.resolve_element_name(vars(node)[node.terminal_element_name(source['element'])])] = source
+        incoming = {edge['target']['element']: edge for edge in graph['connections'] if edge['target']['nodeId'] == self.name()}
+        removed = {name for name, options in self.pending_terminals.items() if options['io'] == 'in' and name != 'add_element'} - bindings.keys()
+        if any(edge['source']['nodeId'] == self.name() and edge['source']['element'] in {f'{name}_out' for name in removed}
+               for edge in graph['connections']):
+            raise ValueError('Disconnect the removed input’s passthrough output first')
+        graph['connections'] = [edge for edge in graph['connections'] if edge['target']['nodeId'] != self.name()]
+        for name, source in bindings.items():
+            graph['connections'].append({'id': incoming[name]['id'] if name in incoming else f'{self.name()}:{name}',
+                                         'source': source, 'target': {'nodeId': self.name(), 'element': name}})
 
     def update_terminal(self, arguments=None):
         args_elements_indexes = list(map(
@@ -138,8 +168,6 @@ class OperatorPipelineNode(CNode, AudioPipeline):
                     ElementValue(arg),
                     selection_nodes=self.get_nodes
                 )
-            elif isinstance(arg, str) and arg in self.operations_string:
-                element = Parameter(self, name, arg, kind='choice', choices=self.operations_string)
             elif isinstance(arg, str):
                 element = Parameter(self, name, arg, kind='text')
             else:

@@ -13,6 +13,7 @@ export default {
     {
       "name": "input_value_interval",
       "control": "interval",
+      "ordered": false,
       "label": "Input range",
       "min": -10000,
       "max": 10000
@@ -20,6 +21,7 @@ export default {
     {
       "name": "output_value_interval",
       "control": "interval",
+      "ordered": false,
       "label": "Output range",
       "min": -10000,
       "max": 10000

@@ -59,6 +59,9 @@ class Server:
         try:
             await session.send(event("graph.snapshot", self.runtime.snapshot(), self.runtime.revision))
             await session.send(event("history.update", {"canUndo": bool(self.router.history.entries)}, self.runtime.revision))
+            await session.send(event("jev.update", self.router.generation.state, self.runtime.revision))
+            if self.router.generation.preview is not None:
+                await session.send(event("jev.preview", self.router.generation.preview, self.runtime.revision))
             async for packet in socket:
                 try:
                     message = decode(packet)
@@ -115,6 +118,7 @@ class Server:
             try:
                 await self.processing()
             finally:
+                await self.router.generation.cancel()
                 self.runtime.close()
 
 

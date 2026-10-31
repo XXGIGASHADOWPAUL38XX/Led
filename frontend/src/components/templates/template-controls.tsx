@@ -15,10 +15,10 @@ export function TemplateControls() {
   const [error, setError] = useState("");
   const disabled = busy !== null || status.connection !== "connected";
 
-  async function save() {
+  async function save(replace = false) {
     setBusy("save"); setError(""); setMessage("");
     try {
-      const name = await saveFile(filename, () => backend.exportTemplate());
+      const name = await saveFile(filename, () => backend.exportTemplate(), replace);
       setFilename(name);
       setMessage(`Saved ${name}`);
     } catch (reason) {
@@ -49,6 +49,7 @@ export function TemplateControls() {
     <div className="flex flex-wrap gap-2">
       <button type="button" disabled={disabled} onClick={() => { void load(); }} className="rounded border border-white/10 px-3 py-2 text-zinc-300 hover:bg-white/5 disabled:opacity-40">{busy === "init" ? "Loading…" : "init_template"}</button>
       <button type="button" disabled={disabled} onClick={() => { void save(); }} className="rounded border border-violet-400/25 bg-violet-400/10 px-3 py-2 text-violet-200 hover:bg-violet-400/20 disabled:opacity-40">{busy === "save" ? "Saving…" : "Save template"}</button>
+      <button type="button" disabled={disabled} onClick={() => { void save(true); }} className="rounded border border-white/10 px-3 py-2 text-zinc-300 hover:bg-white/5 disabled:opacity-40">Replace existing .led…</button>
       <button type="button" disabled={disabled} onClick={() => input.current?.click()} className="rounded border border-white/10 px-3 py-2 text-zinc-300 hover:bg-white/5 disabled:opacity-40">{busy === "load" ? "Loading…" : "Load template"}</button>
       <input ref={input} type="file" accept=".led" aria-label="Open node template" className="hidden" onChange={(event) => {
         const file = event.currentTarget.files?.[0];

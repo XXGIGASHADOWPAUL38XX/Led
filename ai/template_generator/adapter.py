@@ -1,6 +1,5 @@
 """Turn Led Elements into Jev choices and typed constructor values."""
 
-from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum
 import inspect
@@ -31,6 +30,11 @@ def boolean(element, sources=()):
 
 
 def number(element, sources=()):
+    if np.ndim(element.value):
+        shapes = {(1,), (180,), (180, 3), (180, 4), *(np.shape(source.value) for source in sources)}
+        return Choice({"original": current(element), **{
+            f"shape_{'x'.join(map(str, shape))}": shape for shape in sorted(shapes) if shape and all(shape)
+        }})
     values = np.linspace(element.minimum, element.maximum, 50)
     values = list(dict.fromkeys(int(round(value)) if element.integer else float(value) for value in values))
     options = {"original": current(element), **{f"value_{i}": value for i, value in enumerate(values)}}
@@ -74,8 +78,8 @@ def interval(element, sources=()):
 
     def build(selected):
         result = [selected["0"], selected["1"]]
-        if element.name in ("input_value_interval", "interval_input") and result[0] == result[1]:
-            raise ValueError(f"{element.name} endpoints must differ")
+        if element.name in ("input_value_interval", "interval_input") and result[0] >= result[1]:
+            raise ValueError(f"{element.name} must have increasing endpoints")
         return result
 
     return Group(children, build, element.value)
@@ -147,6 +151,15 @@ def node_selector(element, sources=()):
     return spec
 
 
+def node_reference(element, sources=()):
+    from backend.nodes.pipelines.amplitudes.amplitude_level_function import AmplitudesLevelFunction
+    from backend.nodes.windows_fcts.window_fct import WindowFct
+    value = element.value
+    expected = {"amplitudes_level_fct": AmplitudesLevelFunction, "window_function": WindowFct}[element.name]
+    return Choice({"original": value, **{source.node.name(): source.node for source in sources
+        if isinstance(source.node, expected)}})
+
+
 def fixed(element, sources=()):
     return Choice({"original": current(element)})
 
@@ -171,13 +184,16 @@ def value_spec(value, sources):
 
 def sequence(element, sources=()):
     value = element.value
+    if element.name in ("operator_nodes", "nodes", "auto_start_nodes", "offline_pipelines"):
+        from backend.overrides.CNode import OfflineCNode
+        nodes = {source.node.name(): source.node for source in sources
+                 if (element.name != "operator_nodes" or source.name == "data" and np.size(source.value) == 1)
+                 and (element.name != "auto_start_nodes" or source.node.nodeName in {"StreamPlayer", "StreamMic", "SCPlaylistPlayer"})
+                 and (element.name != "offline_pipelines" or isinstance(source.node, OfflineCNode))}
+        return Choice({"original": value, **{name: [node] for name, node in nodes.items()},
+                       **({"all": list(nodes.values())} if nodes else {})})
     if element.name in ("input_datas", "input_booleans"):
-        children = {}
-        for index, source in enumerate(value):
-            options = signal(source, sources).options
-            options["original"] = source
-            children[str(index)] = Choice(options)
-        return Group(children, lambda selected: list(selected.values()), value)
+        return fixed(element)
     if element.name == "arguments" and not value:
         options = {"original": None}
         for source in sources:
@@ -196,7 +212,7 @@ def sequence(element, sources=()):
 ADAPTERS = {
     "Parameter": parameter, "ArrayElement": array,
     "DataElement": signal, "NodeSelector": node_selector,
-    "SequenceElement": sequence, "ReferenceElement": fixed,
+    "SequenceElement": sequence, "NodeReferenceElement": node_reference, "ReferenceElement": fixed,
 }
 
 
@@ -213,17 +229,16 @@ def serialize(value):
         if value.node.pending_terminals.get(terminal, {}).get("io") != "out":
             terminal = next((name for name, options in value.node.pending_terminals.items()
                              if options.get("io") == "out" and value.node.terminal_element_name(name) == value.name), value.name)
-        return {"__element_ref__": {"node_name": value.node.name(), "element_name": terminal}}
+        return {"nodeId": value.node.name(), "element": terminal}
+    if any(cls.__name__ == "CNode" for cls in type(value).__mro__):
+        return {"nodeId": value.name()}
     if isinstance(value, Enum):
-        return {"__cnode_serde__": "enum", "module": type(value).__module__,
-                "class_name": type(value).__name__, "name": value.name}
+        return value.name
     if isinstance(value, np.ndarray):
-        return {"__cnode_serde__": "ndarray", "dtype": str(value.dtype), "value": value.tolist()}
+        return np.array(value, copy=True)
     if isinstance(value, np.generic):
-        return {"__cnode_serde__": "npscalar", "dtype": str(value.dtype), "value": value.item()}
-    if isinstance(value, tuple):
-        return {"__cnode_serde__": "tuple", "value": [serialize(item) for item in value]}
-    if isinstance(value, list):
+        return value.item()
+    if type(value) in (list, tuple):
         return [serialize(item) for item in value]
     if isinstance(value, dict):
         return {key: serialize(item) for key, item in value.items()}
@@ -238,7 +253,7 @@ def summary(value):
     return str(serialize(value))
 
 
-def prepare_parameters(nodes, sources=None):
+def prepare_parameters(nodes, sources=None, locked=(), editing=False):
     """Snapshot parameter choices before asking Jev."""
     nodes = list(nodes)
     sources = sources if sources is not None else [element for node in nodes for element in node.elements
@@ -254,14 +269,16 @@ def prepare_parameters(nodes, sources=None):
             paths[path] = key
             questions[key] = {
                 "type": "choice",
-                "instructions": f"Choose {'.'.join(path)}. {description} Choose a value that supports the requested lighting effect. Explore suitable alternatives when the prompt leaves it unspecified.",
-                "criteria": {name: "Keep the existing value" if name == "original" else f"{name}: {summary(value)}"
+                "instructions": f"Choose {'.'.join(path)}. {description} " + (
+                    "Keep original unless the requested edit requires changing it." if editing else
+                    "Choose a value that supports the requested lighting effect. Explore suitable alternatives when the prompt leaves it unspecified."),
+                "criteria": {name: f"{name}: {summary(value)}"
                              for name, value in spec.options.items()},
             }
 
     for node in nodes:
         for name in inspect.signature(type(node).__init__).parameters:
-            if name in ("self", "alias", "parent", "terminals", "node_selector"):
+            if name in ("self", "alias", "parent", "terminals", "node_selector", *locked):
                 continue
             element = vars(node)[name]
             spec = adapt(element, sources)
@@ -272,11 +289,6 @@ def prepare_parameters(nodes, sources=None):
         return _resolve_parameters(specs, paths, answers)
 
     return questions, resolve
-
-
-def generate_parameters(prompt, nodes, ask):
-    questions, resolve = prepare_parameters(nodes)
-    return resolve(ask(prompt, questions) if questions else {})
 
 
 def _resolve_parameters(specs, paths, answers):
@@ -297,30 +309,3 @@ def _resolve_parameters(specs, paths, answers):
         if changed:
             changes.setdefault(node, {})[name] = serialize(value)
     return changes
-
-
-def apply_parameters(state, changes, live_nodes=()):
-    """Apply selected fields/references to a saved graph without mutating it."""
-    result = deepcopy(state)
-    nodes = {node["name"]: node for node in result["nodes"]}
-    terminals = {node.name(): node.pending_terminals for node in live_nodes}
-    for name, parameters in changes.items():
-        saved = nodes[name]["state"]
-        for parameter, value in parameters.items():
-            if parameter == "arguments" and "arguments" in saved:
-                saved["arguments"] = value
-                saved.setdefault("ctor_kwargs", {}).pop(parameter, None)
-                continue
-            result["connects"] = [edge for edge in result["connects"] if tuple(edge[2:]) != (name, parameter)]
-            saved.setdefault("ctor_kwargs", {}).pop(parameter, None)
-            saved.setdefault("init_refs", {}).pop(parameter, None)
-            if isinstance(value, dict) and "__element_ref__" in value:
-                ref = value["__element_ref__"]
-                if ref["node_name"] not in nodes:
-                    raise ValueError(f"Unknown source node: {ref['node_name']}")
-                saved["init_refs"][parameter] = value
-                if name not in terminals or terminals[name].get(parameter, {}).get("io") == "in":
-                    result["connects"].append([ref["node_name"], ref["element_name"], name, parameter])
-            else:
-                saved["ctor_kwargs"][parameter] = value
-    return result

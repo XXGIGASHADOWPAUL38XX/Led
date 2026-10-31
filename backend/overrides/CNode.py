@@ -47,6 +47,9 @@ class CNode:
     def parameters_changed(self, name):
         """Rebuild derived state after a parameter change."""
 
+    def configure_graph(self, graph, parameters):
+        """Update structural connections when constructor parameters change."""
+
     def disconnect_input(self, name, parameters):
         """Remove a saved source reference; return any outputs removed with it."""
         value = parameters.get(name)

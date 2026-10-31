@@ -1,10 +1,16 @@
 "use client";
 
 import { useCallback, useSyncExternalStore } from "react";
-import { backend, initialStatus } from "./store";
+import { backend, initialStatus, initialGeneration } from "./store";
 import { emptyViewSettings } from "./template";
 
 const empty = () => null;
+export function useGeneration() {
+  return useSyncExternalStore(useCallback((listener) => backend.subscribe("jev", listener), []), () => backend.generation, () => initialGeneration);
+}
+export function useGenerationPreview() {
+  return useSyncExternalStore(useCallback((listener) => backend.subscribe("jev-preview", listener), []), () => backend.generationPreview, empty);
+}
 export function useBackendStatus() {
   return useSyncExternalStore(useCallback((listener) => backend.subscribe("status", listener), []), () => backend.status, () => initialStatus);
 }

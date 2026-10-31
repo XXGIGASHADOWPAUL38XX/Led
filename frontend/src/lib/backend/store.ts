@@ -1,15 +1,19 @@
 import { BackendConnection, type ConnectionStatus } from "./connection.ts";
-import type { Message, Snapshot, NodeDescriptor, Endpoint, ArrayValue, PlayerState, Graph } from "./protocol.ts";
+import type { Message, Snapshot, NodeDescriptor, Endpoint, ArrayValue, PlayerState, Graph, GenerationPreview } from "./protocol.ts";
 import { encodeTemplate, decodeTemplate, emptyViewSettings, type DisplayState, type ViewSettings } from "./template.ts";
 
 type Listener = () => void;
 const keyOf = (nodeId: string, element: string) => JSON.stringify([nodeId, element]);
 export const initialStatus = { connection: "offline" as ConnectionStatus, error: "", revision: 0, canUndo: false };
+export type GenerationState = { status: "idle" | "running" | "complete" | "cancelled" | "error"; message: string; nodes: number; mode: "generate" | "edit" };
+export const initialGeneration: GenerationState = { status: "idle", message: "", nodes: 0, mode: "generate" };
 
 export class BackendStore {
   snapshot: Snapshot | null = null;
   templateRevision = 0;
   status = initialStatus;
+  generation = initialGeneration;
+  generationPreview: GenerationPreview | null = null;
   private display: DisplayState = {};
   private nodes = new Map<string, NodeDescriptor>();
   private originals = new Map<string, NodeDescriptor>();
@@ -26,6 +30,8 @@ export class BackendStore {
     this.status = { ...this.status, connection };
     if (connection === "offline") {
       this.edits.clear();
+      this.generationPreview = null;
+      this.emit("jev-preview");
       for (const node of this.originals.values()) this.updateNode(node);
     }
     this.emit("status");
@@ -92,6 +98,26 @@ export class BackendStore {
   }
 
   private receive(message: Message) {
+    if (message.type === "jev.preview") {
+      this.generationPreview = message.payload as GenerationPreview;
+      this.emit("jev-preview");
+      return;
+    }
+    if (message.type === "jev.update") {
+      const generation = message.payload as GenerationState;
+      if (generation.status === "complete" && this.generation.status === "running" && generation.mode === "generate") {
+        this.replaceDisplay({});
+        this.templateRevision++;
+        this.emit("template");
+      }
+      this.generation = generation;
+      if (generation.status !== "running") {
+        this.generationPreview = null;
+        this.emit("jev-preview");
+      }
+      this.emit("jev");
+      return;
+    }
     if (message.type === "error") {
       this.status = { ...this.status, error: String(message.payload.message) };
       this.emit("status");

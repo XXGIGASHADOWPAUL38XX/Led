@@ -1,6 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
+import type { Endpoint } from "@/lib/backend/protocol";
+import { Terminal, terminalKey } from "../workspace/terminal";
 
 export type SequenceElementProps<T> = {
   label: string;
@@ -10,9 +12,10 @@ export type SequenceElementProps<T> = {
   createItem: () => T;
   renderItem: (item: T, index: number, onChange: (value: T) => void) => ReactNode;
   disabled?: boolean;
+  addEndpoint?: Endpoint;
 };
 
-export function SequenceElement<T>({ label, value, onValueChange, onValueCommit, createItem, renderItem, disabled = false }: SequenceElementProps<T>) {
+export function SequenceElement<T>({ label, value, onValueChange, onValueCommit, createItem, renderItem, disabled = false, addEndpoint }: SequenceElementProps<T>) {
   function move(index: number, offset: number) {
     const next = [...value];
     [next[index], next[index + offset]] = [next[index + offset], next[index]];
@@ -30,6 +33,9 @@ export function SequenceElement<T>({ label, value, onValueChange, onValueCommit,
       </div>
     </div>)}
     {!value.length && <p className="px-1 text-xs text-zinc-600">No items</p>}
-    <button type="button" onClick={() => { onValueChange([...value, createItem()]); onValueCommit?.(); }} className="w-full rounded border border-dashed border-white/10 py-1.5 text-[10px] text-violet-300 hover:bg-violet-400/10">+ Add item</button>
+    <div className="relative" data-terminal={addEndpoint ? terminalKey(addEndpoint, "input") : undefined}>
+      {addEndpoint && !disabled && <Terminal endpoint={addEndpoint} direction="input" className="absolute -left-4 top-2" />}
+      <button type="button" onClick={() => { onValueChange([...value, createItem()]); onValueCommit?.(); }} className="w-full rounded border border-dashed border-white/10 py-1.5 text-[10px] text-violet-300 hover:bg-violet-400/10">+ Add item</button>
+    </div>
   </fieldset>;
 }

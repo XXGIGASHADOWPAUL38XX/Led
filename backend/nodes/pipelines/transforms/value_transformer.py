@@ -10,7 +10,7 @@ class ValueTransformerPipelineNode(CNode, AudioPipeline):
     """Map scalar or vector values between numeric intervals.
 
     Input `input_value` produces output `output_value` each audio update.
-    Configure ascending `input_value_interval` and `output_value_interval`;
+    Configure `input_value_interval` and `output_value_interval` in either direction;
     linear interpolation clamps out-of-range inputs to endpoint outputs.
     A scalar produces a one-element array; use 1D arrays for vector input."""
 
@@ -52,8 +52,12 @@ class ValueTransformerPipelineNode(CNode, AudioPipeline):
         self.output_value = DataElement(self, 'output_value', ElementValue(np.zeros(self._compute_input_value_shape(self.input_value.value))))
 
     def c_update(self):
+        inputs = self.input_value_interval.value
+        outputs = self.output_value_interval.value
+        if inputs[0] > inputs[1]:
+            inputs, outputs = inputs[::-1], outputs[::-1]
         self.output_value.value[:] = np.interp(
             self.input_value.value,
-            self.input_value_interval.value,
-            self.output_value_interval.value
+            inputs,
+            outputs
         )

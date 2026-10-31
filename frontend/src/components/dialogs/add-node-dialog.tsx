@@ -83,7 +83,14 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
         const element = node.elements.find((item) => item.name === field.name);
         if (!element) return null;
         const value = Object.hasOwn(parameters, field.name) ? parameters[field.name] : element.value;
-        const onChange = (value: unknown) => setParameters((previous) => ({ ...previous, [field.name]: value }));
+        const onChange = (value: unknown) => setParameters((previous) => {
+          const next = { ...previous, [field.name]: value };
+          if (value && field.control === "port" && node.ports.some((port) => port.name === field.name && port.adaptiveShape)) {
+            const source = value as Endpoint;
+            next.shape = snapshot!.nodes.find((item) => item.id === source.nodeId)!.ports.find((port) => port.name === source.element)!.shape;
+          }
+          return next;
+        });
         const count = field.bounds ? Number(parameters[field.bounds.from] ?? node.elements.find((item) => item.name === field.bounds!.from)?.value) : 0;
         return <div key={field.name}>{field.control === "port" ? <ReferenceControl nodeId={node.id} field={field} value={(parameters[field.name] ?? null) as Endpoint | null} onChange={onChange} />
           : <FieldControl node={node} field={field} parameters={parameters} onParametersChange={(values) => setParameters((previous) => ({ ...previous, ...values }))} element={field.bounds ? { ...element, min: Math.floor(count * field.bounds.min), max: Math.floor(count * field.bounds.max) } : element} value={value} onChange={onChange} />}</div>;

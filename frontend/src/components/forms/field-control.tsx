@@ -4,8 +4,11 @@ import { useState } from "react";
 import { useGraph } from "@/lib/backend/hooks";
 import { isArrayValue, type ArrayValue, type ElementDescriptor, type NodeDescriptor } from "@/lib/backend/protocol";
 import type { FieldDefinition } from "../node/definition";
+import { OperatorExpressionControl } from "./operator-expression-control";
 import { FunctionCurveControl } from "./function-curve-control";
 import { ColorControl } from "./color-control";
+import { Terminal } from "../workspace/terminal";
+import type { Endpoint } from "@/lib/backend/protocol";
 import { ArrayElement, AxisElement, ColorElement, CurveElement, DataElement, IntervalElement, OptionalSliderElement, OperatorElement,
   ReferenceElement, SelectElement, SequenceElement, SliderElement, SwitchElement, TextElement, type Color, type CurvePoint, type NumericArray } from "../elements";
 
@@ -41,12 +44,13 @@ export function ReferenceControl({ nodeId, field, value, onChange, disabled = fa
     }} />;
 }
 
-function TokenControl({ nodeId, field, value, onChange, onCommit }: { nodeId: string; field: FieldDefinition; value: unknown; onChange: (value: unknown) => void; onCommit?: () => void }) {
+function TokenControl({ nodeId, field, value, onChange, onCommit, endpoint }: { nodeId: string; field: FieldDefinition; value: unknown; onChange: (value: unknown) => void; onCommit?: () => void; endpoint?: Endpoint }) {
   const commit = (value: unknown) => { onChange(value); onCommit?.(); };
   const array = isArrayValue(value) ? value : null;
   const operator = typeof value === "string" && ["+", "-", "*", "/", "**", "<", "<=", "==", ">=", ">", "&", "|", "(", ")"].includes(value);
   const kind = array ? "array" : typeof value === "object" && value !== null ? "source" : typeof value === "number" ? "number" : operator ? "operator" : "text";
-  return <div className="space-y-2">
+  return <div className="relative space-y-2">
+    {endpoint && <Terminal endpoint={endpoint} direction="input" className="absolute -left-6 top-14" />}
     <SelectElement label="Value type" value={kind} options={[...(array ? ["array"] : []), "source", "number", "operator", "text"].map((value) => ({ value, label: value }))}
       onValueChange={(next) => { if (next !== "array") commit(next === "source" ? {} : next === "number" ? 1 : next === "operator" ? "*" : ""); }} />
     {array ? <p className="px-1 text-[10px] text-zinc-500">Constant array · {array.shape.join(" × ")}</p>
@@ -75,7 +79,7 @@ export function FieldControl({ node, field, element, value, onChange, onCommit, 
       const props = { ...common, value: color, onValueChange: onChange, onValueCommit: onCommit };
       return field.channels ? <ColorControl {...props} nodeId={node.id} colorPort={field.name} channels={field.channels} /> : <ColorElement {...props} />;
     }
-    case "interval": return <IntervalElement {...common} value={value as [number, number]} onValueChange={onChange} onValueCommit={onCommit} min={field.min ?? -10000} max={field.max ?? 10000} />;
+    case "interval": return <IntervalElement {...common} ordered={field.ordered} value={value as [number, number]} onValueChange={onChange} onValueCommit={onCommit} min={field.min ?? -10000} max={field.max ?? 10000} />;
     case "array": return <ArrayElement {...common} value={isArrayValue(value) ? plainArray(value) : value as NumericArray} onValueChange={commit} min={element.min} max={element.max} integer={element.dtype ? /[iu]/.test(element.dtype) : false} />;
     case "shape": return <ArrayElement {...common} shape value={value as number[]} onValueChange={commit} />;
     case "curve": {
@@ -88,9 +92,13 @@ export function FieldControl({ node, field, element, value, onChange, onCommit, 
     }
     case "reference": return <ReferenceControl nodeId={node.id} field={field} value={value as Reference} onChange={commit} disabled={common.disabled} />;
     case "node-reference": return <ReferenceControl nodeId={node.id} field={field} value={value as Reference} onChange={commit} disabled={common.disabled} nodeOnly />;
+    case "expression": return <OperatorExpressionControl node={node} element={element} value={value as unknown[]} disabled={common.disabled ?? false}
+      onChange={(values) => { onParametersChange!(values); onCommit?.(); }} />;
     case "sequence": return <SequenceElement {...common} value={value as unknown[]} onValueChange={onChange} onValueCommit={onCommit}
+      addEndpoint={field.addPort && node.ports.some((port) => port.name === field.addPort) ? { nodeId: node.id, element: field.addPort } : undefined}
       createItem={() => field.item === "token" ? "*" : null}
-      renderItem={(item, _index, set) => field.item === "token" ? <TokenControl nodeId={node.id} field={field} value={item} onChange={set} onCommit={onCommit} />
+      renderItem={(item, index, set) => field.item === "token" ? <TokenControl nodeId={node.id} field={field} value={item} onChange={set} onCommit={onCommit}
+        endpoint={element.itemPorts?.[index] ? { nodeId: node.id, element: element.itemPorts[index]! } : undefined} />
         : <ReferenceControl nodeId={node.id} field={field} value={item as Reference} onChange={(value) => { set(value); onCommit?.(); }} nodeOnly={field.item === "node"} />} />;
     case "managed": return <p className="px-1 text-[10px] text-zinc-500">{label} · managed by Python</p>;
     default: return <TextElement {...common} value={String(value ?? "")} onValueChange={onChange} onValueCommit={onCommit} kind={field.name.includes("url") ? "url" : field.name.includes("path") ? "path" : "name"} />;

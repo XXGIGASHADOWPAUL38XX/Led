@@ -10,6 +10,7 @@ import { FieldControl } from "../forms/field-control";
 
 export function NodeFields({ node, definition }: { node: NodeDescriptor; definition: NodeDefinition }) {
   const [draft, setDraft] = useState<Record<string, unknown>>({});
+  const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const changes = useRef(draft);
   const pending = useRef(false);
@@ -21,11 +22,12 @@ export function NodeFields({ node, definition }: { node: NodeDescriptor; definit
     pending.current = true;
     setSaving(true);
     try {
-      const structural = definition.fields.some((field) => Object.hasOwn(parameters, field.name) && (field.rebuild || field.bounds || ["sequence", "node-reference", "curve", "axis"].includes(field.control)));
+      const structural = definition.fields.some((field) => Object.hasOwn(parameters, field.name) && (field.rebuild || field.bounds || ["sequence", "expression", "node-reference", "curve", "axis"].includes(field.control)));
       const result = structural
         ? await backend.command("node.configure", { nodeId: node.id, parameters })
         : await Promise.all(Object.entries(parameters).map(([name, value]) => backend.setElement(node.id, name, value)));
-      if (result !== undefined) { changes.current = {}; setDraft({}); }
+      if (result !== undefined) { changes.current = {}; setDraft({}); setError(""); }
+      else setError(backend.status.error ?? "Could not apply changes");
     } finally { pending.current = false; setSaving(false); }
   }
   return <div className="space-y-2">
@@ -49,6 +51,7 @@ export function NodeFields({ node, definition }: { node: NodeDescriptor; definit
           setDraft(next);
         }} /></div>;
     })}
+    {error && <p role="alert" className="text-[10px] text-rose-300">{error}</p>}
     {!complete && <p role="status" className="text-[10px] text-zinc-500">Choose a source for each reference to finish the change.</p>}
   </div>;
 }
