@@ -47,6 +47,9 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
     setBusy(true); setError("");
     const nodeId = name.trim() || automaticName;
     const values = { ...parameters };
+    for (const field of definition.fields.filter((field) => field.control === "shape")) {
+      values[field.name] ??= node!.elements.find((element) => element.name === field.name)!.value;
+    }
     const connections = definition.fields.filter((field) => field.control === "port").flatMap((field) => {
       const source = values[field.name] as Endpoint | null;
       delete values[field.name];

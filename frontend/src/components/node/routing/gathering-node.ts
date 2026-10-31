@@ -3,7 +3,7 @@ import type { NodeDefinition } from "../definition.ts";
 export default {
   "type": "Gathering",
   "title": "Gathering",
-  "description": "Select enabled source values using a parallel boolean list.",
+  "description": "Select the first enabled source using a matching list of enable signals.",
   "category": "routing",
   "fields": [
     {

@@ -42,13 +42,15 @@ class WindowNode(CNode, AudioUpdatable):
 
     def connect_input(self, name, source, parameters):
         if name == 'input_data':
-            parameters.setdefault('shape', self.shape.value)
+            parameters['shape'] = self.shape.value
         return super().connect_input(name, source, parameters)
 
     def validate_parameters(self, changes):
         shape = validate_shape(changes.get('shape', self.shape.value), minimum=0)
         if (not self._placeholder or self.input_data._value_source is not None) and np.shape(self.input_data.value) != shape:
             raise ValueError(f'Input shape {shape} is incompatible with input data {np.shape(self.input_data.value)}')
+        if self.input_data.value.dtype.kind not in 'iufb':
+            raise ValueError('Window input data must be a numeric array')
         length = int(changes.get('length', self.length.value))
         if length * np.prod(shape, dtype=object) > 4_194_304:
             raise ValueError('Window history exceeds 4,194,304 elements')

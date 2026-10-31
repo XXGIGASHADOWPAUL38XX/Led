@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack --hostname 127.0.0.1",
-    "build": "next build --webpack",
-    "start": "next start --hostname 127.0.0.1",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "start": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "node --test \"src/**/*.test.mjs\""
   },
@@ -15,19 +15,19 @@
     "@radix-ui/react-select": "^2.4.1",
     "@radix-ui/react-slider": "^1.6.1",
     "@radix-ui/react-switch": "^1.4.1",
-    "next": "latest",
     "react": "latest",
     "react-dom": "latest",
     "recharts": "^3.10.1"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "postcss": "^8",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite": "latest",
+    "@vitejs/plugin-react": "latest",
+    "@tailwindcss/vite": "4.3.3"
   },
   "type": "module"
 }
