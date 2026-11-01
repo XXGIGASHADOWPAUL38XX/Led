@@ -369,6 +369,8 @@ class Runtime:
             return {"nodeId": value.name()} if self.nodes.get(value.name()) is value else None
         if type(value) in (list, tuple):
             return [self._describe_value(item) for item in value]
+        if type(value) is dict:
+            return {key: self._describe_value(item) for key, item in value.items()}
         return value
 
     @staticmethod

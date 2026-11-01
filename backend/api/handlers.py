@@ -177,10 +177,11 @@ class Handlers:
 
     def player_state(self, node):
         with node._data_lock:
-            tracks = [{"id": self._track_id(entry), **node._entry_metadata(entry), "duration": node.track_duration(index), "loaded": node._tracks[index] is not None}
+            tracks = [{"id": self._track_id(entry), **node._entry_metadata(entry), "duration": node.track_duration(index), "loaded": node._tracks[index] is not None,
+                       "downloadState": "ready" if node._tracks[index] is not None else entry.get("_download_state", "queued")}
                       for index, entry in enumerate(node._entries)]
             index = node._current_track_index
-        return {"nodeId": node.name(), "tracks": tracks,
+        return {"nodeId": node.name(), "tracks": tracks, "loading": node.loading,
                 "activeTrackId": tracks[index]["id"] if 0 <= index < len(tracks) else None,
                 "playing": node._is_playing, "position": max(0.0, node._current_position()) if index >= 0 else 0.0,
                 "duration": node.track_duration(index) if 0 <= index < len(tracks) else 0.0}
@@ -195,7 +196,8 @@ class Handlers:
         if not node._entries:
             node.start()
             return {"loading": True}
-        index = next((index for index, entry in enumerate(node._entries) if self._track_id(entry) == payload.get("trackId")), 0)
+        first_ready = next((index for index, track in enumerate(node._tracks) if track is not None), 0)
+        index = next((index for index, entry in enumerate(node._entries) if self._track_id(entry) == payload.get("trackId")), first_ready)
         if "trackId" in payload and self._track_id(node._entries[index]) != payload["trackId"]:
             raise ValueError("Unknown track")
         if node._tracks[index] is None:

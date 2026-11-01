@@ -126,44 +126,44 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
         with YoutubeDL(playlist_opts) as ydl:
             return ydl.extract_info(url, download=False).get("entries", [])
 
-    def _worker(self):
+    def _worker(self, playlist_url, opts, stop_event, events):
         try:
-            opts = self._ydl_opts()
-            playlist_url = str(self.playlist_url.value).strip()
             entries_cache = self._load_cache(self.entries_cache_path) if bool(self.cache.value) else {}
             entries_key = hashlib.sha256(f"{playlist_url}|{repr(sorted(opts.items()))}".encode()).hexdigest()
             entries = entries_cache.get(entries_key)
             if entries is None:
-                entries = self._extract_entries(playlist_url, opts)
+                entries = list(self._extract_entries(playlist_url, opts))
                 entries_cache[entries_key] = entries
                 if bool(self.cache.value):
                     self._save_cache(self.entries_cache_path, entries_cache)
         except Exception:
-            self._events.put(("loading", False))
+            events.put(("loading", False))
             return
         entries = list(entries)
-        self._events.put(("playlist", entries))
+        events.put(("playlist", entries))
         track_cache = self._load_cache(self.tracks_cache_path) if bool(self.cache.value) else {}
         prefetched_seconds = 0.0
         for index, entry in enumerate(entries):
-            if self._stop_event.is_set():
+            if stop_event.is_set():
                 break
             if prefetched_seconds >= float(self.prefetch_seconds.value):
                 break
+            events.put(("download", (entry, "downloading")))
             try:
                 track = self._download_track(entry, opts, bool(self.cache.value), track_cache)
             except Exception:
+                events.put(("download", (entry, "failed")))
                 continue
             prefetched_seconds += float(entry.get("duration") or 0.0)
-            self._events.put(("track", (entry, track)))
+            events.put(("track", (entry, track)))
         if bool(self.cache.value):
             self._save_cache(self.tracks_cache_path, track_cache)
-        self._events.put(("loading", False))
+        events.put(("loading", False))
 
     def add_music(self, entry):
-        threading.Thread(target=self._add_worker, args=(entry,), daemon=True).start()
+        threading.Thread(target=self._add_worker, args=(entry, self._events), daemon=True).start()
 
-    def _add_worker(self, entry):
+    def _add_worker(self, entry, events):
         try:
             opts = self._ydl_opts()
             track_cache = self._load_cache(self.tracks_cache_path) if bool(self.cache.value) else {}
@@ -171,9 +171,9 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
             if bool(self.cache.value):
                 self._save_cache(self.tracks_cache_path, track_cache)
         except Exception:
-            self._events.put(("loading", False))
+            events.put(("loading", False))
             return
-        self._events.put(("add", (entry, track)))
+        events.put(("add", (entry, track)))
 
     def remove_music(self, index):
         with self._data_lock:
@@ -193,8 +193,13 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
                 self.loading = value
             elif kind == "playlist":
                 self._entries = value
+                for entry in value:
+                    entry["_download_state"] = "queued"
                 self._tracks = [None] * len(value)
                 self._seek_ratios = [0.0] * len(value)
+            elif kind == "download":
+                entry, status = value
+                entry["_download_state"] = status
             elif kind == "add":
                 entry, track = value
                 self._entries.append(entry)
@@ -206,6 +211,7 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
                 index = next((at for at, item in enumerate(self._entries) if item is entry), None)
                 if index is not None:
                     self._tracks[index] = track
+                    entry["_download_state"] = "ready"
                 self.calculate_offline_pipelines()
 
     def on_play_requested(self, index):
@@ -302,12 +308,24 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
         for node in self.offline_pipelines:
             node.update_audio_position(track_index, position)
 
+    def parameters_changed(self, name):
+        if name == 'playlist_url':
+            self.stop()
+            # In-flight workers retain their old event queue and cancellation token.
+            self._events = SimpleQueue()
+            self._stop_event = threading.Event()
+            self._thread = None
+            self.loading = False
+            self._entries, self._tracks, self._seek_ratios = [], [], []
+            self._current_track_index = -1
+            self._track_start_position = 0.0
+
     def start(self):
         if self._thread is not None and self._thread.is_alive():
             return
         self.loading = True
         self._stop_event.clear()
-        self._thread = threading.Thread(target=self._worker, daemon=True)
+        self._thread = threading.Thread(target=self._worker, args=(str(self.playlist_url.value).strip(), self._ydl_opts(), self._stop_event, self._events), daemon=True)
         self._thread.start()
 
     def stop(self):

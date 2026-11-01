@@ -3,7 +3,7 @@
 import * as Slider from "@radix-ui/react-slider";
 import { useState } from "react";
 
-export type Track = { id: string; title: string; artist: string; duration: number };
+export type Track = { id: string; title: string; artist: string; duration: number; loaded?: boolean; downloadState?: "queued" | "downloading" | "ready" | "failed" };
 
 export function formatTime(seconds: number) {
   const total = Math.floor(Math.max(0, Number.isFinite(seconds) ? seconds : 0));
@@ -37,7 +37,7 @@ export function MusicPlayer({ track, playing, position, duration, onPlay, onPaus
           <p className="line-clamp-2 break-words text-xs font-medium text-zinc-100" title={track?.title}>{track?.title ?? "Choose a track"}</p>
           <p className="mt-1 truncate text-[10px] text-zinc-400" title={track?.artist}>{track?.artist ?? "Your playlist is ready"}</p>
         </div>
-        <button type="button" disabled={!track} onClick={playing ? onPause : onPlay}
+        <button type="button" disabled={!track || track.loaded === false} onClick={playing ? onPause : onPlay}
           aria-label={playing ? "Pause" : "Play"} aria-pressed={playing}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-400 text-sm text-[#181322] shadow-lg shadow-violet-500/10 transition-colors hover:bg-violet-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-200 disabled:cursor-default disabled:opacity-30">
           <span aria-hidden="true">{playing ? "Ⅱ" : "▶"}</span>
@@ -45,7 +45,7 @@ export function MusicPlayer({ track, playing, position, duration, onPlay, onPaus
       </div>
       <Slider.Root min={0} max={Math.max(1, duration)} step={0.1} value={[duration > 0 ? Math.min(duration, elapsed) : 0]} onValueChange={([value]) => setSeeking(value)}
         onValueCommit={([value]) => { void commit(value); }} onPointerCancel={() => setSeeking(null)}
-        disabled={committing || !track || duration <= 0} className="group/seek relative flex h-6 w-full touch-none select-none items-center">
+        disabled={committing || !track || track.loaded === false || duration <= 0} className="group/seek relative flex h-6 w-full touch-none select-none items-center">
         <Slider.Track className="relative h-1 w-full overflow-hidden rounded-full bg-white/10">
           <Slider.Range className="absolute h-full rounded-full bg-violet-400" />
         </Slider.Track>

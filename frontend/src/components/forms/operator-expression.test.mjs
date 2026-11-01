@@ -20,3 +20,14 @@ test('renamed inputs persist, remove unused bindings and reject conflicting name
   assert.throws(() => writeExpression('clip', [{ name: 'clip', value: a }]), /unique identifiers/);
   assert.throws(() => writeExpression('x', [{ name: 'x', value: a }, { name: 'x', value: b }]), /unique identifiers/);
 });
+
+test('several expressions share input names and keep references used only by extra outputs', async () => {
+  const { readExpressions, writeExpressions } = await import('./operator-expression.ts');
+  const draft = readExpressions([a, '* 2'], [{ name: 'difference', arguments: [b, '-', a] }], ['bass', 'highs'], ['bass:data', null, 'highs:data', null, null]);
+  assert.equal(draft.inputs.length, 2);
+  assert.deepEqual(draft.outputs, [{ name: 'data', expression: 'bass * 2' }, { name: 'difference', expression: 'highs - bass' }]);
+  const saved = writeExpressions(draft.outputs, draft.inputs);
+  assert.deepEqual(saved.operations, [{ name: 'difference', arguments: [b, '-', a] }]);
+  assert.deepEqual(saved.input_names, ['bass', 'highs']);
+  assert.throws(() => writeExpressions([{ name: 'data', expression: '1' }, { name: 'data', expression: '2' }], []), /unique identifiers/);
+});

@@ -16,6 +16,10 @@ export function LiveNode({ id }: { id: string }) {
   const position = snapshot?.graph.nodes.find((item) => item.id === id)?.position ?? [0, 0];
   // Dynamic stems and argument ports follow the live processing schema.
   const inlineOutputs = new Set(definition.fields.filter((field) => field.control === "expression").flatMap((field) => node.elements.find((element) => element.name === field.name)?.itemPorts?.filter(Boolean).map((name) => `${name}_out`) ?? []));
+  if (definition.fields.some((field) => field.control === "expression")) {
+    inlineOutputs.add("data");
+    for (const operation of (node.elements.find((element) => element.name === "operations")?.value ?? []) as { name: string }[]) inlineOutputs.add(operation.name);
+  }
   const views = [...definition.views, ...node.ports.filter((port) => port.direction === "out" && !inlineOutputs.has(port.name) && !definition.views.some((view) => view.data === port.name))
     .map((port) => ({ kind: node.type === "StemsRecognition" ? "trigger" as const : "bars" as const, data: port.name, label: port.name, open: false }))];
   const shown = new Set([...definition.fields.flatMap((field) => [field.name, field.addPort]), ...views.map((view) => view.data), ...node.elements.flatMap((element) => element.itemPorts ?? [])]);
@@ -27,6 +31,6 @@ export function LiveNode({ id }: { id: string }) {
     <NodeFields key={node.id} node={node} definition={definition} />
     {definition.actions && <div className="flex gap-2">{definition.actions.map((action) => <button key={action} type="button"
       onClick={() => { void backend.command(`node.${action}`, { nodeId: id }); }} className="flex-1 rounded bg-violet-400/15 py-2 text-xs capitalize text-violet-200">{action}</button>)}</div>}
-    {views.map((view, index) => <NodeView key={`${view.data ?? view.kind}-${index}`} node={node} view={view} />)}
+    {views.map((view, index) => <NodeView key={`${view.data ?? view.kind}-${index}`} node={node} view={view} hidePort={inlineOutputs.has(view.data ?? "")} />)}
   </Node>;
 }

@@ -6,6 +6,7 @@ export default {
   "description": "Evaluate an expression assembled from Elements and literal tokens.",
   "category": "transforms",
   "fields": [
+    { "name": "operations", "control": "managed", "hidden": true },
     { "name": "input_names", "control": "managed", "hidden": true },
     {
       "name": "arguments",

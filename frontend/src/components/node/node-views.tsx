@@ -51,8 +51,8 @@ function LivePlaylist({ nodeId }: { nodeId: string }) {
   const [searching, setSearching] = useState(false);
   const send = (type: string, payload: Record<string, unknown> = {}) => backend.command(type, { nodeId, ...payload });
   return <div className="space-y-2">
-    <button type="button" onClick={() => { void send("player.play"); }} className="rounded bg-violet-400/15 px-3 py-1.5 text-xs text-violet-200">Load playlist / play</button>
-    <PlaylistPlayer tracks={player?.tracks ?? []} activeTrackId={player?.activeTrackId ?? null} playing={player?.playing ?? false} position={player?.position ?? 0} duration={player?.duration ?? 0}
+    <button type="button" disabled={player?.loading && !player.tracks.some((track) => track.loaded)} onClick={() => { void send("player.play"); }} className="rounded bg-violet-400/15 px-3 py-1.5 text-xs text-violet-200 disabled:opacity-40">{player?.loading && !player.tracks.length ? "Loading playlist…" : "Load playlist / play"}</button>
+    <PlaylistPlayer loading={player?.loading ?? false} tracks={player?.tracks ?? []} activeTrackId={player?.activeTrackId ?? null} playing={player?.playing ?? false} position={player?.position ?? 0} duration={player?.duration ?? 0}
       onPlay={(trackId) => { void send("player.play", { trackId }); }} onPause={() => { void send("player.pause"); }} onSeek={(position) => send("player.seek", { position })}
       onAdd={(track) => { void send("playlist.add", { trackId: track.id }); }} onRemove={(trackId) => { void send("playlist.remove", { trackId }); }}
       query={query} onQueryChange={setQuery} searching={searching} results={results?.tracks ?? null}
@@ -60,14 +60,14 @@ function LivePlaylist({ nodeId }: { nodeId: string }) {
   </div>;
 }
 
-export function NodeView({ node, view }: { node: NodeDescriptor; view: ViewDefinition }) {
+export function NodeView({ node, view, hidePort = false }: { node: NodeDescriptor; view: ViewDefinition; hidePort?: boolean }) {
   const settings = useViewSettings(node.id, viewKey(view.kind, view.data));
   const open = settings.open ?? view.open ?? false;
   if (view.kind === "playlist") return <LivePlaylist nodeId={node.id} />;
   const port = node.ports.find((port) => port.name === view.data);
   if (!port) return null;
   return <div className="space-y-2 border-t border-white/5 pt-2">
-    <DataElement label={view.label ?? port.name} endpoint={{ nodeId: node.id, element: port.name }} direction={port.direction === "out" ? "output" : "input"} shape={port.shape} unit={view.unit} />
+    {!hidePort && <DataElement label={view.label ?? port.name} endpoint={{ nodeId: node.id, element: port.name }} direction={port.direction === "out" ? "output" : "input"} shape={port.shape} unit={view.unit} />}
     <button type="button" aria-expanded={open} onClick={() => backend.setViewSettings(node.id, viewKey(view.kind, view.data), { open: !open })} className="px-1 text-[10px] text-violet-300">{open ? "Hide view" : "Show view"}</button>
     {open && <StreamView node={node} view={view} />}
   </div>;
