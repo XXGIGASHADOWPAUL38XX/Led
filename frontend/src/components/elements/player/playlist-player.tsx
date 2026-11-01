@@ -37,7 +37,6 @@ export function PlaylistPlayer({ tracks, activeTrackId, onPlay, onAdd, onRemove,
             {results.map((track) => {
               const added = tracks.some((item) => item.id === track.id);
               const downloading = track.downloadState === "downloading";
-          const unavailable = track.loaded === false;
           return <li aria-busy={downloading} key={track.id} className="flex items-center gap-2 rounded p-2 hover:bg-white/5">
                 <div className="min-w-0 flex-1"><p className="truncate text-xs text-zinc-200">{track.title}</p><p className="mt-0.5 truncate text-[10px] text-zinc-500">{track.artist}</p></div>
                 <button type="button" disabled={added} onClick={() => onAdd(track)} aria-label={`Add ${track.title}`}

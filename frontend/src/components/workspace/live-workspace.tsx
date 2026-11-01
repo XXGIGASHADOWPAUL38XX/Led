@@ -3,7 +3,6 @@ import { backend } from "@/lib/backend/store";
 import { useBackendStatus, useGraph, useTemplateRevision } from "@/lib/backend/hooks";
 import { SelectElement } from "../elements";
 import { LiveNode } from "../node/live-node";
-import { nodeDefinitions } from "../node/registry";
 import { compatiblePorts } from "../../lib/nodes/configuration";
 import { TemplateControls } from "../templates/template-controls";
 import { JevControls } from "../templates/jev-controls";
