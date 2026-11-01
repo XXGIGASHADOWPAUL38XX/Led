@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useGraph } from "@/lib/backend/hooks";
 import { isArrayValue, type ElementDescriptor, type NodeDescriptor } from "@/lib/backend/protocol";
 import { SelectElement } from "../elements";
@@ -26,11 +26,13 @@ export function OperatorExpressionControl({
   const [error, setError] = useState("");
   const [word, setWord] = useState("");
   const text = useRef<HTMLTextAreaElement>(null);
-  useEffect(() => {
+  const [source, setSource] = useState(node);
+  if (source !== node) {
+    setSource(node);
     setDraft(readExpressions(value, operations, names, element.itemPorts));
     setError("");
     setActive((index) => Math.min(index, operations.length));
-  }, [node]);
+  }
   const sources = (snapshot?.nodes ?? [])
     .filter((source) => source.id !== node.id)
     .flatMap((source) =>

@@ -12,9 +12,13 @@ export function NodeFields({ node, definition }: { node: NodeDescriptor; definit
   const [saving, setSaving] = useState(false);
   const changes = useRef(draft);
   const pending = useRef(false);
+  const [source, setSource] = useState(node);
+  if (source !== node) {
+    setSource(node);
+    setDraft({});
+  }
   useEffect(() => {
     changes.current = {};
-    setDraft({});
   }, [node]);
   const complete = completeConfiguration(definition.fields, draft);
   async function commit() {

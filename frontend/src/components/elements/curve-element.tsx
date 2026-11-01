@@ -1,4 +1,4 @@
-import { type ReactNode, useRef, useState } from "react";
+import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
 import { clamp, curvePath, type CurveAxis, type CurvePoint, type CurveValue } from "../../lib/curves/curve";
 export type { CurvePoint } from "../../lib/curves/curve";
 
@@ -82,7 +82,9 @@ export function CurveElement({
       : { points: [...value], slopes: value.slice(1).map(() => 0), ids: value.map((_, i) => `p${i}`) });
   const { points, slopes, ids } = current;
   const latest = useRef(current);
-  latest.current = current;
+  useLayoutEffect(() => {
+    latest.current = current;
+  });
   const dragging = useRef<{
     kind: "point" | "slope";
     index: number;

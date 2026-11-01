@@ -1,4 +1,5 @@
-import { MusicPlayer, formatTime, type MusicPlayerProps, type Track } from "./music-player";
+import { formatTime } from "@/lib/player/format-time";
+import { MusicPlayer, type MusicPlayerProps, type Track } from "./music-player";
 
 export type PlaylistPlayerProps = Omit<MusicPlayerProps, "track" | "onPlay"> & {
   tracks: readonly Track[];

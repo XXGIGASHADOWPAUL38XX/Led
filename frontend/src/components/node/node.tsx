@@ -1,4 +1,4 @@
-import { type ReactNode, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { type ReactNode, useContext, useLayoutEffect, useRef, useState } from "react";
 import { Terminal, TerminalContext } from "../workspace/terminal";
 import { useObjectSelection } from "../workspace/object-selection";
 
@@ -28,9 +28,11 @@ export function Node({
   const [position, setPosition] = useState(initialPosition ?? { x: 0, y: 0 });
   const initialX = initialPosition?.x ?? 0,
     initialY = initialPosition?.y ?? 0;
-  useEffect(() => {
+  const [initial, setInitial] = useState([initialX, initialY]);
+  if (initial[0] !== initialX || initial[1] !== initialY) {
+    setInitial([initialX, initialY]);
     setPosition({ x: initialX, y: initialY });
-  }, [initialX, initialY]);
+  }
   const drag = useRef({ x: 0, y: 0 });
   const article = useRef<HTMLElement>(null);
   const selecting = useRef(false);

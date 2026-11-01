@@ -1,5 +1,6 @@
 import * as Slider from "@radix-ui/react-slider";
 import { useState } from "react";
+import { formatTime } from "@/lib/player/format-time";
 
 export type Track = {
   id: string;
@@ -9,11 +10,6 @@ export type Track = {
   loaded?: boolean;
   downloadState?: "queued" | "downloading" | "ready" | "failed";
 };
-
-export function formatTime(seconds: number) {
-  const total = Math.floor(Math.max(0, Number.isFinite(seconds) ? seconds : 0));
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
-}
 
 export type MusicPlayerProps = {
   track: Track | null;

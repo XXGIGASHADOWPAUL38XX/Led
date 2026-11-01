@@ -28,7 +28,7 @@ import {
 } from "../elements";
 
 type Reference = { nodeId: string; element?: string } | null;
-export function plainArray(array: ArrayValue): NumericArray {
+function plainArray(array: ArrayValue): NumericArray {
   const values = Array.from(array.data, Number);
   function nest(shape: number[], start: number): NumericArray {
     if (shape.length <= 1) return values.slice(start, start + (shape[0] ?? 1));

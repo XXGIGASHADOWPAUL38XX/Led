@@ -51,9 +51,6 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
   useEffect(() => {
     if (!type) return;
     let active = true;
-    setNode(null);
-    setParameters({});
-    setError("");
     void backend.command("node.describe", { nodeType: type }).then((result) => {
       if (active && result) setNode({ ...(result as NodeDescriptor), id: "" });
     });
@@ -61,6 +58,13 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
       active = false;
     };
   }, [type]);
+  function choose(next: string) {
+    if (next === type) return;
+    setType(next);
+    setNode(null);
+    setParameters({});
+    setError("");
+  }
   async function create() {
     setBusy(true);
     setError("");
@@ -127,7 +131,7 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
               }
               if (event.key === "Enter" && choices[selected]) {
                 event.preventDefault();
-                setType(choices[selected].type);
+                choose(choices[selected].type);
               }
             }}
             className="mb-3 w-full rounded-lg border border-white/10 bg-black/20 p-3 text-sm outline-none focus:border-violet-400"
@@ -149,7 +153,7 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
                       key={item.type}
                       type="button"
                       data-selected={selected === item.index}
-                      onClick={() => setType(item.type)}
+                      onClick={() => choose(item.type)}
                       className={`block w-full rounded-md px-3 py-2 text-left text-xs ${selected === item.index ? "bg-violet-400/15 text-violet-200" : "text-zinc-400 hover:bg-white/5"}`}
                     >
                       {nodeDefinitions[item.type].title}
