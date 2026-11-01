@@ -2,7 +2,8 @@ import { useRef, useState } from "react";
 import { useGraph } from "@/lib/backend/hooks";
 import { isArrayValue, type ElementDescriptor, type NodeDescriptor } from "@/lib/backend/protocol";
 import { SelectElement } from "../elements";
-import { Terminal, terminalKey } from "../workspace/terminal";
+import { Terminal } from "../workspace/terminal";
+import { terminalKey } from "../workspace/terminal-compatibility";
 import { expressionFunctions, readExpressions, writeExpressions, type SavedOperation } from "./operator-expression";
 
 export function OperatorExpressionControl({

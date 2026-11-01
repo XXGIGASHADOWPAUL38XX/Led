@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Endpoint } from "@/lib/backend/protocol";
-import { Terminal, terminalKey } from "../workspace/terminal";
+import { Terminal } from "../workspace/terminal";
+import { terminalKey } from "../workspace/terminal-compatibility";
 
 export type SequenceElementProps<T> = {
   label: string;

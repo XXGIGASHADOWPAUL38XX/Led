@@ -1,11 +1,13 @@
 import { useEffect, useRef } from "react";
 import { backend } from "@/lib/backend/store";
 import type { Graph } from "@/lib/backend/protocol";
-import { useObjectSelection } from "./object-selection";
 import { isTyping } from "./shortcuts";
 
-export function useNodeClipboard(insertionPosition: () => [number, number]) {
-  const selection = useObjectSelection()!;
+export function useNodeClipboard(
+  insertionPosition: () => [number, number],
+  selected: () => string[],
+  select: (ids: string[]) => void,
+) {
   const clipboard = useRef<Promise<Graph | null> | null>(null);
   const offset = useRef(0);
   useEffect(() => {
@@ -17,11 +19,12 @@ export function useNodeClipboard(insertionPosition: () => [number, number]) {
         backend.status.connection !== "connected"
       )
         return;
-      if (event.key.toLowerCase() === "c" && selection.value.kind === "node" && selection.value.ids.size) {
+      const nodeIds = selected();
+      if (event.key.toLowerCase() === "c" && nodeIds.length) {
         event.preventDefault();
         offset.current = 0;
         clipboard.current = backend
-          .command("graph.copy", { nodeIds: [...selection.value.ids] })
+          .command("graph.copy", { nodeIds })
           .then((result) => (result ? (result as { graph: Graph }).graph : null));
       }
       if (event.key.toLowerCase() === "v" && clipboard.current) {
@@ -32,11 +35,11 @@ export function useNodeClipboard(insertionPosition: () => [number, number]) {
           if (!graph) return;
           const result = (await backend.command("graph.paste", { graph, position })) as
             { nodeIds: string[] } | undefined;
-          if (result) selection.setNodes(result.nodeIds);
+          if (result) select(result.nodeIds);
         });
       }
     };
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [selection, insertionPosition]);
+  }, [insertionPosition, selected, select]);
 }

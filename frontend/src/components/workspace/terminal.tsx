@@ -1,28 +1,21 @@
-import { createContext, useCallback, useContext, useRef } from "react";
+import { Handle, Position, useNodeId } from "@xyflow/react";
+import { useContext } from "react";
 import type { Endpoint } from "@/lib/backend/protocol";
-import type { CanvasDrag } from "./use-canvas-viewport";
-import type { NodeMovement } from "./use-node-movement";
-import { useObjectSelection } from "./object-selection";
 import { terminalKey } from "./terminal-compatibility";
-export { terminalKey } from "./terminal-compatibility";
+import { WorkspaceContext } from "./workspace-context";
 
-export const TerminalContext = createContext<
-  | (CanvasDrag &
-      NodeMovement & {
-        compatible: ReadonlySet<string> | null;
-        dragging: string | null;
-        linked: ReadonlySet<string>;
-        register: (key: string, element: HTMLElement) => () => void;
-        invalidate: () => void;
-        zoom: number;
-        start: (key: string, x: number, y: number) => void;
-        move: (x: number, y: number) => void;
-        finish: (x: number, y: number) => void;
-        cancel: () => void;
-        disconnect: (key: string) => void;
-      })
-  | null
->(null);
+// The React Flow handle fills the terminal dot; the dot keeps its own placement and look.
+const handleStyle = {
+  inset: 0,
+  width: "100%",
+  height: "100%",
+  minWidth: 0,
+  minHeight: 0,
+  transform: "none",
+  background: "transparent",
+  border: 0,
+  borderRadius: "9999px",
+};
 
 export function Terminal({
   endpoint,
@@ -33,73 +26,48 @@ export function Terminal({
   direction: "input" | "output";
   className?: string;
 }) {
-  const registry = useContext(TerminalContext);
-  const selection = useObjectSelection();
-  const selecting = useRef(false);
+  const workspace = useContext(WorkspaceContext);
+  const nodeId = useNodeId();
+  // Terminals outside a canvas node (e.g. the add-node dialog) are display-only.
+  const connectable = Boolean(endpoint && workspace && nodeId === endpoint.nodeId);
   const key = endpoint ? terminalKey(endpoint, direction) : undefined;
-  const register = registry?.register;
-  const ref = useCallback(
-    (element: HTMLSpanElement | null) => {
-      if (element && key && register) return register(key, element);
-    },
-    [key, register],
-  );
-  const linked = Boolean(key && registry?.linked.has(key));
-  const selected = Boolean(key && selection?.value.kind === "terminal" && selection.value.ids.has(key));
+  const linked = Boolean(key && workspace?.linked.has(key));
   const compatible =
-    key && registry?.compatible && registry.dragging !== key ? registry.compatible.has(key) : undefined;
+    key && workspace?.compatible && workspace.origin !== key ? workspace.compatible.has(key) : undefined;
   const label = `${endpoint ? `${endpoint.nodeId}.${endpoint.element} ` : ""}${direction}${linked ? " · connected" : ""}`;
   return (
     <span
-      ref={ref}
       data-terminal={key}
       data-linked={linked || undefined}
-      data-selected={selected || undefined}
       data-compatible={compatible}
       role="button"
-      aria-pressed={selected}
-      tabIndex={key && registry ? 0 : -1}
+      tabIndex={connectable ? 0 : -1}
       aria-label={label}
-      title={`${label}${compatible ? " · Compatible connection" : ""} · Drag to connect · Ctrl-click to select several · Delete to disconnect`}
-      onPointerDown={(event) => {
-        if (!key || !registry || (event.button !== 0 && !event.ctrlKey)) return;
-        event.preventDefault();
-        event.stopPropagation();
-        selection?.select("terminal", key, event.ctrlKey || event.metaKey);
-        selecting.current = true;
-        event.currentTarget.focus({ preventScroll: true });
-        selecting.current = false;
-        if (event.ctrlKey || event.metaKey) return;
-        event.currentTarget.setPointerCapture(event.pointerId);
-        registry.start(key, event.clientX, event.clientY);
-      }}
-      onFocus={() => {
-        if (key && !selecting.current) selection?.focus("terminal", key);
-      }}
-      onContextMenu={(event) => {
-        if (event.ctrlKey) event.preventDefault();
-      }}
-      onPointerMove={(event) => {
-        if (event.currentTarget.hasPointerCapture(event.pointerId)) registry?.move(event.clientX, event.clientY);
-      }}
-      onPointerUp={(event) => {
-        if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
-        registry?.finish(event.clientX, event.clientY);
-        event.currentTarget.releasePointerCapture(event.pointerId);
-      }}
-      onPointerCancel={() => registry?.cancel()}
-      onLostPointerCapture={() => registry?.cancel()}
+      title={`${label}${compatible ? " · Compatible connection" : ""} · Drag to connect · Click to select its wires · Delete to disconnect`}
       onKeyDown={(event) => {
-        if (key && (event.key === "Delete" || event.key === "Backspace")) {
+        if (connectable && (event.key === "Delete" || event.key === "Backspace")) {
           event.preventDefault();
           event.stopPropagation();
-          registry?.disconnect(key);
+          workspace!.disconnect(key!);
         }
       }}
-      className={`group/terminal z-10 inline-block h-3 w-3 shrink-0 cursor-crosshair touch-none rounded-full border-2 outline-none focus-visible:ring-2 focus-visible:ring-white/70 data-[compatible=false]:opacity-25 data-[compatible=true]:ring-4 data-[compatible=true]:ring-emerald-400/60 data-[selected]:ring-2 data-[selected]:ring-white/80 ${direction === "input" ? "border-sky-400 data-[linked]:bg-sky-400" : "border-violet-400 data-[linked]:bg-violet-400"} bg-[#1c1d26] ${className}`}
+      className={`group/terminal z-10 inline-block h-3 w-3 shrink-0 cursor-crosshair touch-none rounded-full border-2 outline-none focus-visible:ring-2 focus-visible:ring-white/70 data-[compatible=false]:opacity-25 data-[compatible=true]:ring-4 data-[compatible=true]:ring-emerald-400/60 ${direction === "input" ? "border-sky-400 data-[linked]:bg-sky-400" : "border-violet-400 data-[linked]:bg-violet-400"} bg-[#1c1d26] ${className}`}
     >
       <span aria-hidden="true" className="relative block h-full w-full">
         <span className="absolute -inset-2 rounded-full transition-colors group-focus/terminal:bg-violet-400/15 group-focus/terminal:ring-2 group-focus/terminal:ring-violet-300/60 hover:bg-violet-400/20" />
+        {connectable && (
+          <Handle
+            id={endpoint!.element}
+            type={direction === "output" ? "source" : "target"}
+            position={direction === "output" ? Position.Right : Position.Left}
+            style={handleStyle}
+            onClick={(event) => {
+              // Keep the click from also selecting the node, which Delete would then remove.
+              event.stopPropagation();
+              workspace!.selectPort(key!, event.ctrlKey || event.metaKey);
+            }}
+          />
+        )}
       </span>
     </span>
   );

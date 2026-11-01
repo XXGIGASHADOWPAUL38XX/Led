@@ -16,3 +16,17 @@ button {
   background-image: radial-gradient(#34353f 1px, transparent 1px);
   background-size: 24px 24px;
 }
+.react-flow {
+  --xy-background-color: transparent;
+  --xy-edge-stroke: #a78bfa;
+  --xy-edge-stroke-selected: #e9d5ff;
+  --xy-edge-stroke-width: 2;
+  --xy-connectionline-stroke: #c4b5fd;
+  --xy-connectionline-stroke-width: 2;
+}
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke-width: 3;
+}
+.react-flow__connection-path {
+  stroke-dasharray: 5 4;
+}

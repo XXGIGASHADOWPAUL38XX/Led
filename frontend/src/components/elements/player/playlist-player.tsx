@@ -83,7 +83,7 @@ export function PlaylistPlayer({
               {searching ? "Searching…" : "No tracks found."}
             </p>
           )}
-          <ul className="max-h-40 overflow-y-auto">
+          <ul className="nowheel max-h-40 overflow-y-auto">
             {results.map((track) => {
               const added = tracks.some((item) => item.id === track.id);
               const downloading = track.downloadState === "downloading";
@@ -118,7 +118,7 @@ export function PlaylistPlayer({
           {ready} / {tracks.length} ready
         </span>
       </div>
-      <ul aria-label="Playlist" className="max-h-60 space-y-0.5 overflow-y-auto">
+      <ul aria-label="Playlist" className="nowheel max-h-60 space-y-0.5 overflow-y-auto">
         {tracks.map((track, index) => {
           const selected = track.id === activeTrackId;
           const playing = selected && player.playing;

@@ -2,15 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { backend } from "@/lib/backend/store";
 import { useBackendStatus, useGraph, useTemplateRevision } from "@/lib/backend/hooks";
 import { SelectElement } from "../elements";
-import { LiveNode } from "../node/live-node";
+import { ReactFlowProvider } from "@xyflow/react";
 import { compatiblePorts } from "../../lib/nodes/configuration";
 import { TemplateControls } from "../templates/template-controls";
 import { JevControls } from "../templates/jev-controls";
-import { ConnectionLayer } from "./connection-layer";
+import { WorkspaceCanvas, type CanvasHandle } from "./workspace-canvas";
 import { AddNodeDialog } from "../dialogs/add-node-dialog";
 import { isTyping } from "./shortcuts";
-import type { CanvasHandle } from "./use-canvas-viewport";
-import { ObjectSelectionProvider } from "./object-selection";
 
 export function LiveWorkspace() {
   const status = useBackendStatus();
@@ -158,13 +156,10 @@ export function LiveWorkspace() {
         </details>
       )}
       {snapshot && (
-        <ObjectSelectionProvider graph={snapshot.graph} revision={templateRevision}>
-          <ConnectionLayer ref={canvas} graph={snapshot.graph}>
-            {snapshot.graph.nodes.map((node) => (
-              <LiveNode key={`${templateRevision}:${node.id}`} id={node.id} />
-            ))}
-          </ConnectionLayer>
-        </ObjectSelectionProvider>
+        // A loaded template starts from a fresh canvas: node state, selection and viewport.
+        <ReactFlowProvider key={templateRevision}>
+          <WorkspaceCanvas ref={canvas} graph={snapshot.graph} />
+        </ReactFlowProvider>
       )}
     </section>
   );

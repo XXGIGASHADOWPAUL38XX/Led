@@ -1,17 +1,15 @@
 import { backend } from "@/lib/backend/store";
-import { useBackendNode, useGraph } from "@/lib/backend/hooks";
+import { useBackendNode } from "@/lib/backend/hooks";
 import { Node } from "./node";
 import { NodeFields } from "./node-fields";
 import { NodeView } from "./node-views";
 import { nodeDefinitions } from "./registry";
 
-export function LiveNode({ id }: { id: string }) {
+export function LiveNode({ id, selected }: { id: string; selected: boolean }) {
   const node = useBackendNode(id);
-  const snapshot = useGraph();
   if (!node) return null;
   const definition = nodeDefinitions[node.type];
   if (!definition) return <p role="alert">Missing UI definition for {node.type}</p>;
-  const position = snapshot?.graph.nodes.find((item) => item.id === id)?.position ?? [0, 0];
   // Dynamic stems and argument ports follow the live processing schema.
   const inlineOutputs = new Set(
     definition.fields
@@ -54,11 +52,10 @@ export function LiveNode({ id }: { id: string }) {
   ]);
   return (
     <Node
-      absolute
       id={id}
+      selected={selected}
       title={definition.title}
       description={definition.description}
-      initialPosition={{ x: position[0], y: position[1] }}
       inputs={node.ports
         .filter(
           (port) =>
@@ -67,9 +64,6 @@ export function LiveNode({ id }: { id: string }) {
             !definition.fields.some((field) => field.portsPrefix && port.name.startsWith(field.portsPrefix)),
         )
         .map((port) => port.name)}
-      onPositionCommit={({ x, y }) => {
-        void backend.command("node.move", { nodeId: id, position: [x, y] });
-      }}
     >
       <div className="flex items-center justify-between text-[10px] text-zinc-500">
         <span>
