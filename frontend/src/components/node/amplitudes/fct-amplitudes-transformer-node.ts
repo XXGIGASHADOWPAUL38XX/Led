@@ -23,9 +23,7 @@ export default {
       "name": "amplitudes_level_fct",
       "control": "node-reference",
       "matchInput": "input_data",
-      "nodeTypes": [
-        "AmplitudeLevelFunction"
-      ]
+      "nodeTypes": ["AmplitudeLevelFunction"]
     }
   ],
   "views": [

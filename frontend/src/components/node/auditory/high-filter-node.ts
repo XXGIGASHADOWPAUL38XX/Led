@@ -3,7 +3,8 @@ import type { NodeDefinition } from "../definition.ts";
 export default {
   "type": "HighFilter",
   "title": "High Filter",
-  "description": "Apply a first-order Butterworth high-pass filter to audio. Input shape adapts when linked and is editable.",
+  "description":
+    "Apply a first-order Butterworth high-pass filter to audio. Input shape adapts when linked and is editable.",
   "category": "auditory",
   "fields": [
     {

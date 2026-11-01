@@ -9,9 +9,7 @@ export default {
     {
       "name": "window",
       "control": "reference",
-      "nodeTypes": [
-        "Window"
-      ]
+      "nodeTypes": ["Window"]
     },
     {
       "name": "avg_axis",

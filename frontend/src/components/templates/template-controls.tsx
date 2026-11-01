@@ -14,18 +14,24 @@ export function TemplateControls() {
   const disabled = busy !== null || status.connection !== "connected";
 
   async function save(replace = false) {
-    setBusy("save"); setError(""); setMessage("");
+    setBusy("save");
+    setError("");
+    setMessage("");
     try {
       const name = await saveFile(filename, () => backend.exportTemplate(), replace);
       setFilename(name);
       setMessage(`Saved ${name}`);
     } catch (reason) {
-      if (!(reason instanceof DOMException && reason.name === "AbortError")) setError(reason instanceof Error ? reason.message : "Could not save template.");
+      if (!(reason instanceof DOMException && reason.name === "AbortError"))
+        setError(reason instanceof Error ? reason.message : "Could not save template.");
+    } finally {
+      setBusy(null);
     }
-    finally { setBusy(null); }
   }
   async function load(file?: File) {
-    setBusy(file ? "load" : "init"); setError(""); setMessage("");
+    setBusy(file ? "load" : "init");
+    setError("");
+    setMessage("");
     try {
       let bytes: ArrayBuffer;
       const name = file?.name ?? "init_template.led";
@@ -40,22 +46,76 @@ export function TemplateControls() {
       await backend.importTemplate(bytes);
       setFilename(name.endsWith(".led") ? name : "lighting-template.led");
       setMessage(`Loaded ${name}`);
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not load template."); }
-    finally { setBusy(null); }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Could not load template.");
+    } finally {
+      setBusy(null);
+    }
   }
-  return <div className="space-y-1 text-xs">
-    <div className="flex flex-wrap gap-2">
-      <button type="button" disabled={disabled} onClick={() => { void load(); }} className="rounded border border-white/10 px-3 py-2 text-zinc-300 hover:bg-white/5 disabled:opacity-40">{busy === "init" ? "Loading…" : "init_template"}</button>
-      <button type="button" disabled={disabled} onClick={() => { void save(); }} className="rounded border border-violet-400/25 bg-violet-400/10 px-3 py-2 text-violet-200 hover:bg-violet-400/20 disabled:opacity-40">{busy === "save" ? "Saving…" : "Save template"}</button>
-      <button type="button" disabled={disabled} onClick={() => { void save(true); }} className="rounded border border-white/10 px-3 py-2 text-zinc-300 hover:bg-white/5 disabled:opacity-40">Replace existing .led…</button>
-      <button type="button" disabled={disabled} onClick={() => input.current?.click()} className="rounded border border-white/10 px-3 py-2 text-zinc-300 hover:bg-white/5 disabled:opacity-40">{busy === "load" ? "Loading…" : "Load template"}</button>
-      <input ref={input} type="file" accept=".led" aria-label="Open node template" className="hidden" onChange={(event) => {
-        const file = event.currentTarget.files?.[0];
-        event.currentTarget.value = "";
-        if (file) void load(file);
-      }} />
+  return (
+    <div className="space-y-1 text-xs">
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => {
+            void load();
+          }}
+          className="rounded border border-white/10 px-3 py-2 text-zinc-300 hover:bg-white/5 disabled:opacity-40"
+        >
+          {busy === "init" ? "Loading…" : "init_template"}
+        </button>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => {
+            void save();
+          }}
+          className="rounded border border-violet-400/25 bg-violet-400/10 px-3 py-2 text-violet-200 hover:bg-violet-400/20 disabled:opacity-40"
+        >
+          {busy === "save" ? "Saving…" : "Save template"}
+        </button>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => {
+            void save(true);
+          }}
+          className="rounded border border-white/10 px-3 py-2 text-zinc-300 hover:bg-white/5 disabled:opacity-40"
+        >
+          Replace existing .led…
+        </button>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => input.current?.click()}
+          className="rounded border border-white/10 px-3 py-2 text-zinc-300 hover:bg-white/5 disabled:opacity-40"
+        >
+          {busy === "load" ? "Loading…" : "Load template"}
+        </button>
+        <input
+          ref={input}
+          type="file"
+          accept=".led"
+          aria-label="Open node template"
+          className="hidden"
+          onChange={(event) => {
+            const file = event.currentTarget.files?.[0];
+            event.currentTarget.value = "";
+            if (file) void load(file);
+          }}
+        />
+      </div>
+      {message && (
+        <p role="status" className="text-zinc-400">
+          {message}
+        </p>
+      )}
+      {error && (
+        <p role="alert" className="text-rose-300">
+          {error}
+        </p>
+      )}
     </div>
-    {message && <p role="status" className="text-zinc-400">{message}</p>}
-    {error && <p role="alert" className="text-rose-300">{error}</p>}
-  </div>;
+  );
 }

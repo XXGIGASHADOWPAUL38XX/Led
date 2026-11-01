@@ -7,9 +7,34 @@ export type OptionalSliderElementProps = Omit<SliderElementProps, "value" | "onV
   defaultValue?: number;
 };
 
-export function OptionalSliderElement({ label, value, onValueChange, onValueCommit, defaultValue, ...props }: OptionalSliderElementProps) {
-  return <div className="space-y-1.5">
-    <SwitchElement label={label} checked={value !== null} disabled={props.disabled} onCheckedChange={(enabled) => { onValueChange(enabled ? defaultValue ?? props.min : null); onValueCommit?.(); }} />
-    {value !== null && <SliderElement {...props} label="Value" value={value} onValueChange={onValueChange} onValueCommit={onValueCommit} />}
-  </div>;
+export function OptionalSliderElement({
+  label,
+  value,
+  onValueChange,
+  onValueCommit,
+  defaultValue,
+  ...props
+}: OptionalSliderElementProps) {
+  return (
+    <div className="space-y-1.5">
+      <SwitchElement
+        label={label}
+        checked={value !== null}
+        disabled={props.disabled}
+        onCheckedChange={(enabled) => {
+          onValueChange(enabled ? (defaultValue ?? props.min) : null);
+          onValueCommit?.();
+        }}
+      />
+      {value !== null && (
+        <SliderElement
+          {...props}
+          label="Value"
+          value={value}
+          onValueChange={onValueChange}
+          onValueCommit={onValueCommit}
+        />
+      )}
+    </div>
+  );
 }

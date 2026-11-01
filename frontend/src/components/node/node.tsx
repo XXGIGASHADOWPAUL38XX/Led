@@ -14,10 +14,23 @@ export type NodeProps = {
   absolute?: boolean;
 };
 
-export function Node({ id, title, description, inputs = [], outputs = [], children, initialPosition, onPositionCommit, absolute = false }: NodeProps) {
+export function Node({
+  id,
+  title,
+  description,
+  inputs = [],
+  outputs = [],
+  children,
+  initialPosition,
+  onPositionCommit,
+  absolute = false,
+}: NodeProps) {
   const [position, setPosition] = useState(initialPosition ?? { x: 0, y: 0 });
-  const initialX = initialPosition?.x ?? 0, initialY = initialPosition?.y ?? 0;
-  useEffect(() => { setPosition({ x: initialX, y: initialY }); }, [initialX, initialY]);
+  const initialX = initialPosition?.x ?? 0,
+    initialY = initialPosition?.y ?? 0;
+  useEffect(() => {
+    setPosition({ x: initialX, y: initialY });
+  }, [initialX, initialY]);
   const drag = useRef({ x: 0, y: 0 });
   const article = useRef<HTMLElement>(null);
   const selecting = useRef(false);
@@ -26,7 +39,9 @@ export function Node({ id, title, description, inputs = [], outputs = [], childr
   const workspace = useContext(TerminalContext);
   const invalidate = workspace?.invalidate;
   const zoom = workspace?.zoom ?? 1;
-  useLayoutEffect(() => { invalidate?.(); }, [position, invalidate]);
+  useLayoutEffect(() => {
+    invalidate?.();
+  }, [position, invalidate]);
   useLayoutEffect(() => {
     if (!invalidate) return;
     const observer = new ResizeObserver(invalidate);
@@ -35,31 +50,51 @@ export function Node({ id, title, description, inputs = [], outputs = [], childr
   }, [invalidate]);
 
   return (
-    <article ref={article} aria-label={`${title} node`} data-node-id={id} data-selected={selected || undefined} tabIndex={0}
+    <article
+      ref={article}
+      aria-label={`${title} node`}
+      data-node-id={id}
+      data-selected={selected || undefined}
+      tabIndex={0}
       onPointerDownCapture={(event) => {
         if ((event.button !== 0 && !event.ctrlKey) || (event.target as Element).closest("[data-terminal]")) return;
         if (event.ctrlKey || event.metaKey) selection?.select("node", id, true);
         else selection?.focus("node", id);
         if (event.ctrlKey || event.metaKey || event.target === event.currentTarget) {
           event.preventDefault();
-          selecting.current = true; event.currentTarget.focus({ preventScroll: true }); selecting.current = false;
+          selecting.current = true;
+          event.currentTarget.focus({ preventScroll: true });
+          selecting.current = false;
           if (event.ctrlKey || event.metaKey) event.stopPropagation();
         }
       }}
-      onFocus={(event) => { if (event.target === event.currentTarget && !selecting.current) selection?.focus("node", id); }}
-      onContextMenu={(event) => { if (event.ctrlKey) event.preventDefault(); }}
+      onFocus={(event) => {
+        if (event.target === event.currentTarget && !selecting.current) selection?.focus("node", id);
+      }}
+      onContextMenu={(event) => {
+        if (event.ctrlKey) event.preventDefault();
+      }}
       style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
-      className={`${absolute ? "absolute left-0 top-0" : "relative"} w-72 rounded-xl border border-violet-400/50 bg-[#1c1d26] shadow-2xl shadow-black/40 outline-none focus-visible:ring-2 focus-visible:ring-violet-200 data-[selected]:border-violet-200 data-[selected]:ring-2 data-[selected]:ring-violet-400/70`}>
-      <button type="button" aria-label={`Drag ${title}`} className="flex w-full touch-none select-none items-center gap-3 rounded-t-xl border-b border-white/10 px-4 py-3 text-left cursor-grab active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-violet-400"
+      className={`${absolute ? "absolute top-0 left-0" : "relative"} w-72 rounded-xl border border-violet-400/50 bg-[#1c1d26] shadow-2xl shadow-black/40 outline-none focus-visible:ring-2 focus-visible:ring-violet-200 data-[selected]:border-violet-200 data-[selected]:ring-2 data-[selected]:ring-violet-400/70`}
+    >
+      <button
+        type="button"
+        aria-label={`Drag ${title}`}
+        className="flex w-full cursor-grab touch-none items-center gap-3 rounded-t-xl border-b border-white/10 px-4 py-3 text-left select-none focus-visible:outline-2 focus-visible:outline-violet-400 active:cursor-grabbing"
         onPointerDown={(event) => {
           if (event.button !== 0) return;
           event.preventDefault();
           event.currentTarget.focus({ preventScroll: true });
           event.currentTarget.setPointerCapture(event.pointerId);
-          const point = workspace?.toCanvas(event.clientX, event.clientY) ?? { x: event.clientX / zoom, y: event.clientY / zoom };
+          const point = workspace?.toCanvas(event.clientX, event.clientY) ?? {
+            x: event.clientX / zoom,
+            y: event.clientY / zoom,
+          };
           drag.current = { x: point.x - position.x, y: point.y - position.y };
           workspace?.beginNodeMove(id);
-          workspace?.startNodeDrag(event.clientX, event.clientY, (point) => workspace.updateNodeMove({ x: point.x - drag.current.x, y: point.y - drag.current.y }));
+          workspace?.startNodeDrag(event.clientX, event.clientY, (point) =>
+            workspace.updateNodeMove({ x: point.x - drag.current.x, y: point.y - drag.current.y }),
+          );
         }}
         onPointerMove={(event) => {
           if (event.currentTarget.hasPointerCapture(event.pointerId)) {
@@ -69,32 +104,67 @@ export function Node({ id, title, description, inputs = [], outputs = [], childr
         }}
         onPointerUp={(event) => {
           if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
-          const point = workspace?.endNodeDrag(event.clientX, event.clientY) ?? { x: event.clientX / zoom, y: event.clientY / zoom };
+          const point = workspace?.endNodeDrag(event.clientX, event.clientY) ?? {
+            x: event.clientX / zoom,
+            y: event.clientY / zoom,
+          };
           const next = { x: point.x - drag.current.x, y: point.y - drag.current.y };
           if (workspace) void workspace.commitNodeMove(next);
-          else { setPosition(next); onPositionCommit?.(next); }
+          else {
+            setPosition(next);
+            onPositionCommit?.(next);
+          }
           event.currentTarget.releasePointerCapture(event.pointerId);
         }}
-        onPointerCancel={() => { workspace?.cancelNodeDrag(); workspace?.cancelNodeMove(); setPosition({ x: initialX, y: initialY }); }}
-        onLostPointerCapture={() => { workspace?.cancelNodeDrag(); workspace?.cancelNodeMove(); }}
+        onPointerCancel={() => {
+          workspace?.cancelNodeDrag();
+          workspace?.cancelNodeMove();
+          setPosition({ x: initialX, y: initialY });
+        }}
+        onLostPointerCapture={() => {
+          workspace?.cancelNodeDrag();
+          workspace?.cancelNodeMove();
+        }}
         onKeyDown={(event) => {
           const delta = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] }[event.key];
           if (delta) {
             event.preventDefault();
             const next = { x: position.x + delta[0], y: position.y + delta[1] };
-            if (workspace) { workspace.beginNodeMove(id); void workspace.commitNodeMove(next); }
-            else { setPosition(next); onPositionCommit?.(next); }
+            if (workspace) {
+              workspace.beginNodeMove(id);
+              void workspace.commitNodeMove(next);
+            } else {
+              setPosition(next);
+              onPositionCommit?.(next);
+            }
           }
-        }}>
+        }}
+      >
         <span className="h-2 w-2 rounded-full bg-violet-400" />
         <span className="flex-1 text-sm font-semibold">{title}</span>
-        <span aria-hidden="true" className="text-zinc-500">⠿</span>
+        <span aria-hidden="true" className="text-zinc-500">
+          ⠿
+        </span>
       </button>
       {description && <p className="px-4 py-4 text-xs leading-5 text-zinc-400">{description}</p>}
       {children && <div className="space-y-2 px-3 pb-4">{children}</div>}
       <div className="flex justify-between gap-4 pb-4 text-xs text-zinc-300">
-        <div className="space-y-3">{inputs.map((name) => <div key={name} className="flex items-center gap-2"><Terminal endpoint={{ nodeId: id, element: name }} direction="input" className="-ml-1.5" />{name}</div>)}</div>
-        <div className="space-y-3">{outputs.map((name) => <div key={name} className="flex items-center justify-end gap-2">{name}<Terminal endpoint={{ nodeId: id, element: name }} direction="output" className="-mr-1.5" /></div>)}</div>
+        <div className="space-y-3">
+          {inputs.map((name) => (
+            <div key={name} className="flex items-center gap-2">
+              <Terminal endpoint={{ nodeId: id, element: name }} direction="input" className="-ml-1.5" />
+              {name}
+            </div>
+          ))}
+        </div>
+        <div className="space-y-3">
+          {outputs.map((name) => (
+            <div key={name} className="flex items-center justify-end gap-2">
+              {name}
+              <Terminal endpoint={{ nodeId: id, element: name }} direction="output" className="-mr-1.5" />
+            </div>
+          ))}
+        </div>
       </div>
     </article>
   );

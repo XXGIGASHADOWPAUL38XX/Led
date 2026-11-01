@@ -9,11 +9,7 @@ export default {
     {
       "name": "color",
       "control": "color",
-      "channels": [
-        "color_red",
-        "color_green",
-        "color_blue"
-      ]
+      "channels": ["color_red", "color_green", "color_blue"]
     },
     {
       "name": "number_points",

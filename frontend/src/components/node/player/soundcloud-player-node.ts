@@ -31,9 +31,7 @@ export default {
       "name": "offline_pipelines",
       "control": "sequence",
       "item": "node",
-      "nodeTypes": [
-        "StemsRecognition"
-      ]
+      "nodeTypes": ["StemsRecognition"]
     }
   ],
   "views": [

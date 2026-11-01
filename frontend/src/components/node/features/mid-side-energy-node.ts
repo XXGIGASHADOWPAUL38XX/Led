@@ -35,10 +35,7 @@ export default {
       "data": "data",
       "label": "Mid / Side energy",
       "open": true,
-      "series": [
-        "Mid",
-        "Side"
-      ]
+      "series": ["Mid", "Side"]
     }
   ]
 } satisfies NodeDefinition;

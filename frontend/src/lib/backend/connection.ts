@@ -7,7 +7,10 @@ export class BackendConnection {
   private reconnect: ReturnType<typeof setTimeout> | null = null;
   private stopped = true;
   private sequence = 0;
-  private pending = new Map<number, { resolve: (result: unknown) => void; reject: (error: Error) => void; timeout: ReturnType<typeof setTimeout> }>();
+  private pending = new Map<
+    number,
+    { resolve: (result: unknown) => void; reject: (error: Error) => void; timeout: ReturnType<typeof setTimeout> }
+  >();
 
   private receive: (message: Message) => void;
   private status: (status: ConnectionStatus) => void;
@@ -63,15 +66,26 @@ export class BackendConnection {
   request(type: string, payload: Record<string, unknown> = {}): Promise<unknown> {
     const id = ++this.sequence;
     return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => { this.pending.delete(id); reject(Error(`${type} timed out`)); }, 30000);
+      const timeout = setTimeout(() => {
+        this.pending.delete(id);
+        reject(Error(`${type} timed out`));
+      }, 30000);
       this.pending.set(id, { resolve, reject, timeout });
-      try { this.send(type, payload, id); }
-      catch (error) { clearTimeout(timeout); this.pending.delete(id); reject(error); }
+      try {
+        this.send(type, payload, id);
+      } catch (error) {
+        clearTimeout(timeout);
+        this.pending.delete(id);
+        reject(error);
+      }
     });
   }
 
   private rejectPending() {
-    for (const request of this.pending.values()) { clearTimeout(request.timeout); request.reject(Error("Backend disconnected; command was not replayed")); }
+    for (const request of this.pending.values()) {
+      clearTimeout(request.timeout);
+      request.reject(Error("Backend disconnected; command was not replayed"));
+    }
     this.pending.clear();
   }
 

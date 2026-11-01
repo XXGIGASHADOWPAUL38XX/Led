@@ -43,8 +43,5 @@ export default {
       "open": false
     }
   ],
-  "actions": [
-    "start",
-    "stop"
-  ]
+  "actions": ["start", "stop"]
 } satisfies NodeDefinition;

@@ -1,4 +1,14 @@
-import { type ReactNode, type Ref, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  type ReactNode,
+  type Ref,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { Graph } from "@/lib/backend/protocol";
 import { backend } from "@/lib/backend/store";
 import { useBackendStatus, useTemplateRevision } from "@/lib/backend/hooks";
@@ -15,26 +25,44 @@ import { useBoxSelection } from "./use-box-selection";
 import { useNodeClipboard } from "./use-node-clipboard";
 
 /** One registry and SVG for the workspace; live data frames never redraw wires. */
-export function ConnectionLayer({ graph, children, ref }: { graph: Graph; children: ReactNode; ref?: Ref<CanvasHandle> }) {
+export function ConnectionLayer({
+  graph,
+  children,
+  ref,
+}: {
+  graph: Graph;
+  children: ReactNode;
+  ref?: Ref<CanvasHandle>;
+}) {
   const { connections } = graph;
   const status = useBackendStatus();
   const templateRevision = useTemplateRevision();
   const container = useRef<HTMLDivElement>(null);
   const viewport = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
-  const { toCanvas, insertionPosition, rememberPointer, startNodeDrag, moveNodeDrag, endNodeDrag, cancelNodeDrag } = useCanvasViewport(viewport, container, zoom);
+  const { toCanvas, insertionPosition, rememberPointer, startNodeDrag, moveNodeDrag, endNodeDrag, cancelNodeDrag } =
+    useCanvasViewport(viewport, container, zoom);
   useImperativeHandle(ref, () => ({ insertionPosition }), [insertionPosition]);
   useNodeClipboard(insertionPosition);
   const anchor = useRef<{ left: number; top: number } | null>(null);
-  const changeZoom = useCallback((next: number, point?: { x: number; y: number }) => {
-    const element = viewport.current!;
-    next = clampZoom(next);
-    const { x, y } = point ?? { x: element.clientWidth / 2, y: element.clientHeight / 2 };
-    anchor.current = { left: zoomScroll(element.scrollLeft, x, zoom, next), top: zoomScroll(element.scrollTop, y, zoom, next) };
-    setZoom(next);
-  }, [zoom]);
+  const changeZoom = useCallback(
+    (next: number, point?: { x: number; y: number }) => {
+      const element = viewport.current!;
+      next = clampZoom(next);
+      const { x, y } = point ?? { x: element.clientWidth / 2, y: element.clientHeight / 2 };
+      anchor.current = {
+        left: zoomScroll(element.scrollLeft, x, zoom, next),
+        top: zoomScroll(element.scrollTop, y, zoom, next),
+      };
+      setZoom(next);
+    },
+    [zoom],
+  );
   useLayoutEffect(() => {
-    if (anchor.current) { viewport.current!.scrollTo(anchor.current); anchor.current = null; }
+    if (anchor.current) {
+      viewport.current!.scrollTo(anchor.current);
+      anchor.current = null;
+    }
   }, [zoom]);
   useEffect(() => {
     const element = viewport.current!;
@@ -53,19 +81,40 @@ export function ConnectionLayer({ graph, children, ref }: { graph: Graph; childr
     };
     element.addEventListener("wheel", wheel, { passive: false });
     window.addEventListener("keydown", key);
-    return () => { element.removeEventListener("wheel", wheel); window.removeEventListener("keydown", key); };
+    return () => {
+      element.removeEventListener("wheel", wheel);
+      window.removeEventListener("keydown", key);
+    };
   }, [zoom, changeZoom]);
   const terminals = useRef(new Map<string, HTMLElement>());
-  const { preview, compatible, dragging, start, move, finish, cancel, disconnect } = useTerminalDrag(graph, container, terminals.current, zoom, { toCanvas, startNodeDrag, moveNodeDrag, endNodeDrag, cancelNodeDrag });
+  const { preview, compatible, dragging, start, move, finish, cancel, disconnect } = useTerminalDrag(
+    graph,
+    container,
+    terminals.current,
+    zoom,
+    { toCanvas, startNodeDrag, moveNodeDrag, endNodeDrag, cancelNodeDrag },
+  );
   const selection = useObjectSelection()!;
-  const boxSelection = useBoxSelection(container, { toCanvas, startNodeDrag, moveNodeDrag, endNodeDrag, cancelNodeDrag });
+  const boxSelection = useBoxSelection(container, {
+    toCanvas,
+    startNodeDrag,
+    moveNodeDrag,
+    endNodeDrag,
+    cancelNodeDrag,
+  });
   const selected = selection.value.kind === "wire" ? [...selection.value.ids][0] : null;
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { cancel(); boxSelection.cancel(); movement.cancelNodeMove(); selection.clear(); }
+      if (event.key === "Escape") {
+        cancel();
+        boxSelection.cancel();
+        movement.cancelNodeMove();
+        selection.clear();
+      }
       if (!selected || isTyping() || document.querySelector("dialog[open]")) return;
       if (event.key === "Delete" || event.key === "Backspace") {
-        event.preventDefault(); selection.clear();
+        event.preventDefault();
+        selection.clear();
         void backend.command("connection.remove", { connectionId: selected });
       }
     };
@@ -86,34 +135,104 @@ export function ConnectionLayer({ graph, children, ref }: { graph: Graph; childr
   const [arranging, setArranging] = useState(false);
   const autoArranged = useRef("");
   const automaticKey = JSON.stringify([templateRevision, graph.nodes.map((node) => node.id), connections]);
-  const arrange = useCallback(async (recordHistory = true) => {
-    const sizes = new Map([...container.current!.querySelectorAll<HTMLElement>("[data-node-id]")].map((node) => [node.dataset.nodeId!, { width: node.offsetWidth, height: node.offsetHeight }]));
-    setArranging(true);
-    try { await backend.command("graph.move", { positions: layoutGraph(graph, sizes), recordHistory }); }
-    finally { setArranging(false); }
-  }, [graph]);
+  const arrange = useCallback(
+    async (recordHistory = true) => {
+      const sizes = new Map(
+        [...container.current!.querySelectorAll<HTMLElement>("[data-node-id]")].map((node) => [
+          node.dataset.nodeId!,
+          { width: node.offsetWidth, height: node.offsetHeight },
+        ]),
+      );
+      setArranging(true);
+      try {
+        await backend.command("graph.move", { positions: layoutGraph(graph, sizes), recordHistory });
+      } finally {
+        setArranging(false);
+      }
+    },
+    [graph],
+  );
   useLayoutEffect(() => {
-    if (status.connection === "connected" && graph.nodes.length > 1 && graph.nodes.every((node) => node.position.every((coordinate) => coordinate === 0)) && autoArranged.current !== automaticKey) {
+    if (
+      status.connection === "connected" &&
+      graph.nodes.length > 1 &&
+      graph.nodes.every((node) => node.position.every((coordinate) => coordinate === 0)) &&
+      autoArranged.current !== automaticKey
+    ) {
       autoArranged.current = automaticKey;
       void arrange(false);
     }
   }, [graph, arrange, status.connection, automaticKey]);
   const invalidate = useCallback(() => {
-    if (!frame.current) frame.current = requestAnimationFrame(() => { frame.current = 0; setLayout((value) => value + 1); });
+    if (!frame.current)
+      frame.current = requestAnimationFrame(() => {
+        frame.current = 0;
+        setLayout((value) => value + 1);
+      });
   }, []);
-  const register = useCallback((key: string, element: HTMLElement) => {
-    terminals.current.set(key, element);
-    invalidate();
-    return () => { terminals.current.delete(key); invalidate(); };
-  }, [invalidate]);
+  const register = useCallback(
+    (key: string, element: HTMLElement) => {
+      terminals.current.set(key, element);
+      invalidate();
+      return () => {
+        terminals.current.delete(key);
+        invalidate();
+      };
+    },
+    [invalidate],
+  );
   const movement = useNodeMovement(graph, container, selection.value, invalidate);
-  const registry = useMemo(() => ({ ...movement, compatible, dragging, register, invalidate, zoom, start, move, finish, cancel, disconnect, toCanvas, startNodeDrag, moveNodeDrag, endNodeDrag, cancelNodeDrag, linked: new Set(connections.flatMap((edge) => [
-    terminalKey(edge.source, "output"), terminalKey(edge.target, "input"),
-  ])) }), [movement.beginNodeMove, movement.updateNodeMove, movement.commitNodeMove, movement.cancelNodeMove, compatible, dragging, connections, register, invalidate, zoom, start, move, finish, cancel, disconnect, toCanvas, startNodeDrag, moveNodeDrag, endNodeDrag, cancelNodeDrag]);
+  const registry = useMemo(
+    () => ({
+      ...movement,
+      compatible,
+      dragging,
+      register,
+      invalidate,
+      zoom,
+      start,
+      move,
+      finish,
+      cancel,
+      disconnect,
+      toCanvas,
+      startNodeDrag,
+      moveNodeDrag,
+      endNodeDrag,
+      cancelNodeDrag,
+      linked: new Set(
+        connections.flatMap((edge) => [terminalKey(edge.source, "output"), terminalKey(edge.target, "input")]),
+      ),
+    }),
+    [
+      movement.beginNodeMove,
+      movement.updateNodeMove,
+      movement.commitNodeMove,
+      movement.cancelNodeMove,
+      compatible,
+      dragging,
+      connections,
+      register,
+      invalidate,
+      zoom,
+      start,
+      move,
+      finish,
+      cancel,
+      disconnect,
+      toCanvas,
+      startNodeDrag,
+      moveNodeDrag,
+      endNodeDrag,
+      cancelNodeDrag,
+    ],
+  );
 
   useLayoutEffect(() => {
     const origin = container.current!.getBoundingClientRect();
-    const nodes = [...container.current!.querySelectorAll<HTMLElement>("[data-node-id]")].map((node) => node.getBoundingClientRect());
+    const nodes = [...container.current!.querySelectorAll<HTMLElement>("[data-node-id]")].map((node) =>
+      node.getBoundingClientRect(),
+    );
     setBounds((previous) => {
       const next = {
         left: Math.floor(Math.min(previous.left, ...nodes.map((node) => (node.left - origin.left) / zoom - 24))),
@@ -121,48 +240,158 @@ export function ConnectionLayer({ graph, children, ref }: { graph: Graph; childr
         right: Math.ceil(Math.max(previous.right, ...nodes.map((node) => (node.right - origin.left) / zoom + 24))),
         bottom: Math.ceil(Math.max(previous.bottom, ...nodes.map((node) => (node.bottom - origin.top) / zoom + 24))),
       };
-      return next.left === previous.left && next.top === previous.top && next.right === previous.right && next.bottom === previous.bottom ? previous : next;
+      return next.left === previous.left &&
+        next.top === previous.top &&
+        next.right === previous.right &&
+        next.bottom === previous.bottom
+        ? previous
+        : next;
     });
-    setPaths(connections.flatMap((edge) => {
-      const source = terminals.current.get(terminalKey(edge.source, "output"));
-      const target = terminals.current.get(terminalKey(edge.target, "input"));
-      if (!source || !target) return [];
-      const from = source.getBoundingClientRect(), to = target.getBoundingClientRect();
-      const x1 = (from.left + from.width / 2 - origin.left) / zoom, y1 = (from.top + from.height / 2 - origin.top) / zoom;
-      const x2 = (to.left + to.width / 2 - origin.left) / zoom, y2 = (to.top + to.height / 2 - origin.top) / zoom;
-      return [{ id: edge.id, label: `${edge.source.nodeId}.${edge.source.element} → ${edge.target.nodeId}.${edge.target.element}`,
-        d: connectionPath({ x: x1, y: y1 }, { x: x2, y: y2 }) }];
-    }));
+    setPaths(
+      connections.flatMap((edge) => {
+        const source = terminals.current.get(terminalKey(edge.source, "output"));
+        const target = terminals.current.get(terminalKey(edge.target, "input"));
+        if (!source || !target) return [];
+        const from = source.getBoundingClientRect(),
+          to = target.getBoundingClientRect();
+        const x1 = (from.left + from.width / 2 - origin.left) / zoom,
+          y1 = (from.top + from.height / 2 - origin.top) / zoom;
+        const x2 = (to.left + to.width / 2 - origin.left) / zoom,
+          y2 = (to.top + to.height / 2 - origin.top) / zoom;
+        return [
+          {
+            id: edge.id,
+            label: `${edge.source.nodeId}.${edge.source.element} → ${edge.target.nodeId}.${edge.target.element}`,
+            d: connectionPath({ x: x1, y: y1 }, { x: x2, y: y2 }),
+          },
+        ];
+      }),
+    );
   }, [connections, layout, zoom]);
   useLayoutEffect(() => {
     const observer = new ResizeObserver(invalidate);
     observer.observe(container.current!);
-    return () => { observer.disconnect(); cancelAnimationFrame(frame.current); frame.current = 0; };
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame.current);
+      frame.current = 0;
+    };
   }, [invalidate]);
-  return <TerminalContext.Provider value={registry}>
-    <div className="flex items-center gap-3"><button type="button" disabled={arranging || !graph.nodes.length || status.connection !== "connected"} onClick={() => { void arrange(); }} className="rounded border border-white/10 px-3 py-2 text-xs text-zinc-300 hover:bg-white/5 disabled:opacity-40">{arranging ? "Arranging…" : "Arrange nodes"}</button>
-      <div role="group" aria-label="Workspace zoom" className="flex items-center rounded border border-white/10 text-xs text-zinc-300">
-        <button type="button" aria-label="Zoom out" disabled={zoom <= MIN_ZOOM} onClick={() => changeZoom(zoom / 1.2)} className="px-3 py-2 disabled:opacity-30">−</button>
-        <button type="button" aria-label="Reset zoom" onClick={() => changeZoom(1)} className="w-14 py-2 font-mono text-[10px]">{Math.round(zoom * 100)}%</button>
-        <button type="button" aria-label="Zoom in" disabled={zoom >= MAX_ZOOM} onClick={() => changeZoom(zoom * 1.2)} className="px-3 py-2 disabled:opacity-30">+</button>
+  return (
+    <TerminalContext.Provider value={registry}>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          disabled={arranging || !graph.nodes.length || status.connection !== "connected"}
+          onClick={() => {
+            void arrange();
+          }}
+          className="rounded border border-white/10 px-3 py-2 text-xs text-zinc-300 hover:bg-white/5 disabled:opacity-40"
+        >
+          {arranging ? "Arranging…" : "Arrange nodes"}
+        </button>
+        <div
+          role="group"
+          aria-label="Workspace zoom"
+          className="flex items-center rounded border border-white/10 text-xs text-zinc-300"
+        >
+          <button
+            type="button"
+            aria-label="Zoom out"
+            disabled={zoom <= MIN_ZOOM}
+            onClick={() => changeZoom(zoom / 1.2)}
+            className="px-3 py-2 disabled:opacity-30"
+          >
+            −
+          </button>
+          <button
+            type="button"
+            aria-label="Reset zoom"
+            onClick={() => changeZoom(1)}
+            className="w-14 py-2 font-mono text-[10px]"
+          >
+            {Math.round(zoom * 100)}%
+          </button>
+          <button
+            type="button"
+            aria-label="Zoom in"
+            disabled={zoom >= MAX_ZOOM}
+            onClick={() => changeZoom(zoom * 1.2)}
+            className="px-3 py-2 disabled:opacity-30"
+          >
+            +
+          </button>
+        </div>
       </div>
-    </div>
-    <p className="text-[10px] text-zinc-500">Drag empty space to select nodes · Ctrl/Cmd-click to extend selection · Drag a selected node to move the group · Drag terminals to connect</p>
-    <div ref={viewport} tabIndex={-1} onPointerDown={boxSelection.onPointerDown} onPointerUp={boxSelection.onPointerUp} onPointerCancel={boxSelection.cancel} onLostPointerCapture={boxSelection.cancel} onPointerMove={(event) => { rememberPointer(event.clientX, event.clientY); boxSelection.onPointerMove(event); }} className="node-canvas max-h-[75vh] min-h-48 touch-none overflow-auto rounded-xl border border-white/5 outline-none [overflow-anchor:none]">
-    <div style={{ width: extent.width * zoom, height: extent.height * zoom }} className="overflow-hidden">
-    <div ref={container} style={{ ...extent, transform: `translate(${-bounds.left * zoom}px, ${-bounds.top * zoom}px) scale(${zoom})`, transformOrigin: "0 0" }} className="relative min-h-48">
-      <svg aria-label="Node connections" className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" fill="none">
-        {paths.map((path) => <g key={path.id}>
-          <path d={path.d} stroke={selected === path.id ? "#e9d5ff" : "#a78bfa"} strokeWidth={selected === path.id ? 3 : 2} strokeOpacity={0.8} />
-          <path d={path.d} stroke="transparent" strokeWidth={12} pointerEvents="stroke" className="cursor-pointer"
-            onPointerDown={(event) => { event.stopPropagation(); selection.select("wire", path.id); }}><title>{path.label} · Delete to disconnect</title></path>
-        </g>)}
-        {preview && <path d={preview} stroke="#c4b5fd" strokeWidth={2} strokeDasharray="5 4" />}
-      </svg>
-      {children}
-      {boxSelection.box && <div aria-hidden="true" data-selection-box style={boxSelection.box} className="pointer-events-none absolute z-20 rounded border border-violet-300 bg-violet-400/15" />}
-    </div>
-    </div>
-    </div>
-  </TerminalContext.Provider>;
+      <p className="text-[10px] text-zinc-500">
+        Drag empty space to select nodes · Ctrl/Cmd-click to extend selection · Drag a selected node to move the group ·
+        Drag terminals to connect
+      </p>
+      <div
+        ref={viewport}
+        tabIndex={-1}
+        onPointerDown={boxSelection.onPointerDown}
+        onPointerUp={boxSelection.onPointerUp}
+        onPointerCancel={boxSelection.cancel}
+        onLostPointerCapture={boxSelection.cancel}
+        onPointerMove={(event) => {
+          rememberPointer(event.clientX, event.clientY);
+          boxSelection.onPointerMove(event);
+        }}
+        className="node-canvas max-h-[75vh] min-h-48 touch-none overflow-auto rounded-xl border border-white/5 outline-none [overflow-anchor:none]"
+      >
+        <div style={{ width: extent.width * zoom, height: extent.height * zoom }} className="overflow-hidden">
+          <div
+            ref={container}
+            style={{
+              ...extent,
+              transform: `translate(${-bounds.left * zoom}px, ${-bounds.top * zoom}px) scale(${zoom})`,
+              transformOrigin: "0 0",
+            }}
+            className="relative min-h-48"
+          >
+            <svg
+              aria-label="Node connections"
+              className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
+              fill="none"
+            >
+              {paths.map((path) => (
+                <g key={path.id}>
+                  <path
+                    d={path.d}
+                    stroke={selected === path.id ? "#e9d5ff" : "#a78bfa"}
+                    strokeWidth={selected === path.id ? 3 : 2}
+                    strokeOpacity={0.8}
+                  />
+                  <path
+                    d={path.d}
+                    stroke="transparent"
+                    strokeWidth={12}
+                    pointerEvents="stroke"
+                    className="cursor-pointer"
+                    onPointerDown={(event) => {
+                      event.stopPropagation();
+                      selection.select("wire", path.id);
+                    }}
+                  >
+                    <title>{path.label} · Delete to disconnect</title>
+                  </path>
+                </g>
+              ))}
+              {preview && <path d={preview} stroke="#c4b5fd" strokeWidth={2} strokeDasharray="5 4" />}
+            </svg>
+            {children}
+            {boxSelection.box && (
+              <div
+                aria-hidden="true"
+                data-selection-box
+                style={boxSelection.box}
+                className="pointer-events-none absolute z-20 rounded border border-violet-300 bg-violet-400/15"
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    </TerminalContext.Provider>
+  );
 }

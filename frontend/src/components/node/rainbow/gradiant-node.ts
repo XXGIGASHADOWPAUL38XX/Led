@@ -15,20 +15,12 @@ export default {
     {
       "name": "color_in",
       "control": "color",
-      "channels": [
-        "color_in_red",
-        "color_in_green",
-        "color_in_blue"
-      ]
+      "channels": ["color_in_red", "color_in_green", "color_in_blue"]
     },
     {
       "name": "color_out",
       "control": "color",
-      "channels": [
-        "color_out_red",
-        "color_out_green",
-        "color_out_blue"
-      ]
+      "channels": ["color_out_red", "color_out_green", "color_out_blue"]
     },
     {
       "name": "cycle",

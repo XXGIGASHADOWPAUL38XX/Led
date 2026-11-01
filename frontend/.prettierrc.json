@@ -1,5 +1,11 @@
 {
   "printWidth": 120,
   "plugins": ["prettier-plugin-tailwindcss"],
-  "tailwindStylesheet": "./src/index.css"
+  "tailwindStylesheet": "./src/index.css",
+  "overrides": [
+    {
+      "files": "src/components/node/**/*-node.ts",
+      "options": { "quoteProps": "preserve", "trailingComma": "none" }
+    }
+  ]
 }
