@@ -1,5 +1,3 @@
-"use client";
-
 import { type ReactNode, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Terminal, TerminalContext } from "../workspace/terminal";
 import { useObjectSelection } from "../workspace/object-selection";

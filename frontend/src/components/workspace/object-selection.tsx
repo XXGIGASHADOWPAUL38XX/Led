@@ -1,5 +1,3 @@
-"use client";
-
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { Graph } from "@/lib/backend/protocol";
 import { backend } from "@/lib/backend/store";

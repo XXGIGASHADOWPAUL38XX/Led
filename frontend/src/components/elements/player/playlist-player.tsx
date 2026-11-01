@@ -1,5 +1,3 @@
-"use client";
-
 import { MusicPlayer, formatTime, type MusicPlayerProps, type Track } from "./music-player";
 
 export type PlaylistPlayerProps = Omit<MusicPlayerProps, "track" | "onPlay"> & {

@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useRef, useState } from "react";
 import { backend } from "@/lib/backend/store";
 import { useBackendStatus, useGraph, useTemplateRevision } from "@/lib/backend/hooks";
@@ -50,7 +48,7 @@ export function LiveWorkspace() {
     <TemplateControls />
     <JevControls />
     {adding && <AddNodeDialog position={adding} onClose={() => setAdding(null)} />}
-    {status.connection !== "connected" && <p className="text-xs text-zinc-500">Start Python with <code>.venv/bin/python -m backend.api.server</code>. Component previews below work offline.</p>}
+    {status.connection !== "connected" && <p className="text-xs text-zinc-500">Start Python with <code>.venv/bin/python -m backend.api.server</code>.</p>}
     {status.error && <p role="alert" className="rounded border border-rose-400/20 bg-rose-400/5 p-3 text-xs text-rose-300">{status.error}</p>}
     {snapshot && <details className="rounded border border-white/10 p-3"><summary className="cursor-pointer text-xs text-zinc-400">Connections ({snapshot.graph.connections.length})</summary>
       <div className="mt-3 grid gap-2 sm:grid-cols-3">

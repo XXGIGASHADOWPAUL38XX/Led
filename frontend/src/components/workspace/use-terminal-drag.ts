@@ -1,5 +1,3 @@
-"use client";
-
 import { type RefObject, useCallback, useEffect, useRef, useState } from "react";
 import { backend } from "@/lib/backend/store";
 import type { Connection, Endpoint, Graph } from "@/lib/backend/protocol";

@@ -1,5 +1,3 @@
-"use client";
-
 import { type RefObject, useCallback, useEffect, useRef } from "react";
 import type { Point } from "./connection-path";
 

@@ -1,5 +1,3 @@
-"use client";
-
 import { type ReactNode, type Ref, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Graph } from "@/lib/backend/protocol";
 import { backend } from "@/lib/backend/store";

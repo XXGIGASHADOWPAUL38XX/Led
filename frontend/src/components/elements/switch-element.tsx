@@ -1,5 +1,3 @@
-"use client";
-
 import * as Switch from "@radix-ui/react-switch";
 import { useId } from "react";
 import { CoreElement } from "./core-element";

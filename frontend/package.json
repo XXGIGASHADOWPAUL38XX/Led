@@ -16,18 +16,17 @@
     "@radix-ui/react-slider": "^1.6.1",
     "@radix-ui/react-switch": "^1.4.1",
     "react": "latest",
-    "react-dom": "latest",
-    "recharts": "^3.10.1"
+    "react-dom": "latest"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "4.3.3",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "latest",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vite": "latest",
-    "@vitejs/plugin-react": "latest",
-    "@tailwindcss/vite": "4.3.3"
+    "vite": "latest"
   },
   "type": "module"
 }

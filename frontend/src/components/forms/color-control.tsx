@@ -1,5 +1,3 @@
-"use client";
-
 import { useArray, useGraph } from "@/lib/backend/hooks";
 import { ColorElement, type ColorElementProps } from "../elements/color-element";
 import { Terminal } from "../workspace/terminal";

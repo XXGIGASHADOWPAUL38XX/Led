@@ -1,5 +1,3 @@
-"use client";
-
 import { type ReactNode, useRef, useState } from "react";
 import { clamp, curvePath, type CurveAxis, type CurvePoint, type CurveValue } from "../../lib/curves/curve";
 export type { CurvePoint } from "../../lib/curves/curve";

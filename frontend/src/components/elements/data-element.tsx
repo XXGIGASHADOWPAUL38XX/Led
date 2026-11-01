@@ -1,5 +1,3 @@
-"use client";
-
 import { useId } from "react";
 import { CoreElement } from "./core-element";
 import type { Endpoint } from "@/lib/backend/protocol";

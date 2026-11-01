@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { backend } from "@/lib/backend/store";
 import { usePlayer, useSearchResults, useViewSettings } from "@/lib/backend/hooks";

@@ -1,5 +1,3 @@
-"use client";
-
 import { SelectElement } from "./select-element";
 
 export type ElementReference = { nodeId: string; elementId: string | null };

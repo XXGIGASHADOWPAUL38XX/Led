@@ -1,5 +1,3 @@
-"use client";
-
 import type { ReactNode } from "react";
 import type { Endpoint } from "@/lib/backend/protocol";
 import { Terminal, terminalKey } from "../workspace/terminal";

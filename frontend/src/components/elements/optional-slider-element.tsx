@@ -1,5 +1,3 @@
-"use client";
-
 import { SliderElement, type SliderElementProps } from "./slider-element";
 import { SwitchElement } from "./switch-element";
 

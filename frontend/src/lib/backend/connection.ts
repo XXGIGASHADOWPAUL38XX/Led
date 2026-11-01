@@ -24,7 +24,7 @@ export class BackendConnection {
 
   private open() {
     this.status("connecting");
-    const url = process.env.NEXT_PUBLIC_BACKEND_URL ?? `ws://${window.location.hostname}:8000/ws`;
+    const url = import.meta.env.VITE_BACKEND_URL ?? `ws://${window.location.hostname}:8000/ws`;
     const socket = new WebSocket(url);
     this.socket = socket;
     socket.binaryType = "arraybuffer";

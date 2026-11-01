@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { useGraph } from "@/lib/backend/hooks";
 import { isArrayValue, type ArrayValue, type ElementDescriptor, type NodeDescriptor } from "@/lib/backend/protocol";

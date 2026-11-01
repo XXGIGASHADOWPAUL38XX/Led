@@ -1,5 +1,3 @@
-"use client";
-
 import { useCallback, useSyncExternalStore } from "react";
 import { backend, initialStatus, initialGeneration } from "./store";
 import { emptyViewSettings } from "./template";

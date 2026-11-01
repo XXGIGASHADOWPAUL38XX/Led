@@ -1,5 +1,3 @@
-"use client";
-
 import * as Select from "@radix-ui/react-select";
 import { useId, useState } from "react";
 import { CoreElement } from "./core-element";

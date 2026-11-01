@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useRef } from "react";
 import { backend } from "@/lib/backend/store";
 import type { ViewSettings } from "@/lib/backend/template";

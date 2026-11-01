@@ -1,5 +1,3 @@
-"use client";
-
 import { createContext, useCallback, useContext, useRef } from "react";
 import type { Endpoint } from "@/lib/backend/protocol";
 import type { CanvasDrag } from "./use-canvas-viewport";

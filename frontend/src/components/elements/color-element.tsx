@@ -1,5 +1,3 @@
-"use client";
-
 import { type ReactNode, useId } from "react";
 import { CoreElement } from "./core-element";
 import { SliderElement } from "./slider-element";

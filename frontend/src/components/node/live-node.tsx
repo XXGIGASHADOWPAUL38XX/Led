@@ -1,5 +1,3 @@
-"use client";
-
 import { backend } from "@/lib/backend/store";
 import { useBackendNode, useGraph } from "@/lib/backend/hooks";
 import { Node } from "./node";
