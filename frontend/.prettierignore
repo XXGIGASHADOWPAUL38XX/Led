@@ -1,3 +1,5 @@
 dist
 package-lock.json
 public/templates
+test-results
+playwright-report

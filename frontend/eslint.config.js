@@ -6,9 +6,9 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist"] },
+  { ignores: ["dist", "test-results", "playwright-report"] },
   {
-    files: ["**/*.{ts,tsx}"],
+    files: ["src/**/*.{ts,tsx}"],
     extends: [
       js.configs.recommended,
       ...tseslint.configs.recommended,
@@ -18,8 +18,8 @@ export default tseslint.config(
     languageOptions: { globals: globals.browser },
   },
   {
-    files: ["**/*.mjs", "vite.config.ts", "eslint.config.js"],
-    extends: [js.configs.recommended],
+    files: ["**/*.mjs", "e2e/**/*.ts", "*.config.ts", "eslint.config.js"],
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
     languageOptions: { globals: globals.node },
   },
   prettier,
