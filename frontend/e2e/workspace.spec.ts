@@ -144,3 +144,14 @@ test("init_template loads and unpositioned nodes are laid out automatically", as
     )
     .toBe(3);
 });
+
+test("select menus open, pick an option and show it on the trigger", async ({ workspace, page }) => {
+  await expect(workspace.nodes()).toHaveCount(2);
+  await page.getByText("Connections (1)").click();
+  await page.getByRole("combobox", { name: "From" }).click();
+  await page.getByRole("option", { name: "buffer-1.data" }).click();
+  await expect(page.getByRole("combobox", { name: "From" })).toHaveText(/buffer-1\.data/);
+  await page.getByRole("combobox", { name: "To" }).click();
+  await expect(page.getByRole("option", { name: "amplitudes-1.buffer" })).toBeVisible();
+  await page.keyboard.press("Escape");
+});

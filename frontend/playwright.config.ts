@@ -3,6 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 // End-to-end runs use their own backend and dev server ports, so they never touch a running dev session.
 export const BACKEND_PORT = 8001;
 const FRONTEND_PORT = 3001;
+const DIST = "node_modules/.e2e-dist";
 // Resolved from the repository root, where the backend runs.
 const python = process.env.E2E_PYTHON ?? ".venv/bin/python";
 
@@ -28,7 +29,8 @@ export default defineConfig({
       reuseExistingServer: false,
     },
     {
-      command: `npx vite --port ${FRONTEND_PORT} --strictPort`,
+      // The production bundle is what ships, and it renders several times faster than the dev server.
+      command: `npx vite build --outDir ${DIST} && npx vite preview --outDir ${DIST} --port ${FRONTEND_PORT} --strictPort`,
       port: FRONTEND_PORT,
       env: { VITE_BACKEND_URL: `ws://127.0.0.1:${BACKEND_PORT}/ws` },
       reuseExistingServer: false,
