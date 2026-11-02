@@ -21,10 +21,12 @@ export function SelectElement({
 }: SelectElementProps) {
   const id = useId();
   const [trigger, setTrigger] = useState<HTMLButtonElement | null>(null);
+  // Radix renders every item even while closed; the trigger already shows the label, so items mount on open only.
+  const [open, setOpen] = useState(false);
 
   return (
     <CoreElement id={id} label={label} disabled={disabled}>
-      <Select.Root value={value} onValueChange={onValueChange} disabled={disabled}>
+      <Select.Root value={value} onValueChange={onValueChange} disabled={disabled} open={open} onOpenChange={setOpen}>
         <Select.Trigger
           ref={setTrigger}
           id={id}
@@ -49,19 +51,20 @@ export function SelectElement({
               ▴
             </Select.ScrollUpButton>
             <Select.Viewport className="max-h-60">
-              {options.map((option) => (
-                <Select.Item
-                  key={option.value}
-                  value={option.value}
-                  disabled={option.disabled}
-                  className="relative cursor-pointer rounded px-3 py-2 pr-8 text-xs text-zinc-300 outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-35 data-[highlighted]:bg-violet-400/15 data-[highlighted]:text-white data-[state=checked]:text-violet-200"
-                >
-                  <Select.ItemText>{option.label}</Select.ItemText>
-                  <Select.ItemIndicator className="absolute inset-y-0 right-3 flex items-center text-violet-300">
-                    ✓
-                  </Select.ItemIndicator>
-                </Select.Item>
-              ))}
+              {open &&
+                options.map((option) => (
+                  <Select.Item
+                    key={option.value}
+                    value={option.value}
+                    disabled={option.disabled}
+                    className="relative cursor-pointer rounded px-3 py-2 pr-8 text-xs text-zinc-300 outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-35 data-[highlighted]:bg-violet-400/15 data-[highlighted]:text-white data-[state=checked]:text-violet-200"
+                  >
+                    <Select.ItemText>{option.label}</Select.ItemText>
+                    <Select.ItemIndicator className="absolute inset-y-0 right-3 flex items-center text-violet-300">
+                      ✓
+                    </Select.ItemIndicator>
+                  </Select.Item>
+                ))}
             </Select.Viewport>
             <Select.ScrollDownButton className="flex h-5 items-center justify-center text-violet-300">
               ▾

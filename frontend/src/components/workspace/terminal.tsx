@@ -1,5 +1,5 @@
-import { Handle, Position, useNodeId } from "@xyflow/react";
-import { useContext } from "react";
+import { Handle, Position, useNodeId, useReactFlow, useUpdateNodeInternals } from "@xyflow/react";
+import { useContext, useEffect } from "react";
 import type { Endpoint } from "@/lib/backend/protocol";
 import { terminalKey } from "./terminal-compatibility";
 import { WorkspaceContext } from "./workspace-context";
@@ -31,6 +31,13 @@ export function Terminal({
   // Terminals outside a canvas node (e.g. the add-node dialog) are display-only.
   const connectable = Boolean(endpoint && workspace && nodeId === endpoint.nodeId);
   const key = endpoint ? terminalKey(endpoint, direction) : undefined;
+  // React Flow measures handles with their node; a handle mounting after that measure is re-measured or its wires
+  // never draw. Before the first measure it is left alone, so the initial fitView still sees every node.
+  const flow = useReactFlow();
+  const updateNodeInternals = useUpdateNodeInternals();
+  useEffect(() => {
+    if (connectable && flow.getInternalNode(nodeId!)?.measured.width) updateNodeInternals(nodeId!);
+  }, [connectable, nodeId, key, flow, updateNodeInternals]);
   const linked = Boolean(key && workspace?.linked.has(key));
   const compatible =
     key && workspace?.compatible && workspace.origin !== key ? workspace.compatible.has(key) : undefined;

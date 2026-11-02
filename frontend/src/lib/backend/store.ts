@@ -202,7 +202,7 @@ export class BackendStore {
       }
       return;
     }
-    if (message.revision !== undefined && message.revision >= this.status.revision) {
+    if (message.revision !== undefined && message.revision > this.status.revision) {
       this.status = { ...this.status, revision: message.revision };
       this.emit("status");
     }

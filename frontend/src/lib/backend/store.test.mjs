@@ -89,3 +89,14 @@ test("batched positions update the graph once and preserve streamed data", () =>
   );
   assert.equal(store.array("amp", "data"), value);
 });
+
+test("acks at the current revision do not notify status listeners", () => {
+  const store = setup();
+  let updates = 0;
+  store.subscribe("status", () => updates++);
+  store.receive({ type: "ack", revision: 1, requestId: 7, payload: { command: "subscribe" } });
+  assert.equal(updates, 0);
+  store.receive({ type: "ack", revision: 2, requestId: 8, payload: { command: "element.set" } });
+  assert.equal(updates, 1);
+  assert.equal(store.status.revision, 2);
+});

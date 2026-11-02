@@ -9,3 +9,7 @@ __pycache__/
 /frontend/test-results/
 /frontend/playwright-report/
 /frontend/*.tsbuildinfo
+
+# Quality tool outputs (crapper, dryer, mutator)
+.metrics/
+target/
