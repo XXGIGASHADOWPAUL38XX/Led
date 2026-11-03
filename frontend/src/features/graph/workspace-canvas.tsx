@@ -7,6 +7,8 @@ import {
   useConnection,
   useNodesInitialized,
   useReactFlow,
+  useStore,
+  useUpdateNodeInternals,
   useViewport,
   type Connection as FlowConnection,
   type Edge,
@@ -86,6 +88,19 @@ export function WorkspaceCanvas({ graph, ref }: { graph: Graph; ref?: Ref<Canvas
     setNodes((previous) => toNodes(graph, previous));
     setEdges((previous) => toEdges(graph, previous));
   }
+
+  // React Flow drops a node's handle bounds when it re-adopts our nodes between measuring them and our applying that
+  // measure (e.g. a paste selection landing meanwhile); the node keeps its size but never draws its wires again.
+  const unbounded = useStore((state) =>
+    [...state.nodeLookup.values()]
+      .filter((node) => node.measured.width && !node.internals.handleBounds)
+      .map((node) => node.id)
+      .join("\n"),
+  );
+  const updateNodeInternals = useUpdateNodeInternals();
+  useEffect(() => {
+    if (unbounded) updateNodeInternals(unbounded.split("\n"));
+  }, [unbounded, updateNodeInternals]);
 
   const pointer = useRef<{ x: number; y: number } | null>(null);
   const wrapper = useRef<HTMLDivElement>(null);
