@@ -3,6 +3,7 @@ from copy import deepcopy
 import unittest
 import numpy as np
 from backend.api.handlers import Handlers
+from backend.api.schemas import parse_command
 from backend.api.protocol import encode, decode
 from backend.api.runtime import Runtime
 
@@ -28,13 +29,13 @@ class BroadcastIndexesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(port['shape'], [180])
         before = self.runtime.nodes['sample']
         with self.assertRaisesRegex(ValueError, 'incompatible with input data'):
-            await self.handlers.connection_add(None, {'source': {'nodeId': 'gradient', 'element': 'data'},
-                'target': {'nodeId': 'sample', 'element': 'input_data'}})
+            await self.handlers.connection_add(None, parse_command('connection.add', {'source': {'nodeId': 'gradient', 'element': 'data'},
+                'target': {'nodeId': 'sample', 'element': 'input_data'}}))
         self.assertIs(self.runtime.nodes['sample'], before)
         self.assertEqual(self.runtime.graph['connections'], [])
         self.runtime.configure('sample', {'shape': [4, 3]})
-        await self.handlers.connection_add(None, {'source': {'nodeId': 'gradient', 'element': 'data'},
-            'target': {'nodeId': 'sample', 'element': 'input_data'}})
+        await self.handlers.connection_add(None, parse_command('connection.add', {'source': {'nodeId': 'gradient', 'element': 'data'},
+            'target': {'nodeId': 'sample', 'element': 'input_data'}}))
         self.assertEqual(self.runtime.tick(), [])
         sample = self.runtime.nodes['sample']
         self.assertEqual(sample.shape.value, (4, 3))
@@ -48,8 +49,8 @@ class BroadcastIndexesTests(unittest.IsolatedAsyncioTestCase):
         ], 'connections': []})
         self.runtime.configure('sample', {'shape': [180, 3]})
         self.assertEqual(self.runtime.nodes['sample'].input_data.value.shape, (180, 3))
-        await self.handlers.connection_add(None, {'source': {'nodeId': 'gradient', 'element': 'data'},
-            'target': {'nodeId': 'sample', 'element': 'input_data'}})
+        await self.handlers.connection_add(None, parse_command('connection.add', {'source': {'nodeId': 'gradient', 'element': 'data'},
+            'target': {'nodeId': 'sample', 'element': 'input_data'}}))
         before = self.runtime.nodes['sample']
         graph = deepcopy(self.runtime.graph)
         with self.assertRaisesRegex(ValueError, 'incompatible with input data'):

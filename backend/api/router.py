@@ -5,6 +5,7 @@ import asyncio
 from .protocol import event
 from .history import History
 from .generation import Generation
+from .schemas import parse_command
 
 
 class Router:
@@ -31,9 +32,7 @@ class Router:
         request_id = message.get("requestId")
         try:
             kind = message["type"]
-            if kind not in self.routes and kind != "graph.undo":
-                raise ValueError(f"Unknown route: {kind}")
-            payload = message.get("payload", {})
+            payload = parse_command(kind, message.get("payload", {}))
             if kind in History.commands or kind == "graph.undo":
                 async with self.edit_lock:
                     if kind == "graph.undo":
@@ -41,7 +40,7 @@ class Router:
                         result = await self.routes[route](session, inverse)
                         self.history.entries.pop()
                     else:
-                        inverse = self.history.capture(kind, payload) if payload.get("recordHistory", True) else None
+                        inverse = self.history.capture(kind, payload) if payload["recordHistory"] else None
                         result = await self.routes[kind](session, payload)
                         if inverse is not None:
                             self.history.record(inverse, session, kind, payload)

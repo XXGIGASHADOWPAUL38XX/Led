@@ -8,18 +8,13 @@ import type {
   PlayerState,
   Graph,
   GenerationPreview,
+  GenerationState,
 } from "./protocol.ts";
 import { encodeTemplate, decodeTemplate, emptyViewSettings, type DisplayState, type ViewSettings } from "./template.ts";
 
 type Listener = () => void;
 const keyOf = (nodeId: string, element: string) => JSON.stringify([nodeId, element]);
 export const initialStatus = { connection: "offline" as ConnectionStatus, error: "", revision: 0, canUndo: false };
-export type GenerationState = {
-  status: "idle" | "running" | "complete" | "cancelled" | "error";
-  message: string;
-  nodes: number;
-  mode: "generate" | "edit";
-};
 export const initialGeneration: GenerationState = { status: "idle", message: "", nodes: 0, mode: "generate" };
 
 export class BackendStore {

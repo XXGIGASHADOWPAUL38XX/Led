@@ -1,4 +1,5 @@
 import { decode, encode } from "@msgpack/msgpack";
+import type { components } from "./schema";
 
 export type NumericArray =
   | Float32Array
@@ -13,58 +14,18 @@ export type NumericArray =
   | BigUint64Array;
 export type ArrayValue = { dtype: string; shape: number[]; data: NumericArray };
 export type Message = { type: string; requestId?: number | null; revision?: number; payload: Record<string, unknown> };
-export type Endpoint = { nodeId: string; element: string };
-export type GraphNode = { id: string; type: string; position: [number, number]; parameters: Record<string, unknown> };
-export type Connection = { id: string; source: Endpoint; target: Endpoint };
-export type Graph = { nodes: GraphNode[]; connections: Connection[] };
-export type ElementDescriptor = {
-  name: string;
-  label: string;
-  kind: string;
-  value: unknown;
-  disabled: boolean;
-  min?: number;
-  max?: number;
-  integer?: boolean;
-  optional?: boolean;
-  dtype?: string;
-  defaultType?: string;
-  selectionElements?: string[];
-  shape?: number[];
-  options?: { value: unknown; label: string }[];
-  itemPorts?: (string | null)[];
-};
-export type NodeDescriptor = {
-  id: string;
-  type: string;
-  elements: ElementDescriptor[];
-  ports: {
-    name: string;
-    direction: "in" | "out";
-    shape: number[];
-    accepts?: number[];
-    adaptiveShape?: boolean;
-    variadic?: boolean;
-  }[];
-};
-export type Snapshot = { graph: Graph; nodes: NodeDescriptor[]; catalog: { type: string; description: string }[] };
-export type GenerationPreview = { graph: Graph; nodes: Pick<NodeDescriptor, "id" | "type" | "ports">[] };
-export type PlayerState = {
-  nodeId: string;
-  tracks: {
-    id: string;
-    title: string;
-    artist: string;
-    duration: number;
-    loaded: boolean;
-    downloadState: "queued" | "downloading" | "ready" | "failed";
-  }[];
-  loading: boolean;
-  activeTrackId: string | null;
-  playing: boolean;
-  position: number;
-  duration: number;
-};
+// Wire types are generated from the Python contract (backend/api/schemas.py): npm run api:generate.
+type Schemas = components["schemas"];
+export type Endpoint = Schemas["Endpoint"];
+export type GraphNode = Schemas["GraphNode-Output"];
+export type Connection = Schemas["Connection"];
+export type Graph = Schemas["Graph-Output"];
+export type ElementDescriptor = Schemas["ElementDescriptor"];
+export type NodeDescriptor = Schemas["NodeDescriptor"];
+export type Snapshot = Schemas["Snapshot"];
+export type GenerationPreview = Schemas["GenerationPreview"];
+export type GenerationState = Schemas["GenerationState"];
+export type PlayerState = Schemas["PlayerState"];
 
 const arrays = {
   "|b1": Uint8Array,

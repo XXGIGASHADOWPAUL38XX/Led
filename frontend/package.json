@@ -11,7 +11,9 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "api:generate": "mkdir -p node_modules/.cache && (cd .. && ${PYTHON:-.venv/bin/python} -m backend.api.openapi) > node_modules/.cache/openapi.json && openapi-typescript node_modules/.cache/openapi.json -o src/api/schema.d.ts --array-length --default-non-nullable false",
+    "api:check": "npm run api:generate && git diff --exit-code -- src/api/schema.d.ts"
   },
   "dependencies": {
     "@dagrejs/dagre": "^3.1.3",
@@ -36,6 +38,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
     "globals": "^17.14.0",
+    "openapi-typescript": "7.13.0",
     "prettier": "^3.9.10",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "tailwindcss": "^4",
@@ -43,5 +46,9 @@
     "typescript-eslint": "^8.72.1",
     "vite": "^8.3.5"
   },
-  "type": "module"
+  "type": "module",
+  "overrides": {
+    "@redocly/openapi-core": "1.34.21",
+    "uri-js-replace": "1.0.1"
+  }
 }

@@ -6,7 +6,7 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", "test-results", "playwright-report", "target", ".metrics"] },
+  { ignores: ["dist", "test-results", "playwright-report", "target", ".metrics", "src/api/schema.d.ts"] },
   {
     files: ["src/**/*.{ts,tsx}"],
     extends: [

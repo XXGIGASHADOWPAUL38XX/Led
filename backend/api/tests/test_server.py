@@ -114,7 +114,7 @@ class ServerTests(unittest.IsolatedAsyncioTestCase):
         self.service.router.routes['player.search'] = delayed_search
         async with connect(self.url) as socket:
             await receive_kind(socket, 'graph.snapshot')
-            await socket.send(encode({'type': 'player.search', 'requestId': 1, 'payload': {}}))
+            await socket.send(encode({'type': 'player.search', 'requestId': 1, 'payload': {'nodeId': 'amp', 'query': 'kick'}}))
             await asyncio.wait_for(started.wait(), 3)
             await socket.send(encode({'type': 'element.set', 'requestId': 2, 'payload': {'nodeId': 'amp', 'element': 'powering', 'value': 0.75}}))
             self.assertEqual((await receive_kind(socket, 'ack'))['requestId'], 2)

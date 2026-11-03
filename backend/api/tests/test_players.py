@@ -6,6 +6,7 @@ from unittest.mock import patch
 import numpy as np
 from backend.api.runtime import Runtime
 from backend.api.handlers import Handlers
+from backend.api.schemas import parse_command
 
 
 class PlayerTests(unittest.IsolatedAsyncioTestCase):
@@ -31,27 +32,27 @@ class PlayerTests(unittest.IsolatedAsyncioTestCase):
         self.runtime.close()
 
     async def test_play_pause_seek_and_remove(self):
-        await self.handlers.player_play(self.session, {'nodeId': 'player', 'trackId': self.node._entries[0]['url']})
+        await self.handlers.player_play(self.session, parse_command('player.play', {'nodeId': 'player', 'trackId': self.node._entries[0]['url']}))
         self.assertTrue(self.node._is_playing)
-        await self.handlers.player_seek(self.session, {'nodeId': 'player', 'position': 0.5})
+        await self.handlers.player_seek(self.session, parse_command('player.seek', {'nodeId': 'player', 'position': 0.5}))
         self.assertEqual(self.node._seek_ratios[0], 0.5)
-        await self.handlers.player_pause(self.session, {'nodeId': 'player'})
+        await self.handlers.player_pause(self.session, parse_command('player.pause', {'nodeId': 'player'}))
         self.assertFalse(self.node._is_playing)
         track_id = self.node._entries[0]['url']
-        await self.handlers.playlist_remove(self.session, {'nodeId': 'player', 'trackId': track_id})
+        await self.handlers.playlist_remove(self.session, parse_command('playlist.remove', {'nodeId': 'player', 'trackId': track_id}))
         self.assertEqual(self.node._entries, [])
         self.assertEqual(self.node._current_track_index, -1)
 
     async def test_search_results_and_add_are_bound_to_the_requesting_session(self):
         result = {'url': 'https://soundcloud.com/artist/new', 'title': 'New', 'uploader': 'Artist', 'duration': 12}
         with patch('backend.nodes.playlist_player.soundcloud.api.search_tracks', return_value=[result]):
-            await self.handlers.player_search(self.session, {'nodeId': 'player', 'query': 'new'})
+            await self.handlers.player_search(self.session, parse_command('player.search', {'nodeId': 'player', 'query': 'new'}))
         self.assertEqual(self.messages[-1]['type'], 'player.results')
         with patch.object(self.node, 'add_music') as add:
-            await self.handlers.playlist_add(self.session, {'nodeId': 'player', 'trackId': result['url']})
+            await self.handlers.playlist_add(self.session, parse_command('playlist.add', {'nodeId': 'player', 'trackId': result['url']}))
             add.assert_called_once_with(result)
         with self.assertRaises(ValueError):
-            await self.handlers.playlist_add(self.session, {'nodeId': 'player', 'trackId': 'untrusted-url'})
+            await self.handlers.playlist_add(self.session, parse_command('playlist.add', {'nodeId': 'player', 'trackId': 'untrusted-url'}))
 
     async def test_url_edit_clears_loaded_playlist_before_play(self):
         self.node.on_play_requested(0)
@@ -65,7 +66,7 @@ class PlayerTests(unittest.IsolatedAsyncioTestCase):
         self.node.c_update()
         self.assertEqual(self.node._entries, [])
         with patch.object(self.node, 'start') as start:
-            result = await self.handlers.player_play(self.session, {'nodeId': 'player'})
+            result = await self.handlers.player_play(self.session, parse_command('player.play', {'nodeId': 'player'}))
             start.assert_called_once()
             self.assertEqual(result, {'loading': True})
 
@@ -117,7 +118,7 @@ class PlayerTests(unittest.IsolatedAsyncioTestCase):
                 self.assertTrue(state['loading'])
                 self.assertEqual([track['downloadState'] for track in state['tracks']], ['ready', 'downloading'])
                 self.assertEqual([track['loaded'] for track in state['tracks']], [True, False])
-                result = await self.handlers.player_play(self.session, {'nodeId': 'player', 'trackId': entries[0]['url']})
+                result = await self.handlers.player_play(self.session, parse_command('player.play', {'nodeId': 'player', 'trackId': entries[0]['url']}))
                 self.assertTrue(result['playing'])
                 self.assertTrue(result['loading'])
                 self.assertEqual(result['activeTrackId'], entries[0]['url'])
@@ -133,7 +134,7 @@ class PlayerTests(unittest.IsolatedAsyncioTestCase):
         self.node._entries = [{'url': 'failed', '_download_state': 'failed'}, {'url': 'ready'}]
         self.node._tracks = [None, (np.zeros((40960, 2), dtype=np.float32), 40960)]
         self.node._seek_ratios = [0.0, 0.0]
-        result = await self.handlers.player_play(self.session, {'nodeId': 'player'})
+        result = await self.handlers.player_play(self.session, parse_command('player.play', {'nodeId': 'player'}))
         self.assertTrue(result['playing'])
         self.assertEqual(result['activeTrackId'], 'ready')
         self.assertEqual(result['tracks'][0]['downloadState'], 'failed')

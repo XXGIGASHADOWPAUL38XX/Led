@@ -2,6 +2,7 @@
 import unittest
 import numpy as np
 from backend.api.handlers import Handlers
+from backend.api.schemas import parse_command
 from backend.api.history import History
 from backend.api.runtime import Runtime
 
@@ -22,8 +23,8 @@ class OperatorDropTests(unittest.IsolatedAsyncioTestCase):
         self.runtime.close()
 
     async def drop(self, source):
-        return await self.handlers.connection_add(None, {'source': {'nodeId': source, 'element': 'data'},
-                                                        'target': {'nodeId': 'operator', 'element': 'add_element'}})
+        return await self.handlers.connection_add(None, parse_command('connection.add', {'source': {'nodeId': source, 'element': 'data'},
+                                                        'target': {'nodeId': 'operator', 'element': 'add_element'}}))
 
     async def test_append_preserves_source_references_and_visible_connections(self):
         history = History(self.runtime)
@@ -37,7 +38,7 @@ class OperatorDropTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(self.runtime.graph['connections']), 2)
         self.assertEqual(self.runtime.tick(), [])
         np.testing.assert_allclose(self.runtime.nodes['operator'].data.value, np.full(4, .9))
-        await self.handlers.graph_restore(None, inverse[1])
+        await self.handlers.graph_restore(None, parse_command('graph.restore', inverse[1]))
         self.assertEqual(self.runtime.nodes['operator'].arguments.value, [])
         self.assertEqual(self.runtime.graph['connections'], [])
 
@@ -50,9 +51,9 @@ class OperatorDropTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_passthrough_reference_keeps_the_selected_node_and_port(self):
         await self.drop('source')
-        await self.handlers.node_add(None, {'nodeType': 'OperatorPipeline', 'nodeId': 'consumer'})
+        await self.handlers.node_add(None, parse_command('node.add', {'nodeType': 'OperatorPipeline', 'nodeId': 'consumer'}))
         reference = {'nodeId': 'operator', 'element': 'source:data_out'}
-        await self.handlers.connection_add(None, {'source': reference, 'target': {'nodeId': 'consumer', 'element': 'add_element'}})
+        await self.handlers.connection_add(None, parse_command('connection.add', {'source': reference, 'target': {'nodeId': 'consumer', 'element': 'add_element'}}))
         descriptor = self.runtime.describe(self.runtime.nodes['consumer'])
         arguments = next(element for element in descriptor['elements'] if element['name'] == 'arguments')
         self.assertEqual(arguments['value'], [reference])

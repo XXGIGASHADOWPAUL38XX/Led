@@ -13,3 +13,4 @@ __pycache__/
 # Quality tool outputs (crapper, dryer, mutator)
 .metrics/
 target/
+.coverage

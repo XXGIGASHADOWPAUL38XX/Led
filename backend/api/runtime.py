@@ -74,6 +74,7 @@ class Runtime:
             if item["type"] not in self.catalog.classes:
                 raise ValueError(f"Unknown node type: {item['type']}")
             item["parameters"] = self.catalog.classes[item["type"]].migrate_parameters(item.get("parameters", {}))
+            item.setdefault("position", [0, 0])
             for source in self._references(item.get("parameters", {})):
                 if source not in specs:
                     raise ValueError(f"Unknown source node: {source}")

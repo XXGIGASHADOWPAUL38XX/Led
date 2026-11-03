@@ -4,6 +4,7 @@ import numpy as np
 from scipy.signal import butter, lfilter
 
 from backend.api.handlers import Handlers
+from backend.api.schemas import parse_command
 from backend.api.protocol import decode, encode
 from backend.api.runtime import Runtime
 
@@ -19,8 +20,8 @@ class AudioShapeTests(unittest.IsolatedAsyncioTestCase):
         self.runtime.close()
 
     async def link(self, source, output, target, input_name):
-        await self.handlers.connection_add(None, {'source': {'nodeId': source, 'element': output},
-                                                'target': {'nodeId': target, 'element': input_name}})
+        await self.handlers.connection_add(None, parse_command('connection.add', {'source': {'nodeId': source, 'element': output},
+                                                'target': {'nodeId': target, 'element': input_name}}))
 
     async def test_stereo_chain_adopts_shapes_and_filters_actual_samples(self):
         self.runtime.load({'nodes': [
@@ -70,7 +71,7 @@ class AudioShapeTests(unittest.IsolatedAsyncioTestCase):
             self.runtime.configure('buffer', {'shape': [2, 37]})
         self.assertIs(self.runtime.nodes['buffer'], original)
         edge = next(edge for edge in self.runtime.graph['connections'] if edge['target']['nodeId'] == 'buffer')
-        await self.handlers.connection_remove(None, {'connectionId': edge['id']})
+        await self.handlers.connection_remove(None, parse_command('connection.remove', {'connectionId': edge['id']}))
         self.runtime.configure('buffer', {'shape': [17]})
         self.assertEqual(self.runtime.nodes['buffer'].indata.value.shape, (17,))
         self.assertEqual(self.runtime.nodes['buffer'].data.value.shape, (64,))
@@ -111,7 +112,7 @@ class AudioShapeTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(ValueError, 'incompatible with input data'):
             self.runtime.configure('amp', {'shape': [2, 128]})
         edge = self.runtime.graph['connections'][0]
-        await self.handlers.connection_remove(None, {'connectionId': edge['id']})
+        await self.handlers.connection_remove(None, parse_command('connection.remove', {'connectionId': edge['id']}))
         self.runtime.configure('amp', {'shape': [3, 256]})
         amp = self.runtime.nodes['amp']
         self.assertEqual(amp.buffer.value.shape, (3, 256))
