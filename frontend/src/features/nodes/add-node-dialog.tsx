@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { useBackend } from "@/api/backend-context";
 import { useGraph } from "@/api/hooks";
@@ -17,7 +18,6 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
   const [type, setType] = useState("");
-  const [node, setNode] = useState<NodeDescriptor | null>(null);
   const [parameters, setParameters] = useState<Record<string, unknown>>({});
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -42,20 +42,17 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
   useEffect(() => {
     dialog.current?.querySelector("[data-selected=true]")?.scrollIntoView({ block: "nearest" });
   }, [selected, type, query]);
-  useEffect(() => {
-    if (!type) return;
-    let active = true;
-    void backend.command("node.describe", { nodeType: type }).then((result) => {
-      if (active && result) setNode({ ...(result as NodeDescriptor), id: "" });
-    });
-    return () => {
-      active = false;
-    };
-  }, [backend, type]);
+  // A type's default descriptor never changes while the backend runs.
+  const prototype = useQuery({
+    queryKey: ["node-type", type],
+    queryFn: () => backend.graph.describeType(type),
+    enabled: Boolean(type),
+    staleTime: Infinity,
+  }).data;
+  const node: NodeDescriptor | null = prototype ? { ...(prototype as NodeDescriptor), id: "" } : null;
   function choose(next: string) {
     if (next === type) return;
     setType(next);
-    setNode(null);
     setParameters({});
     setError("");
   }
@@ -75,13 +72,7 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
         return source ? [{ id: crypto.randomUUID(), source, target: { nodeId, element: field.name } }] : [];
       });
     try {
-      const result = await backend.command("node.add", {
-        nodeId,
-        nodeType: type,
-        parameters: values,
-        connections,
-        position,
-      });
+      const result = await backend.graph.addNode({ nodeId, nodeType: type, parameters: values, connections, position });
       if (result) dialog.current!.close();
       else setError(backend.status.error);
     } finally {

@@ -95,6 +95,11 @@ class Snapshot(Model):
     nodes: list[NodeDescriptor]
 
 
+class GraphState(Snapshot):
+    """A snapshot with the revision it describes, for clients resynchronising over HTTP."""
+    revision: int
+
+
 # --- Catalog: how the editor presents each node type ----------------------------------------------------
 
 ControlKind = Literal["port", "slider", "switch", "select", "axis", "text", "color", "interval", "array", "shape",
@@ -220,6 +225,16 @@ class StateUpdate(Model):
     positions: dict[str, Position] = None
 
 
+class GraphPatch(Model):
+    """Changes since revision `base`: rebuild each list from its id order, preferring the items sent here."""
+    base: int
+    nodeOrder: list[str]
+    connectionOrder: list[str]
+    nodes: list[GraphNode]
+    connections: list[Connection]
+    descriptors: list[NodeDescriptor]
+
+
 class HistoryUpdate(Model):
     canUndo: bool
 
@@ -248,7 +263,7 @@ class Error(Model):
 
 
 EVENTS = {
-    "graph.snapshot": Snapshot, "state.update": StateUpdate, "history.update": HistoryUpdate, "frame": Frame,
+    "graph.snapshot": Snapshot, "graph.patch": GraphPatch, "state.update": StateUpdate, "history.update": HistoryUpdate, "frame": Frame,
     "player.update": PlayerState, "player.results": PlayerResults, "jev.update": GenerationState,
     "jev.preview": GenerationPreview, "ack": Ack, "error": Error,
 }

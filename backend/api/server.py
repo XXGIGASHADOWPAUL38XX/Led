@@ -14,6 +14,7 @@ from .catalog import Catalog
 from .handlers import Handlers
 from .openapi import document
 from .protocol import MAX_BYTES, decode, encode, event
+from .rest import routes
 from .router import Router
 from .schemas import CatalogNode, Model
 
@@ -151,7 +152,8 @@ def create_app(server):
             server.runtime.close()
 
     app = FastAPI(title="LED backend", version="1", lifespan=lifespan, generate_unique_id_function=lambda route: route.name)
-    app.add_middleware(CORSMiddleware, allow_origin_regex=LOCAL_ORIGIN, allow_methods=["*"], allow_headers=["*"])
+    app.add_middleware(CORSMiddleware, allow_origin_regex=LOCAL_ORIGIN, allow_methods=["*"], allow_headers=["*"],
+                       expose_headers=["X-Revision"])
 
     @app.get("/api/v1/health")
     async def health() -> Health:
@@ -164,6 +166,8 @@ def create_app(server):
         if request.headers.get("if-none-match") == server.catalog.etag:
             return Response(status_code=304, headers=headers)
         return Response(server.catalog.body, media_type="application/json", headers=headers)
+
+    app.include_router(routes(server))
 
     @app.websocket("/ws")
     async def stream(socket: WebSocket):

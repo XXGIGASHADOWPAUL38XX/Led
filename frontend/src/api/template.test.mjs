@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { encodeMessage } from "./protocol.ts";
+import { encodeMessage, fromJson, toJson } from "./protocol.ts";
 import { encodeTemplate, decodeTemplate, viewKey } from "./template.ts";
 import { BackendStore } from "./store.ts";
 
@@ -71,15 +71,23 @@ test("bad versions, files, graphs, and display settings are rejected", () => {
   assert.throws(() => decodeTemplate(new Uint8Array([0xc1])));
 });
 
+/** A store whose HTTP calls reach `respond(method, path, body)` instead of the network. */
+function storeWith(respond) {
+  return new BackendStore("http://backend", async (request) => {
+    const body = request.method === "GET" ? undefined : fromJson(JSON.parse(await request.text()));
+    const [status, reply] = await respond(request.method, new URL(request.url).pathname, body);
+    return Response.json(toJson(reply), { status });
+  });
+}
+
 test("saving gets current Python values instead of a stale frontend graph", async () => {
-  const store = new BackendStore();
-  snapshot(store, { nodes: [], connections: [] });
   const fresh = graph();
   fresh.nodes[0].position = [200, 300];
-  store.connection.request = async (type) => {
-    assert.equal(type, "graph.get");
-    return { graph: fresh };
-  };
+  const store = storeWith(async (method, path) => {
+    assert.deepEqual([method, path], ["GET", "/api/v1/graph"]);
+    return [200, { graph: fresh, nodes: [], revision: 3 }];
+  });
+  snapshot(store, { nodes: [], connections: [] });
   const saved = decodeTemplate(await store.exportTemplate());
   assert.deepEqual(saved.graph.nodes[0].position, [200, 300]);
   assert.equal(saved.graph.nodes[0].parameters.points.data.length, 4);
@@ -87,48 +95,42 @@ test("saving gets current Python values instead of a stale frontend graph", asyn
 });
 
 test("display restoration waits for acceptance and notifies relevant views", async () => {
-  const store = new BackendStore();
-  const key = viewKey("history", "data");
-  snapshot(store, graph());
-  store.setViewSettings("curve", key, { title: "Current" });
   let resolve;
-  store.connection.request = async (type, payload) => {
-    assert.equal(type, "graph.load");
-    assert.deepEqual(payload.graph, graph());
+  const store = storeWith(async (method, path, body) => {
+    assert.deepEqual([method, path], ["PUT", "/api/v1/graph"]);
+    assert.deepEqual(body.graph, graph());
     return new Promise((done) => {
       resolve = done;
     });
-  };
+  });
+  const key = viewKey("history", "data");
+  snapshot(store, graph());
+  store.setViewSettings("curve", key, { title: "Current" });
   let updates = 0,
-    resets = 0,
     frames = 0;
   store.subscribe(`display:${JSON.stringify(["curve", key])}`, () => updates++);
-  store.subscribe("template", () => resets++);
   store.subscribe("array:other", () => frames++);
   const pending = store.importTemplate(encodeTemplate(template()));
   assert.equal(store.viewSettings("curve", key).title, "Current");
-  resolve({ revision: 2 });
+  while (!resolve) await new Promise((done) => setTimeout(done));
+  resolve([200, { revision: 2 }]);
   await pending;
   assert.deepEqual(store.viewSettings("curve", key), settings);
   assert.equal(updates, 1);
-  assert.equal(resets, 1);
   assert.equal(frames, 0);
-  assert.equal(store.templateRevision, 1);
 });
 
 test("failed imports preserve display state; malformed files never reach Python", async () => {
-  const store = new BackendStore();
+  let requests = 0;
+  const store = storeWith(async () => {
+    requests++;
+    return [422, { detail: "Unknown node" }];
+  });
   const key = viewKey("history", "data");
   snapshot(store, graph());
   store.setViewSettings("curve", key, { title: "Keep me" });
-  let requests = 0;
-  store.connection.request = async () => {
-    requests++;
-    throw Error("Unknown node");
-  };
   await assert.rejects(store.importTemplate(encodeTemplate(template())), /Unknown node/);
   assert.equal(store.viewSettings("curve", key).title, "Keep me");
-  assert.equal(store.templateRevision, 0);
   await assert.rejects(store.importTemplate(new Uint8Array([0xc1])));
   assert.equal(requests, 1);
 });
@@ -142,4 +144,18 @@ test("view settings survive refreshes and are removed with deleted nodes", () =>
   assert.equal(store.viewSettings("curve", key).open, false);
   snapshot(store, { nodes: [], connections: [] });
   assert.deepEqual(store.viewSettings("curve", key), {});
+});
+
+test("a template's view settings arrive with its graph, before the canvas lays it out", async () => {
+  const key = viewKey("history", "data");
+  const store = storeWith(async () => {
+    store.receive({ type: "graph.snapshot", revision: 5, payload: { graph: graph(), nodes: [] } });
+    return [200, { revision: 5 }];
+  });
+  store.connection.request = async () => {};
+  store.status = { ...store.status, connection: "connected" };
+  let seen = null;
+  store.subscribe("epoch", () => (seen = store.viewSettings("curve", key)));
+  await store.importTemplate(encodeTemplate(template()));
+  assert.deepEqual(seen, settings);
 });

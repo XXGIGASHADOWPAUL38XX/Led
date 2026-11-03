@@ -1,4 +1,6 @@
-"""One wire format for commands, settings, and packed NumPy arrays."""
+"""One wire format for commands, settings, and packed NumPy arrays (MessagePack, or JSON with base64 data)."""
+import base64
+import binascii
 from enum import Enum
 from math import prod
 
@@ -49,6 +51,33 @@ def decode(data):
     if type(message) is not dict or type(message.get("type")) is not str or type(message.get("payload", {})) is not dict:
         raise ValueError("Expected a message with type and object payload")
     return message
+
+
+def to_json(value):
+    """JSON-ready copy of a value: arrays become the same envelope as in MessagePack, with base64 data."""
+    if type(value) is dict:
+        return {key: to_json(item) for key, item in value.items()}
+    if type(value) in (list, tuple):
+        return [to_json(item) for item in value]
+    if isinstance(value, (np.ndarray, np.generic, Enum)):
+        packed = _default(value)
+        return {**packed, "data": base64.b64encode(packed["data"]).decode()} if type(packed) is dict else packed
+    return value
+
+
+def from_json(value):
+    """Inverse of to_json; array envelopes are checked like MessagePack ones."""
+    if type(value) is list:
+        return [from_json(item) for item in value]
+    if type(value) is not dict:
+        return value
+    if value.get("__ndarray__") is not True:
+        return {key: from_json(item) for key, item in value.items()}
+    try:
+        data = base64.b64decode(value["data"], validate=True)
+    except (binascii.Error, TypeError) as error:
+        raise ValueError("Array data must be base64") from error
+    return _object({**value, "data": data})
 
 
 def event(kind, payload, revision, request_id=None):

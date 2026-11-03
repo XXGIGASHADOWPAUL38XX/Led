@@ -22,7 +22,8 @@ async def receive_kind(socket, kind):
                 return message
 
 
-class ServerTests(unittest.IsolatedAsyncioTestCase):
+class LiveServer(unittest.IsolatedAsyncioTestCase):
+    """A real uvicorn server on a free port, serving the test graph."""
     @classmethod
     def setUpClass(cls):
         cls.runtime = Runtime()
@@ -44,6 +45,8 @@ class ServerTests(unittest.IsolatedAsyncioTestCase):
         await self.serving
         self.runtime.close()
 
+
+class ServerTests(LiveServer):
     async def test_http_api_reports_health_and_documents_itself_for_local_origins(self):
         async with httpx.AsyncClient(base_url=self.http) as client:
             health = await client.get('/api/v1/health', headers={'Origin': 'http://localhost:3000'})
@@ -196,9 +199,10 @@ class ServerTests(unittest.IsolatedAsyncioTestCase):
             await socket.send(encode({'type': 'node.configure', 'requestId': 1, 'payload': {
                 'nodeId': 'expression', 'parameters': {
                     'arguments': [{'nodeId': 'source', 'element': 'data'}, '*', 0.5], 'length': 180}}}))
-            snapshot = await receive_kind(socket, 'graph.snapshot')
-            expression = next(node for node in snapshot['payload']['nodes'] if node['id'] == 'expression')
-            self.assertIn('source:data', [port['name'] for port in expression['ports']])
+            patch = (await receive_kind(socket, 'graph.patch'))['payload']
+            self.assertEqual([node['id'] for node in patch['descriptors']], ['expression'])
+            self.assertEqual(patch['nodeOrder'], ['source', 'expression'])
+            self.assertIn('source:data', [port['name'] for port in patch['descriptors'][0]['ports']])
             self.assertEqual((await receive_kind(socket, 'ack'))['requestId'], 1)
             await socket.send(encode({'type': 'subscribe', 'requestId': 2, 'payload': {
                 'elements': [{'nodeId': 'expression', 'element': 'data'}]}}))

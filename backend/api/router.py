@@ -8,6 +8,10 @@ from .generation import Generation
 from .schemas import parse_command
 
 
+# Commands refused for a reason the client can fix; anything else is a backend bug and is logged.
+REFUSALS = (ValueError, TypeError, KeyError, IndexError, OverflowError)
+
+
 class Router:
     def __init__(self, handlers):
         self.handlers = handlers
@@ -28,28 +32,32 @@ class Router:
             "playlist.add": handlers.playlist_add, "playlist.remove": handlers.playlist_remove,
         }
 
+    async def execute(self, origin, kind, payload):
+        """Validate and run one command for `origin` (a WebSocket session or an HTTP client id); raises on refusal."""
+        payload = parse_command(kind, payload)
+        if kind not in History.commands and kind != "graph.undo":
+            return await self.routes[kind](origin, payload)
+        async with self.edit_lock:
+            if kind == "graph.undo":
+                route, inverse = self.history.peek()
+                result = await self.routes[route](origin, inverse)
+                self.history.entries.pop()
+            else:
+                inverse = self.history.capture(kind, payload) if payload["recordHistory"] else None
+                result = await self.routes[kind](origin, payload)
+                if inverse is not None:
+                    self.history.record(inverse, origin, kind, payload)
+            await self.handlers.broadcast(event("history.update", {"canUndo": bool(self.history.entries)}, self.handlers.runtime.revision))
+        return result
+
     async def dispatch(self, session, message):
         request_id = message.get("requestId")
         try:
             kind = message["type"]
-            payload = parse_command(kind, message.get("payload", {}))
-            if kind in History.commands or kind == "graph.undo":
-                async with self.edit_lock:
-                    if kind == "graph.undo":
-                        route, inverse = self.history.peek()
-                        result = await self.routes[route](session, inverse)
-                        self.history.entries.pop()
-                    else:
-                        inverse = self.history.capture(kind, payload) if payload["recordHistory"] else None
-                        result = await self.routes[kind](session, payload)
-                        if inverse is not None:
-                            self.history.record(inverse, session, kind, payload)
-                    await self.handlers.broadcast(event("history.update", {"canUndo": bool(self.history.entries)}, self.handlers.runtime.revision))
-            else:
-                result = await self.routes[kind](session, payload)
+            result = await self.execute(session, kind, message.get("payload", {}))
             if kind != "frame.ack":
                 await session.send(event("ack", {"command": kind, "result": result}, self.handlers.runtime.revision, request_id))
-        except (ValueError, TypeError, KeyError, IndexError, OverflowError) as error:
+        except REFUSALS as error:
             await session.send(event("error", {"message": str(error)}, self.handlers.runtime.revision, request_id))
         except Exception:
             logging.getLogger(__name__).exception("Command failed: %s", message["type"])

@@ -24,18 +24,17 @@ export function useNodeClipboard(
       if (event.key.toLowerCase() === "c" && nodeIds.length) {
         event.preventDefault();
         offset.current = 0;
-        clipboard.current = backend
-          .command("graph.copy", { nodeIds })
-          .then((result) => (result ? (result as { graph: Graph }).graph : null));
+        // openapi-fetch widens the schema's [x, y] position tuples to number[]; the backend validated them.
+        clipboard.current = backend.graph.copy(nodeIds).then((result) => (result ? (result.graph as Graph) : null));
       }
       if (event.key.toLowerCase() === "v" && clipboard.current) {
         event.preventDefault();
         offset.current++;
-        const position = insertionPosition().map((coordinate) => coordinate + 24 * offset.current);
+        const [x, y] = insertionPosition();
+        const position: [number, number] = [x + 24 * offset.current, y + 24 * offset.current];
         void clipboard.current.then(async (graph) => {
           if (!graph) return;
-          const result = (await backend.command("graph.paste", { graph, position })) as
-            { nodeIds: string[] } | undefined;
+          const result = await backend.graph.paste(graph, position);
           if (result) select(result.nodeIds);
         });
       }

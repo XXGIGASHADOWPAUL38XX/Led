@@ -27,7 +27,7 @@ export const useViewSettings = (nodeId: string, viewId: string) =>
     (backend) => backend.viewSettings(nodeId, viewId),
     emptyViewSettings,
   );
-export const useTemplateRevision = () => useStoreValue("template", (backend) => backend.templateRevision, 0);
+export const useGraphEpoch = () => useStoreValue("epoch", (backend) => backend.graphEpoch, 0);
 
 export function useArray(nodeId: string, element: string) {
   const backend = useBackend();

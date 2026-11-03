@@ -1,4 +1,3 @@
-import { decode, encode } from "@msgpack/msgpack";
 import { test as base, expect, type Locator, type Page } from "@playwright/test";
 import { BACKEND_PORT } from "../playwright.config";
 
@@ -19,31 +18,14 @@ export const defaultGraph: Graph = {
   ],
 };
 
-/** Load a graph straight through the backend WebSocket, independently of the UI under test. */
+/** Load a graph straight through the backend HTTP API, independently of the UI under test. */
 async function loadGraph(graph: Graph) {
-  const socket = new WebSocket(`ws://127.0.0.1:${BACKEND_PORT}/ws`);
-  socket.binaryType = "arraybuffer";
-  await new Promise((resolve, reject) => {
-    socket.onopen = resolve;
-    socket.onerror = reject;
+  const response = await fetch(`http://127.0.0.1:${BACKEND_PORT}/api/v1/graph`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ graph }),
   });
-  try {
-    await new Promise<void>((resolve, reject) => {
-      socket.onmessage = (event) => {
-        const message = decode(new Uint8Array(event.data as ArrayBuffer)) as {
-          type: string;
-          requestId?: number;
-          payload: { message?: string };
-        };
-        if (message.requestId !== 1) return;
-        if (message.type === "ack") resolve();
-        else reject(Error(message.payload.message));
-      };
-      socket.send(encode({ type: "graph.load", requestId: 1, payload: { graph } }));
-    });
-  } finally {
-    socket.close();
-  }
+  expect(response.ok, await response.text()).toBe(true);
 }
 
 export class Workspace {
@@ -62,6 +44,26 @@ export class Workspace {
   async open() {
     await this.page.goto("/");
     await expect(this.nodes()).toHaveCount(2);
+    // The default graph has no positions: wait for its automatic layout and the fitView that follows.
+    await expect.poll(() => this.position("buffer-1")).not.toBe("translate(0px, 0px)");
+    await this.settled();
+  }
+  /** Wait until the viewport stops moving, so pointer coordinates still hit what was measured. */
+  async settled() {
+    const viewport = () =>
+      this.page.locator(".react-flow__viewport").evaluate((node) => (node as HTMLElement).style.transform);
+    let previous = "";
+    await expect
+      .poll(
+        async () => {
+          const current = await viewport();
+          const stable = current === previous;
+          previous = current;
+          return stable;
+        },
+        { intervals: [100] },
+      )
+      .toBe(true);
   }
   position(id: string) {
     return this.node(id).evaluate((node) => (node as HTMLElement).style.transform);

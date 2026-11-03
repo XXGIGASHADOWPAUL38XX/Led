@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useBackend } from "@/api/backend-context";
-import { useBackendStatus, useGraph, useTemplateRevision } from "@/api/hooks";
+import { useBackendStatus, useGraph, useGraphEpoch } from "@/api/hooks";
 import { SelectElement } from "../nodes/elements";
 import { ReactFlowProvider } from "@xyflow/react";
 import { compatiblePorts } from "../nodes/configuration";
@@ -16,7 +16,7 @@ export function LiveWorkspace() {
   const backend = useBackend();
   const status = useBackendStatus();
   const snapshot = useGraph();
-  const templateRevision = useTemplateRevision();
+  const graphEpoch = useGraphEpoch();
   const catalog = useCatalogQuery();
   const canvas = useRef<CanvasHandle>(null);
   const [adding, setAdding] = useState<[number, number] | null>(null);
@@ -35,7 +35,7 @@ export function LiveWorkspace() {
       if (isTyping()) return;
       if (event.metaKey && !event.shiftKey && event.key.toLowerCase() === "z") {
         event.preventDefault();
-        if (backend.status.canUndo) void backend.command("graph.undo");
+        if (backend.status.canUndo) void backend.graph.undo();
       }
     };
     window.addEventListener("pointerdown", begin, true);
@@ -82,7 +82,7 @@ export function LiveWorkspace() {
               type="button"
               disabled={status.connection !== "connected" || !status.canUndo}
               onClick={() => {
-                void backend.command("graph.undo");
+                void backend.graph.undo();
               }}
               className="rounded border border-white/10 px-3 py-2 text-xs text-zinc-300 disabled:opacity-40"
             >
@@ -131,7 +131,7 @@ export function LiveWorkspace() {
                 type="button"
                 disabled={!source || !inputs.some((input) => input.value === target)}
                 onClick={() => {
-                  void backend.command("connection.add", { source: JSON.parse(source), target: JSON.parse(target) });
+                  void backend.graph.connect(JSON.parse(source), JSON.parse(target));
                 }}
                 className="rounded bg-violet-400/15 py-2 text-xs text-violet-200 disabled:opacity-30"
               >
@@ -146,7 +146,7 @@ export function LiveWorkspace() {
                 <button
                   type="button"
                   onClick={() => {
-                    void backend.command("connection.remove", { connectionId: edge.id });
+                    void backend.graph.disconnect(edge.id);
                   }}
                   className="text-rose-300"
                 >
@@ -157,8 +157,9 @@ export function LiveWorkspace() {
           </details>
         )}
         {snapshot && catalog && (
-          // A loaded template starts from a fresh canvas: node state, selection and viewport.
-          <ReactFlowProvider key={templateRevision}>
+          // A new graph (loaded template, generated graph, reconnection) starts a fresh canvas: node state,
+          // selection, viewport and automatic layout.
+          <ReactFlowProvider key={graphEpoch}>
             <WorkspaceCanvas ref={canvas} graph={snapshot.graph} />
           </ReactFlowProvider>
         )}

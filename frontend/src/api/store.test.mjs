@@ -114,7 +114,6 @@ test("a completed generation replaces the canvas and its view settings; an edit 
   store.receive({ type: "jev.preview", revision: 1, payload: { graph: { nodes: [], connections: [] }, nodes: [] } });
   assert.notEqual(store.generationPreview, null);
   store.receive(generation("complete"));
-  assert.equal(store.templateRevision, 1);
   assert.equal(store.viewSettings("amp", "bars").open, undefined);
   assert.equal(store.generationPreview, null);
   assert.equal(store.generation.status, "complete");
@@ -122,19 +121,38 @@ test("a completed generation replaces the canvas and its view settings; an edit 
   store.setViewSettings("amp", "bars", { open: true });
   store.receive(generation("running", "edit"));
   store.receive(generation("complete", "edit"));
-  assert.equal(store.templateRevision, 1);
   assert.equal(store.viewSettings("amp", "bars").open, true);
 });
 
-test("a generation still running keeps its preview; one that never ran does not reset the canvas", () => {
+test("a generation still running keeps its preview; one that never ran keeps the view settings", () => {
   const store = setup();
+  store.setViewSettings("amp", "bars", { open: true });
   store.receive(generation("running"));
   store.receive({ type: "jev.preview", revision: 1, payload: { graph: { nodes: [], connections: [] }, nodes: [] } });
   store.receive(generation("running"));
   assert.notEqual(store.generationPreview, null);
   store.receive(generation("cancelled"));
   store.receive(generation("complete"));
-  assert.equal(store.templateRevision, 0);
+  assert.equal(store.viewSettings("amp", "bars").open, true);
+});
+
+test("every full snapshot starts a new graph epoch, in the same step that installs the graph", () => {
+  const store = setup();
+  assert.equal(store.graphEpoch, 1);
+  let seen = null;
+  store.subscribe("epoch", () => (seen = store.snapshot.graph.nodes.map((node) => node.id)));
+  store.receive({
+    type: "graph.snapshot",
+    revision: 2,
+    payload: {
+      graph: { nodes: [{ id: "fresh", type: "Buffer", position: [0, 0], parameters: {} }], connections: [] },
+      nodes: [],
+    },
+  });
+  assert.equal(store.graphEpoch, 2);
+  assert.deepEqual(seen, ["fresh"]);
+  store.receive(patch(2, { nodeOrder: ["fresh"] }));
+  assert.equal(store.graphEpoch, 2);
 });
 
 test("frames from an older revision are dropped but still acknowledged", () => {
@@ -215,4 +233,110 @@ test("unwatched streams and streams of unknown nodes leave the subscription", ()
   assert.deepEqual(requests.at(-1), [{ nodeId: "amp", element: "data" }]);
   second();
   assert.deepEqual(requests.at(-1), []);
+});
+
+const patch = (base, changes) => ({
+  type: "graph.patch",
+  revision: base + 1,
+  payload: { base, nodeOrder: ["amp"], connectionOrder: [], nodes: [], connections: [], descriptors: [], ...changes },
+});
+
+test("a graph patch updates only the changed nodes and keeps the others' streams", () => {
+  const store = new BackendStore();
+  store.connection.send = () => {};
+  store.connection.request = async () => {};
+  const node = (id) => ({ id, type: "Buffer", position: [0, 0], parameters: {} });
+  store.receive({
+    type: "graph.snapshot",
+    revision: 1,
+    payload: {
+      graph: { nodes: [node("amp"), node("gone")], connections: [] },
+      nodes: [descriptor(0.5), { ...descriptor(0), id: "gone" }],
+    },
+  });
+  const value = { dtype: "<f4", shape: [1], data: new Float32Array([1]) };
+  store.receive({
+    type: "frame",
+    revision: 1,
+    payload: {
+      sequence: 1,
+      values: [
+        { nodeId: "amp", element: "data", value },
+        { nodeId: "gone", element: "data", value },
+      ],
+      players: [],
+    },
+  });
+  store.setViewSettings("gone", "bars", { open: true });
+  let amp = 0;
+  store.subscribe("node:amp", () => amp++);
+  store.receive(
+    patch(1, {
+      nodeOrder: ["amp", "new"],
+      nodes: [node("new")],
+      descriptors: [{ ...descriptor(0), id: "new" }],
+    }),
+  );
+  assert.deepEqual(
+    store.snapshot.graph.nodes.map((item) => item.id),
+    ["amp", "new"],
+  );
+  assert.equal(amp, 0);
+  assert.equal(store.array("amp", "data"), value);
+  assert.equal(store.array("gone", "data"), null);
+  assert.equal(store.node("gone"), null);
+  assert.equal(store.node("new").id, "new");
+  assert.equal(store.viewSettings("gone", "bars").open, undefined);
+  assert.equal(store.status.revision, 2);
+});
+
+test("a patch from another revision triggers a full resync instead of a wrong merge", async () => {
+  const store = setup();
+  let resyncs = 0;
+  store.resync = async () => resyncs++;
+  store.receive(patch(5, { nodeOrder: [] }));
+  assert.equal(resyncs, 1);
+  assert.equal(store.node("amp").id, "amp");
+});
+
+test("an HTTP command resolves once this tab has received the revision it produced", async () => {
+  const store = new BackendStore("http://backend", async () =>
+    Response.json({ nodeIds: ["copy"] }, { headers: { "X-Revision": "2" } }),
+  );
+  store.connection.send = () => {};
+  store.connection.request = async () => {};
+  store.status = { ...store.status, connection: "connected" };
+  store.receive({
+    type: "graph.snapshot",
+    revision: 1,
+    payload: { graph: { nodes: [], connections: [] }, nodes: [] },
+  });
+  let done = false;
+  const pasted = store.graph.paste({ nodes: [], connections: [] }, [0, 0]).then((result) => {
+    done = true;
+    return result;
+  });
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.equal(done, false);
+  store.receive(
+    patch(1, {
+      nodeOrder: ["copy"],
+      nodes: [{ id: "copy", type: "Buffer", position: [0, 0], parameters: {} }],
+      descriptors: [{ ...descriptor(0), id: "copy" }],
+    }),
+  );
+  assert.deepEqual(await pasted, { nodeIds: ["copy"] });
+  assert.equal(store.node("copy").id, "copy");
+});
+
+test("a command does not wait for a revision once the connection is lost", async () => {
+  const store = new BackendStore("http://backend", async () =>
+    Response.json({ revision: 9 }, { headers: { "X-Revision": "9" } }),
+  );
+  store.status = { ...store.status, connection: "connected" };
+  const removed = store.graph.removeNode("amp");
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  store.status = { ...store.status, connection: "offline" };
+  store.receive({ type: "error", payload: { message: "Backend disconnected" } });
+  assert.deepEqual(await removed, { revision: 9 });
 });

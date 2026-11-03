@@ -1,3 +1,4 @@
+import { createHttpClient, unwrap } from "./client.ts";
 import { BackendConnection, type ConnectionStatus } from "./connection.ts";
 import type {
   Message,
@@ -9,17 +10,29 @@ import type {
   Graph,
   GenerationPreview,
   GenerationState,
+  GraphNode,
+  Connection,
+  GraphPatch,
 } from "./protocol.ts";
 import { encodeTemplate, decodeTemplate, emptyViewSettings, type DisplayState, type ViewSettings } from "./template.ts";
 
 type Listener = () => void;
 const keyOf = (nodeId: string, element: string) => JSON.stringify([nodeId, element]);
+const nodeOf = (key: string) => (JSON.parse(key) as [string, string])[0];
+/** Rebuild a list from its id order, preferring the items a patch sent. */
+const merge = <T extends { id: string }>(items: T[], upserts: T[], order: string[]) => {
+  const known = new Map([...items, ...upserts].map((item) => [item.id, item]));
+  return order.map((id) => known.get(id)!);
+};
+// One id per browser tab scopes undo history; getRandomValues also works outside secure (https) contexts.
+const tabId = () => Array.from(crypto.getRandomValues(new Uint8Array(8)), (byte) => byte.toString(16)).join("");
 export const initialStatus = { connection: "offline" as ConnectionStatus, error: "", revision: 0, canUndo: false };
 export const initialGeneration: GenerationState = { status: "idle", message: "", nodes: 0, mode: "generate" };
 
 export class BackendStore {
   snapshot: Snapshot | null = null;
-  templateRevision = 0;
+  /** Counts full snapshots: each one is a new graph (connection, loaded template, generated graph), edits are patches. */
+  graphEpoch = 0;
   status = initialStatus;
   generation = initialGeneration;
   generationPreview: GenerationPreview | null = null;
@@ -37,19 +50,111 @@ export class BackendStore {
   }
   private listeners = new Map<string, Set<Listener>>();
   private streams = new Map<string, Endpoint>();
-  readonly connection = new BackendConnection(
-    (message) => this.receive(message),
-    (connection) => {
-      this.status = { ...this.status, connection };
-      if (connection === "offline") {
-        this.edits.clear();
-        this.generationPreview = null;
-        this.emit("jev-preview");
-        for (const node of this.originals.values()) this.updateNode(node);
-      }
-      this.emit("status");
-    },
-  );
+  readonly connection: BackendConnection;
+  readonly http: ReturnType<typeof createHttpClient>;
+
+  constructor(
+    baseUrl = "http://127.0.0.1:8000",
+    fetch: typeof globalThis.fetch = (request) => globalThis.fetch(request),
+  ) {
+    this.http = createHttpClient(baseUrl, tabId(), fetch);
+    this.connection = new BackendConnection(
+      `${baseUrl.replace(/^http/, "ws")}/ws`,
+      (message) => this.receive(message),
+      (connection) => {
+        this.status = { ...this.status, connection };
+        if (connection === "offline") {
+          this.edits.clear();
+          this.generationPreview = null;
+          this.emit("jev-preview");
+          for (const node of this.originals.values()) this.updateNode(node);
+        }
+        this.emit("status");
+      },
+    );
+  }
+
+  private headers() {
+    return { "X-History-Group": String(this.historyGroup) };
+  }
+  /**
+   * Run an HTTP request and resolve once this tab's WebSocket state includes its effect (X-Revision), so callers
+   * read their own writes. A lost connection releases the wait: the next snapshot brings the state anyway.
+   */
+  private call<T>(request: Promise<{ data?: T; error?: unknown; response: Response }>) {
+    return unwrap(request, (response) => this.reached(Number(response.headers.get("X-Revision"))));
+  }
+  private reached(revision: number) {
+    return new Promise<void>((resolve) => {
+      const check = () => {
+        if (revision > this.status.revision && this.status.connection === "connected") return;
+        off();
+        resolve();
+      };
+      const off = this.subscribe("status", check);
+      check();
+    });
+  }
+  /** Run an HTTP command; a refusal is shown in the status bar and resolves to undefined. */
+  private async attempt<T>(request: Promise<{ data?: T; error?: unknown; response: Response }>) {
+    try {
+      return await this.call(request);
+    } catch (error) {
+      this.fail(error);
+      return undefined;
+    }
+  }
+  private fail(error: unknown) {
+    this.status = { ...this.status, error: error instanceof Error ? error.message : String(error) };
+    this.emit("status");
+  }
+
+  /** Graph edits over HTTP; their effects reach every tab, this one included, as WebSocket patches. */
+  readonly graph = {
+    undo: () => this.attempt(this.http.POST("/api/v1/graph/undo", { headers: this.headers() })),
+    copy: (nodeIds: string[]) =>
+      this.attempt(this.http.POST("/api/v1/graph/copy", { body: { nodeIds }, headers: this.headers() })),
+    paste: (graph: Graph, position: [number, number]) =>
+      this.attempt(this.http.POST("/api/v1/graph/paste", { body: { graph, position }, headers: this.headers() })),
+    move: (positions: Record<string, [number, number]>, recordHistory = true) =>
+      this.attempt(
+        this.http.PATCH("/api/v1/graph/positions", { body: { positions, recordHistory }, headers: this.headers() }),
+      ),
+    addNode: (body: {
+      nodeType: string;
+      nodeId: string;
+      position: [number, number];
+      parameters: Record<string, unknown>;
+      connections: Connection[];
+    }) => this.attempt(this.http.POST("/api/v1/nodes", { body, headers: this.headers() })),
+    removeNode: (nodeId: string) =>
+      this.attempt(
+        this.http.DELETE("/api/v1/nodes/{nodeId}", { params: { path: { nodeId } }, headers: this.headers() }),
+      ),
+    configureNode: (nodeId: string, parameters: Record<string, unknown>) =>
+      this.attempt(
+        this.http.PUT("/api/v1/nodes/{nodeId}/parameters", {
+          params: { path: { nodeId } },
+          body: { parameters },
+          headers: this.headers(),
+        }),
+      ),
+    runNode: (nodeId: string, action: "start" | "stop") =>
+      this.attempt(this.http.POST(`/api/v1/nodes/{nodeId}/${action}`, { params: { path: { nodeId } } })),
+    connect: (source: Endpoint, target: Endpoint, connectionId?: string) =>
+      this.attempt(
+        this.http.POST("/api/v1/connections", { body: { source, target, connectionId }, headers: this.headers() }),
+      ),
+    disconnect: (connectionId: string) =>
+      this.attempt(
+        this.http.DELETE("/api/v1/connections/{connectionId}", {
+          params: { path: { connectionId } },
+          headers: this.headers(),
+        }),
+      ),
+    describeType: (nodeType: string) =>
+      this.call(this.http.GET("/api/v1/node-types/{nodeType}", { params: { path: { nodeType } } })),
+  };
 
   subscribe(key: string, listener: Listener) {
     const set = this.listeners.get(key) ?? new Set();
@@ -95,15 +200,21 @@ export class BackendStore {
     for (const key of keys) this.emit(`display:${key}`);
   }
   async exportTemplate() {
-    const { graph } = (await this.connection.request("graph.get")) as { graph: Graph };
-    return encodeTemplate({ version: 1, graph, ui: this.display });
+    const { graph } = await this.call(this.http.GET("/api/v1/graph"));
+    // openapi-fetch widens the schema's [x, y] position tuples to number[]; the backend validated them.
+    return encodeTemplate({ version: 1, graph: graph as Graph, ui: this.display });
   }
+  /** View settings of a template being loaded; installed with its snapshot so the first layout sees them. */
+  private incomingDisplay: DisplayState | null = null;
   async importTemplate(bytes: ArrayBuffer | Uint8Array) {
     const template = decodeTemplate(bytes);
-    await this.connection.request("graph.load", { graph: template.graph });
-    this.replaceDisplay(template.ui);
-    this.templateRevision++;
-    this.emit("template");
+    this.incomingDisplay = template.ui;
+    try {
+      await this.call(this.http.PUT("/api/v1/graph", { body: { graph: template.graph }, headers: this.headers() }));
+      if (this.incomingDisplay) this.replaceDisplay(this.incomingDisplay);
+    } finally {
+      this.incomingDisplay = null;
+    }
   }
 
   watchArray(nodeId: string, element: string, listener: Listener) {
@@ -143,6 +254,7 @@ export class BackendStore {
     "jev.update": (message) => this.receiveGeneration(message),
     error: (message) => this.receiveError(message),
     "graph.snapshot": (message) => this.receiveSnapshot(message),
+    "graph.patch": (message) => this.receivePatch(message),
     frame: (message) => this.receiveFrame(message),
   };
   private readonly updates: Record<string, (message: Message) => void> = {
@@ -155,8 +267,9 @@ export class BackendStore {
   private receive(message: Message) {
     const exclusive = this.exclusive[message.type];
     if (exclusive) return exclusive(message);
-    this.advanceRevision(message.revision);
+    // Apply first: a revision is announced only once the state it names is in place.
     this.updates[message.type]?.(message);
+    this.advanceRevision(message.revision);
   }
   private receivePreview(message: Message) {
     this.generationPreview = message.payload as GenerationPreview;
@@ -166,8 +279,6 @@ export class BackendStore {
     const generation = message.payload as GenerationState;
     if (generation.status === "complete" && this.generation.status === "running" && generation.mode === "generate") {
       this.replaceDisplay({});
-      this.templateRevision++;
-      this.emit("template");
     }
     this.generation = generation;
     if (generation.status !== "running") {
@@ -180,21 +291,61 @@ export class BackendStore {
     this.status = { ...this.status, error: String(message.payload.message) };
     this.emit("status");
   }
-  private receiveSnapshot(message: Message) {
-    this.snapshot = message.payload as unknown as Snapshot;
-    const ids = new Set(this.snapshot.graph.nodes.map((node) => node.id));
+  private pruneDisplay(ids: Set<string>) {
     if (Object.keys(this.display).some((id) => !ids.has(id)))
       this.replaceDisplay(Object.fromEntries(Object.entries(this.display).filter(([id]) => ids.has(id))));
+  }
+  private receiveSnapshot(message: Message) {
+    this.snapshot = message.payload as unknown as Snapshot;
+    if (this.incomingDisplay) this.replaceDisplay(this.incomingDisplay);
+    this.incomingDisplay = null;
+    this.pruneDisplay(new Set(this.snapshot.graph.nodes.map((node) => node.id)));
     this.arrays.clear();
     this.players.clear();
     this.nodes.clear();
     this.originals.clear();
     this.edits.clear();
     for (const node of this.snapshot.nodes) this.updateNode(node);
-    this.status = { ...this.status, error: "", revision: message.revision ?? 0 };
+    this.status = { ...this.status, error: "", revision: message.revision };
+    this.graphEpoch++;
+    // The new epoch and its graph reach React together, so no view of the previous graph acts on the new one.
+    this.emit("epoch");
     this.emit("status");
     this.emit("graph");
     this.syncSubscriptions();
+  }
+  /** Apply an edit's delta; untouched nodes keep their descriptor, optimistic edits and streamed arrays. */
+  private receivePatch(message: Message) {
+    const patch = message.payload as unknown as GraphPatch;
+    if (!this.snapshot || patch.base !== this.status.revision) return void this.resync();
+    const kept = new Set(patch.nodeOrder);
+    for (const id of [...this.originals.keys()]) if (!kept.has(id)) this.forgetNode(id);
+    this.pruneDisplay(kept);
+    this.snapshot = {
+      graph: {
+        nodes: merge<GraphNode>(this.snapshot.graph.nodes, patch.nodes, patch.nodeOrder),
+        connections: merge<Connection>(this.snapshot.graph.connections, patch.connections, patch.connectionOrder),
+      },
+      nodes: merge<NodeDescriptor>(this.snapshot.nodes, patch.descriptors, patch.nodeOrder),
+    };
+    for (const node of patch.descriptors) this.updateNode(node);
+    this.status = { ...this.status, error: "", revision: message.revision };
+    this.emit("status");
+    this.emit("graph");
+    this.syncSubscriptions();
+  }
+  private forgetNode(id: string) {
+    for (const map of [this.arrays, this.edits])
+      for (const key of [...map.keys()]) if (nodeOf(key) === id) map.delete(key);
+    this.originals.delete(id);
+    this.nodes.delete(id);
+    this.players.delete(id);
+    this.emit(`node:${id}`);
+  }
+  /** Replace local state with the backend's when a patch does not follow the revision this tab holds. */
+  async resync() {
+    const state = await this.attempt(this.http.GET("/api/v1/graph"));
+    if (state) this.receiveSnapshot({ type: "graph.snapshot", revision: state.revision, payload: state });
   }
   private receiveFrame(message: Message) {
     try {
@@ -209,8 +360,8 @@ export class BackendStore {
       this.connection.send("frame.ack", { sequence: message.payload.sequence });
     }
   }
-  private advanceRevision(revision: number | undefined) {
-    if (revision === undefined || revision <= this.status.revision) return;
+  private advanceRevision(revision: number) {
+    if (revision <= this.status.revision) return;
     this.status = { ...this.status, revision };
     this.emit("status");
   }

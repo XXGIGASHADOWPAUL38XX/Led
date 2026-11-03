@@ -128,8 +128,7 @@ export function WorkspaceCanvas({ graph, ref }: { graph: Graph; ref?: Ref<Canvas
   }, []);
   const disconnect = useCallback(
     (key: string) => {
-      for (const edge of edges)
-        if (attached(edge, key)) void backend.command("connection.remove", { connectionId: edge.id });
+      for (const edge of edges) if (attached(edge, key)) void backend.graph.disconnect(edge.id);
     },
     [backend, edges],
   );
@@ -165,11 +164,11 @@ export function WorkspaceCanvas({ graph, ref }: { graph: Graph; ref?: Ref<Canvas
       // Drag ends and arrow-key moves both report a settled position; one graph.move commits them.
       const moved = changes.flatMap((change) =>
         change.type === "position" && change.dragging === false && change.position
-          ? [[change.id, [change.position.x, change.position.y]] as const]
+          ? [[change.id, [change.position.x, change.position.y] as [number, number]] as const]
           : [],
       );
       if (moved.length)
-        void backend.command("graph.move", { positions: Object.fromEntries(moved) }).then((result) => {
+        void backend.graph.move(Object.fromEntries(moved)).then((result) => {
           if (result === undefined) setNodes((items) => toNodes(graph, items));
         });
     },
@@ -199,20 +198,20 @@ export function WorkspaceCanvas({ graph, ref }: { graph: Graph; ref?: Ref<Canvas
   );
   const onConnect = useCallback(
     (connection: FlowConnection) => {
-      void backend.command("connection.add", {
-        source: endpoint(connection.source, connection.sourceHandle),
-        target: endpoint(connection.target, connection.targetHandle),
-      });
+      void backend.graph.connect(
+        endpoint(connection.source, connection.sourceHandle),
+        endpoint(connection.target, connection.targetHandle),
+      );
     },
     [backend],
   );
   const onReconnect = useCallback(
     (edge: Edge, connection: FlowConnection) => {
-      void backend.command("connection.add", {
-        source: endpoint(connection.source, connection.sourceHandle),
-        target: endpoint(connection.target, connection.targetHandle),
-        connectionId: edge.id,
-      });
+      void backend.graph.connect(
+        endpoint(connection.source, connection.sourceHandle),
+        endpoint(connection.target, connection.targetHandle),
+        edge.id,
+      );
     },
     [backend],
   );
@@ -231,7 +230,7 @@ export function WorkspaceCanvas({ graph, ref }: { graph: Graph; ref?: Ref<Canvas
     if (state.isValid) return;
     const key = terminalKey(endpoint(edge.target, edge.targetHandle), "input");
     if (!moved(event)) selectPort(key, event.ctrlKey || event.metaKey);
-    else if (!state.toHandle) void backend.command("connection.remove", { connectionId: edge.id });
+    else if (!state.toHandle) void backend.graph.disconnect(edge.id);
   };
   const onConnectEnd: NonNullable<ReactFlowProps["onConnectEnd"]> = (event, state) => {
     if (state.isValid || state.toHandle || state.fromHandle?.type !== "target" || !moved(event)) return;
@@ -245,7 +244,7 @@ export function WorkspaceCanvas({ graph, ref }: { graph: Graph; ref?: Ref<Canvas
   );
   const onEdgesDelete = useCallback(
     (deleted: Edge[]) => {
-      for (const edge of deleted) void backend.command("connection.remove", { connectionId: edge.id });
+      for (const edge of deleted) void backend.graph.disconnect(edge.id);
     },
     [backend],
   );
@@ -279,7 +278,7 @@ export function WorkspaceCanvas({ graph, ref }: { graph: Graph; ref?: Ref<Canvas
   const arrange = async () => {
     setArranging(true);
     try {
-      await backend.command("graph.move", { positions: layout() });
+      await backend.graph.move(layout());
     } finally {
       setArranging(false);
     }
@@ -297,9 +296,7 @@ export function WorkspaceCanvas({ graph, ref }: { graph: Graph; ref?: Ref<Canvas
     )
       return;
     arranged.current = key;
-    void backend
-      .command("graph.move", { positions: layout(), recordHistory: false })
-      .then(() => requestAnimationFrame(() => void flow.fitView()));
+    void backend.graph.move(layout(), false).then(() => requestAnimationFrame(() => void flow.fitView()));
   }, [backend, graph, initialized, status.connection, layout, flow]);
 
   return (

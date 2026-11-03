@@ -74,7 +74,7 @@ export function LiveNode({ id, selected }: { id: string; selected: boolean }) {
         <button
           type="button"
           onClick={() => {
-            void backend.command("node.remove", { nodeId: id });
+            void backend.graph.removeNode(id);
           }}
           aria-label={`Remove ${id}`}
           className="rounded px-2 py-1 text-rose-300 hover:bg-rose-400/10"
@@ -90,7 +90,7 @@ export function LiveNode({ id, selected }: { id: string; selected: boolean }) {
               key={action}
               type="button"
               onClick={() => {
-                void backend.command(`node.${action}`, { nodeId: id });
+                void backend.graph.runNode(id, action);
               }}
               className="flex-1 rounded bg-violet-400/15 py-2 text-xs text-violet-200 capitalize"
             >

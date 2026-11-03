@@ -37,7 +37,7 @@ export function NodeFields({ node, definition }: { node: NodeDescriptor; definit
             ["sequence", "expression", "node-reference", "curve", "axis"].includes(field.control)),
       );
       const result = structural
-        ? await backend.command("node.configure", { nodeId: node.id, parameters })
+        ? await backend.graph.configureNode(node.id, parameters)
         : await Promise.all(
             Object.entries(parameters).map(([name, value]) => backend.setElement(node.id, name, value)),
           );

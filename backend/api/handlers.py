@@ -5,16 +5,23 @@ from uuid import uuid4
 
 from .protocol import event
 from .clipboard import copy_nodes, paste_nodes
+from .patch import diff
 
 
 class Handlers:
     def __init__(self, runtime, broadcast):
         self.runtime, self.broadcast = runtime, broadcast
 
-    async def _load(self, graph, replace=False):
-        snapshot = self.runtime.load(graph, replace=replace)
-        await self.broadcast(event("graph.snapshot", snapshot, self.runtime.revision))
+    async def _apply(self, rebuild, replace=False):
+        """Rebuild the graph and tell every client: a snapshot for a fresh graph, a patch for an edit."""
+        before, base = (None, None) if replace else (self.runtime.snapshot(), self.runtime.revision)
+        after = rebuild()
+        message = ("graph.snapshot", after) if replace else ("graph.patch", diff(before, after, base))
+        await self.broadcast(event(*message, self.runtime.revision))
         return {"revision": self.runtime.revision}
+
+    async def _load(self, graph, replace=False):
+        return await self._apply(lambda: self.runtime.load(graph, replace=replace), replace)
 
     async def graph_get(self, session, payload):
         await session.send(event("graph.snapshot", self.runtime.snapshot(), self.runtime.revision))
@@ -31,9 +38,7 @@ class Handlers:
 
     async def graph_load(self, session, payload):
         if "connects" in payload["graph"]:
-            snapshot = self.runtime.load_template(payload["graph"], replace=True)
-            await self.broadcast(event("graph.snapshot", snapshot, self.runtime.revision))
-            return {"revision": self.runtime.revision}
+            return await self._apply(lambda: self.runtime.load_template(payload["graph"], replace=True), replace=True)
         return await self._load(payload["graph"], replace=True)
 
     async def node_add(self, session, payload):
@@ -74,9 +79,7 @@ class Handlers:
         return await self._load(graph)
 
     async def node_configure(self, session, payload):
-        snapshot = self.runtime.configure(payload["nodeId"], payload["parameters"])
-        await self.broadcast(event("graph.snapshot", snapshot, self.runtime.revision))
-        return {"revision": self.runtime.revision}
+        return await self._apply(lambda: self.runtime.configure(payload["nodeId"], payload["parameters"]))
 
     async def node_start(self, session, payload):
         node = self.runtime.nodes[payload["nodeId"]]

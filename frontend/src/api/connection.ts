@@ -1,4 +1,3 @@
-import { backendUrl } from "./client.ts";
 import { decodeMessage, encodeMessage, type Message } from "./protocol.ts";
 
 export type ConnectionStatus = "offline" | "connecting" | "connected";
@@ -13,9 +12,11 @@ export class BackendConnection {
     { resolve: (result: unknown) => void; reject: (error: Error) => void; timeout: ReturnType<typeof setTimeout> }
   >();
 
+  private url: string;
   private receive: (message: Message) => void;
   private status: (status: ConnectionStatus) => void;
-  constructor(receive: (message: Message) => void, status: (status: ConnectionStatus) => void) {
+  constructor(url: string, receive: (message: Message) => void, status: (status: ConnectionStatus) => void) {
+    this.url = url;
     this.receive = receive;
     this.status = status;
   }
@@ -28,8 +29,7 @@ export class BackendConnection {
 
   private open() {
     this.status("connecting");
-    const url = `${backendUrl().replace(/^http/, "ws")}/ws`;
-    const socket = new WebSocket(url);
+    const socket = new WebSocket(this.url);
     this.socket = socket;
     socket.binaryType = "arraybuffer";
     socket.onopen = () => this.status("connected");
@@ -47,7 +47,12 @@ export class BackendConnection {
           }
         }
       } catch (error) {
-        this.receive({ type: "error", payload: { message: error instanceof Error ? error.message : String(error) } });
+        // A local error names no revision of its own: it never advances or replaces state.
+        this.receive({
+          type: "error",
+          revision: 0,
+          payload: { message: error instanceof Error ? error.message : String(error) },
+        });
       }
     };
     socket.onclose = () => {

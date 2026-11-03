@@ -1,4 +1,4 @@
-import { decodeMessage, encodeMessage, type Graph } from "./protocol.ts";
+import { decodeEnvelope, encodeMessage, type Graph } from "./protocol.ts";
 
 export type DisplayColor = [number, number, number] | [number, number, number, number];
 export type ViewSettings = {
@@ -119,7 +119,7 @@ export function encodeTemplate(template: Template) {
 }
 export function decodeTemplate(bytes: ArrayBuffer | Uint8Array): Template {
   if (bytes.byteLength > MAX_TEMPLATE_BYTES) throw Error("Template exceeds 64 MB.");
-  const message = decodeMessage(bytes);
+  const message = decodeEnvelope(bytes);
   if (message.type !== "template") throw Error("Choose a .led template file.");
   validate(message.payload);
   return message.payload;
