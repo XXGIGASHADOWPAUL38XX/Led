@@ -3,11 +3,13 @@ import os
 import unittest
 from copy import deepcopy
 
+import httpx
+import uvicorn
 from websockets.asyncio.client import connect
-from websockets.asyncio.server import serve
+from websockets.exceptions import InvalidStatus
 
 from backend.api.runtime import Runtime
-from backend.api.server import Server
+from backend.api.server import Server, create_app, uvicorn_options
 from backend.api.protocol import encode, decode
 from backend.api.tests.test_runtime import graph
 
@@ -28,19 +30,48 @@ class ServerTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.runtime.load(graph())
         self.service = Server(self.runtime)
-        self.server = await serve(self.service.connect, '127.0.0.1', 0, compression=None)
-        self.url = f'ws://127.0.0.1:{self.server.sockets[0].getsockname()[1]}/ws'
-        self.processing = asyncio.create_task(self.service.processing())
+        self.server = uvicorn.Server(uvicorn.Config(create_app(self.service), host='127.0.0.1', port=0,
+                                                    log_level='warning', **uvicorn_options))
+        self.serving = asyncio.create_task(self.server.serve())
+        while not self.server.started:
+            await asyncio.sleep(0.01)
+        port = self.server.servers[0].sockets[0].getsockname()[1]
+        self.http = f'http://127.0.0.1:{port}'
+        self.url = f'ws://127.0.0.1:{port}/ws'
 
     async def asyncTearDown(self):
-        self.processing.cancel()
-        try:
-            await self.processing
-        except asyncio.CancelledError:
-            pass
-        self.server.close()
-        await self.server.wait_closed()
+        self.server.should_exit = True
+        await self.serving
         self.runtime.close()
+
+    async def test_http_api_reports_health_and_documents_itself_for_local_origins(self):
+        async with httpx.AsyncClient(base_url=self.http) as client:
+            health = await client.get('/api/v1/health', headers={'Origin': 'http://localhost:3000'})
+            self.assertEqual(health.json(), {'status': 'ok', 'revision': self.runtime.revision})
+            self.assertEqual(health.headers['access-control-allow-origin'], 'http://localhost:3000')
+            foreign = await client.get('/api/v1/health', headers={'Origin': 'https://example.com'})
+            self.assertNotIn('access-control-allow-origin', foreign.headers)
+            self.assertEqual((await client.get('/docs')).status_code, 200)
+            schemas = (await client.get('/openapi.json')).json()['components']['schemas']
+            self.assertIn('Snapshot', schemas)
+
+    async def test_websocket_refuses_foreign_origins_and_other_paths(self):
+        with self.assertRaises(InvalidStatus):
+            async with connect(self.url, origin='https://example.com'):
+                pass
+        async with connect(self.url, origin='http://127.0.0.1:3000') as socket:
+            await receive_kind(socket, 'graph.snapshot')
+        with self.assertRaises(InvalidStatus):
+            async with connect(self.url.replace('/ws', '/other')):
+                pass
+
+    async def test_text_frames_are_rejected_without_closing_the_session(self):
+        async with connect(self.url) as socket:
+            await receive_kind(socket, 'graph.snapshot')
+            await socket.send('{"type": "graph.get"}')
+            self.assertIn('binary', (await receive_kind(socket, 'error'))['payload']['message'])
+            await socket.send(encode({'type': 'graph.get', 'requestId': 1, 'payload': {}}))
+            self.assertEqual((await receive_kind(socket, 'ack'))['requestId'], 1)
 
     async def test_binary_frames_backpressure_and_reliable_controls(self):
         async with connect(self.url) as slow, connect(self.url) as editor:

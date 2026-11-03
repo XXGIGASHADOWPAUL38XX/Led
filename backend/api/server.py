@@ -1,19 +1,26 @@
 """Run the headless processing API: python -m backend.api.server --port 8000."""
 import argparse
 import asyncio
-from contextlib import suppress
+from contextlib import asynccontextmanager, suppress
 import logging
 import re
 import time
 
-from websockets.asyncio.server import serve
-from websockets.exceptions import ConnectionClosed
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 
 from .handlers import Handlers
+from .openapi import document
 from .protocol import MAX_BYTES, decode, encode, event
 from .router import Router
+from .schemas import Model
 
 logger = logging.getLogger(__name__)
+# Only the local frontend (any port) or non-browser clients may drive the lights.
+LOCAL_ORIGIN = r"http://(localhost|127\.0\.0\.1)(:\d+)?"
+# Compression trades CPU for bandwidth; packed numeric frames stay raw.
+uvicorn_options = {"ws_max_size": MAX_BYTES, "ws_max_queue": 16, "ws_per_message_deflate": False}
 
 
 class Session:
@@ -35,7 +42,7 @@ class Session:
 
     async def write(self):
         while True:
-            await self.socket.send(await self.outbox.get())
+            await self.socket.send_bytes(await self.outbox.get())
 
 
 class Server:
@@ -49,32 +56,20 @@ class Server:
         if self.sessions:
             await asyncio.gather(*(session.send(message) for session in tuple(self.sessions)))
 
-    async def connect(self, socket):
-        if socket.request.path != "/ws":
-            await socket.close(code=1008, reason="Use /ws")
+    async def connect(self, socket: WebSocket):
+        origin = socket.headers.get("origin")
+        if origin is not None and not re.fullmatch(LOCAL_ORIGIN, origin):
+            await socket.close(code=1008, reason="Origin not allowed")
             return
+        await socket.accept()
         session = Session(socket)
         self.sessions.add(session)
         writer = asyncio.create_task(session.write())
         try:
-            await session.send(event("graph.snapshot", self.runtime.snapshot(), self.runtime.revision))
-            await session.send(event("history.update", {"canUndo": bool(self.router.history.entries)}, self.runtime.revision))
-            await session.send(event("jev.update", self.router.generation.state, self.runtime.revision))
-            if self.router.generation.preview is not None:
-                await session.send(event("jev.preview", self.router.generation.preview, self.runtime.revision))
-            async for packet in socket:
-                try:
-                    message = decode(packet)
-                    if message["type"] == "player.search":
-                        # Network searches must not block control messages or frame ACKs.
-                        job = asyncio.create_task(self.router.dispatch(session, message))
-                        session.jobs.add(job)
-                        job.add_done_callback(session.jobs.discard)
-                    else:
-                        await self.router.dispatch(session, message)
-                except (ValueError, TypeError, KeyError) as error:
-                    await session.send(event("error", {"message": str(error)}, self.runtime.revision))
-        except ConnectionClosed:
+            await self.greet(session)
+            while (packet := await socket.receive())["type"] != "websocket.disconnect":
+                await self.receive(session, packet)
+        except WebSocketDisconnect:
             pass
         finally:
             self.sessions.discard(session)
@@ -83,8 +78,29 @@ class Server:
             if session.jobs:
                 await asyncio.gather(*session.jobs, return_exceptions=True)
             writer.cancel()
-            with suppress(asyncio.CancelledError, ConnectionClosed):
+            with suppress(asyncio.CancelledError, WebSocketDisconnect, RuntimeError):
                 await writer
+
+    async def greet(self, session):
+        """A new session starts from the current state; commands are never replayed."""
+        await session.send(event("graph.snapshot", self.runtime.snapshot(), self.runtime.revision))
+        await session.send(event("history.update", {"canUndo": bool(self.router.history.entries)}, self.runtime.revision))
+        await session.send(event("jev.update", self.router.generation.state, self.runtime.revision))
+        if self.router.generation.preview is not None:
+            await session.send(event("jev.preview", self.router.generation.preview, self.runtime.revision))
+
+    async def receive(self, session, packet):
+        try:
+            message = decode(packet.get("bytes"))
+            if message["type"] == "player.search":
+                # Network searches must not block control messages or frame ACKs.
+                job = asyncio.create_task(self.router.dispatch(session, message))
+                session.jobs.add(job)
+                job.add_done_callback(session.jobs.discard)
+            else:
+                await self.router.dispatch(session, message)
+        except (ValueError, TypeError, KeyError) as error:
+            await session.send(event("error", {"message": str(error)}, self.runtime.revision))
 
     async def processing(self):
         next_frame = time.monotonic()
@@ -98,28 +114,53 @@ class Server:
                 next_frame = now + 0.05
                 for update in self.runtime.schema_updates():
                     await self.broadcast(event("state.update", update, self.runtime.revision))
-                players = [self.handlers.player_state(node) for node in self.runtime.players.values()]
-                for session in tuple(self.sessions):
-                    if session.in_flight is not None:
-                        continue
-                    if not session.subscriptions and not players:
-                        continue
-                    session.sequence += 1
-                    session.in_flight = session.sequence
-                    await session.send(event("frame", {"sequence": session.sequence,
-                        "values": self.runtime.frame(session.subscriptions), "players": players}, self.runtime.revision))
+                await self.send_frames()
             await asyncio.sleep(0.005)
 
-    async def run(self, host="127.0.0.1", port=8000):
-        # Compression trades CPU for bandwidth; packed numeric frames stay raw.
-        async with serve(self.connect, host, port, max_size=MAX_BYTES, max_queue=16, compression=None,
-                         origins=[None, re.compile(r"http://(localhost|127\.0\.0\.1)(:\d+)?")]):
-            logger.info("Listening on ws://%s:%s/ws", host, port)
-            try:
-                await self.processing()
-            finally:
-                await self.router.generation.cancel()
-                self.runtime.close()
+    async def send_frames(self):
+        """One frame per session in flight at most: a slow client skips frames instead of queueing them."""
+        players = [self.handlers.player_state(node) for node in self.runtime.players.values()]
+        for session in tuple(self.sessions):
+            if session.in_flight is not None or not (session.subscriptions or players):
+                continue
+            session.sequence += 1
+            session.in_flight = session.sequence
+            await session.send(event("frame", {"sequence": session.sequence,
+                "values": self.runtime.frame(session.subscriptions), "players": players}, self.runtime.revision))
+
+
+
+class Health(Model):
+    status: str
+    revision: int
+
+
+def create_app(server):
+    @asynccontextmanager
+    async def lifespan(app):
+        processing = asyncio.create_task(server.processing())
+        try:
+            yield
+        finally:
+            processing.cancel()
+            with suppress(asyncio.CancelledError):
+                await processing
+            await server.router.generation.cancel()
+            server.runtime.close()
+
+    app = FastAPI(title="LED backend", version="1", lifespan=lifespan, generate_unique_id_function=lambda route: route.name)
+    app.add_middleware(CORSMiddleware, allow_origin_regex=LOCAL_ORIGIN, allow_methods=["*"], allow_headers=["*"])
+
+    @app.get("/api/v1/health")
+    async def health() -> Health:
+        return Health(status="ok", revision=server.runtime.revision)
+
+    @app.websocket("/ws")
+    async def stream(socket: WebSocket):
+        await server.connect(socket)
+
+    app.openapi = lambda: document(app)
+    return app
 
 
 def main():
@@ -134,10 +175,7 @@ def main():
         {"id": "amplitudes-1", "type": "Amplitudes", "position": [0, 0], "parameters": {}},
     ], "connections": [{"id": "buffer-amplitudes", "source": {"nodeId": "buffer-1", "element": "data"},
                         "target": {"nodeId": "amplitudes-1", "element": "buffer"}}]})
-    try:
-        asyncio.run(Server(runtime).run(port=args.port))
-    except KeyboardInterrupt:
-        pass
+    uvicorn.run(create_app(Server(runtime)), host="127.0.0.1", port=args.port, **uvicorn_options)
 
 
 if __name__ == "__main__":

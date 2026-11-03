@@ -25,7 +25,7 @@ export default defineConfig({
     {
       command: `${python} node.py --port ${BACKEND_PORT}`,
       cwd: "..",
-      port: BACKEND_PORT,
+      url: `http://127.0.0.1:${BACKEND_PORT}/api/v1/health`,
       reuseExistingServer: false,
     },
     {
