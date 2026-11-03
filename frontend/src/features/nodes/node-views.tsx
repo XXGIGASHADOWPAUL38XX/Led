@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useBackend } from "@/api/backend-context";
-import { usePlayer, useSearchResults, useViewSettings } from "@/api/hooks";
+import { useQuery } from "@tanstack/react-query";
+import { usePlayer, useViewSettings } from "@/api/hooks";
 import { type NodeDescriptor } from "@/api/protocol";
 import type { ViewDefinition } from "./definition";
 import { viewKey, type ViewSettings } from "@/api/template";
@@ -116,17 +117,22 @@ function StreamView({ node, view }: { node: NodeDescriptor; view: ViewDefinition
 function LivePlaylist({ nodeId }: { nodeId: string }) {
   const backend = useBackend();
   const player = usePlayer(nodeId);
-  const results = useSearchResults(nodeId);
   const [query, setQuery] = useState("");
-  const [searching, setSearching] = useState(false);
-  const send = (type: string, payload: Record<string, unknown> = {}) => backend.command(type, { nodeId, ...payload });
+  const [submitted, setSubmitted] = useState("");
+  // Each submitted query is cached per player; search runs on the backend, which also vets what can be queued.
+  const search = useQuery({
+    queryKey: ["player-search", nodeId, submitted],
+    queryFn: () => backend.playback.search(nodeId, submitted),
+    enabled: Boolean(submitted),
+    staleTime: 60_000,
+  });
   return (
     <div className="space-y-2">
       <button
         type="button"
         disabled={player?.loading && !player.tracks.some((track) => track.loaded)}
         onClick={() => {
-          void send("player.play");
+          void backend.playback.play(nodeId);
         }}
         className="rounded bg-violet-400/15 px-3 py-1.5 text-xs text-violet-200 disabled:opacity-40"
       >
@@ -140,26 +146,23 @@ function LivePlaylist({ nodeId }: { nodeId: string }) {
         position={player?.position ?? 0}
         duration={player?.duration ?? 0}
         onPlay={(trackId) => {
-          void send("player.play", { trackId });
+          void backend.playback.play(nodeId, trackId);
         }}
         onPause={() => {
-          void send("player.pause");
+          void backend.playback.pause(nodeId);
         }}
-        onSeek={(position) => send("player.seek", { position })}
+        onSeek={(position) => backend.playback.seek(nodeId, position)}
         onAdd={(track) => {
-          void send("playlist.add", { trackId: track.id });
+          void backend.playback.queue(nodeId, track.id);
         }}
         onRemove={(trackId) => {
-          void send("playlist.remove", { trackId });
+          void backend.playback.unqueue(nodeId, trackId);
         }}
         query={query}
         onQueryChange={setQuery}
-        searching={searching}
-        results={results?.tracks ?? null}
-        onSearch={(query) => {
-          setSearching(true);
-          void send("player.search", { query }).finally(() => setSearching(false));
-        }}
+        searching={search.isFetching}
+        results={search.data?.tracks ?? null}
+        onSearch={setSubmitted}
       />
     </div>
   );

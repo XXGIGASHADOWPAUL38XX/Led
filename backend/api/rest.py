@@ -6,8 +6,8 @@ from fastapi.responses import JSONResponse
 
 from .protocol import from_json, to_json
 from .router import REFUSALS
-from .schemas import (Command, Connection, ConnectionAdd, Graph, GraphLoad, GraphMove, GraphPaste, GraphState, Model,
-                      NodeAdd, NodeDescriptor, NodeIds)
+from .schemas import (Command, Connection, ConnectionAdd, Finite, GenerationState, Graph, GraphLoad, GraphMove, GraphPaste,
+                      GraphState, JevGenerate, Model, NodeAdd, NodeDescriptor, NodeIds, PlayerResults, PlayerState)
 
 
 class Revision(Model):
@@ -30,10 +30,26 @@ class NodeParameters(Command):
     parameters: dict[str, Any]
 
 
+class TrackChoice(Command):
+    trackId: str | None = None
+
+
+class Track(Command):
+    trackId: str
+
+
+class Seek(Command):
+    position: Finite
+
+
+class Loading(Model):
+    loading: bool
+
+
 def routes(server):
     api = APIRouter(prefix="/api/v1")
 
-    async def command(request: Request, kind, payload=None):
+    async def command(request: Request, kind, payload=None, status_code=200):
         """Run a command for this browser tab; X-History-Group makes one gesture undo as one step."""
         group = request.headers.get("x-history-group")
         payload = {**from_json(payload or {}), **({"historyGroup": int(group)} if group else {})}
@@ -43,7 +59,8 @@ def routes(server):
         except REFUSALS as error:
             return JSONResponse({"detail": str(error)}, status_code=422)
         # The revision this command produced: clients wait for it on the WebSocket before trusting the result.
-        return JSONResponse(to_json(result), headers={"X-Revision": str(server.runtime.revision)})
+        return JSONResponse(to_json(result), status_code=status_code,
+                            headers={"X-Revision": str(server.runtime.revision)})
 
     @api.get("/graph", response_model=GraphState)
     async def get_graph():
@@ -100,5 +117,38 @@ def routes(server):
     @api.delete("/connections/{connectionId}", response_model=Revision)
     async def remove_connection(request: Request, connectionId: str):
         return await command(request, "connection.remove", {"connectionId": connectionId})
+
+    @api.post("/players/{nodeId}/play", response_model=PlayerState | Loading)
+    async def play(request: Request, nodeId: str, body: TrackChoice):
+        return await command(request, "player.play", {**body.model_dump(exclude_unset=True), "nodeId": nodeId})
+
+    @api.post("/players/{nodeId}/pause", response_model=PlayerState)
+    async def pause(request: Request, nodeId: str):
+        return await command(request, "player.pause", {"nodeId": nodeId})
+
+    @api.post("/players/{nodeId}/seek", response_model=PlayerState)
+    async def seek(request: Request, nodeId: str, body: Seek):
+        return await command(request, "player.seek", {"position": body.position, "nodeId": nodeId})
+
+    @api.get("/players/{nodeId}/search", response_model=PlayerResults)
+    async def search(request: Request, nodeId: str, query: str):
+        return await command(request, "player.search", {"nodeId": nodeId, "query": query})
+
+    @api.post("/players/{nodeId}/playlist", response_model=Loading)
+    async def queue_track(request: Request, nodeId: str, body: Track):
+        return await command(request, "playlist.add", {"trackId": body.trackId, "nodeId": nodeId})
+
+    @api.delete("/players/{nodeId}/playlist", response_model=PlayerState)
+    async def unqueue_track(request: Request, nodeId: str, trackId: str):
+        return await command(request, "playlist.remove", {"trackId": trackId, "nodeId": nodeId})
+
+    @api.post("/generations", response_model=GenerationState, status_code=202)
+    async def generate(request: Request, body: JevGenerate):
+        # Accepted, not done: progress, the preview and the result arrive as jev.* WebSocket events.
+        return await command(request, "jev.generate", body.model_dump(), status_code=202)
+
+    @api.delete("/generations/current", response_model=GenerationState)
+    async def cancel_generation(request: Request):
+        return await command(request, "jev.cancel")
 
     return api

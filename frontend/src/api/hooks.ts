@@ -19,8 +19,6 @@ export const useBackendStatus = () => useStoreValue("status", (backend) => backe
 export const useGraph = () => useStoreValue("graph", (backend) => backend.snapshot, null);
 export const useBackendNode = (id: string) => useStoreValue(`node:${id}`, (backend) => backend.node(id), null);
 export const usePlayer = (id: string) => useStoreValue(`player:${id}`, (backend) => backend.player(id), null);
-export const useSearchResults = (id: string) =>
-  useStoreValue(`results:${id}`, (backend) => backend.searchResults(id), null);
 export const useViewSettings = (nodeId: string, viewId: string) =>
   useStoreValue(
     `display:${JSON.stringify([nodeId, viewId])}`,

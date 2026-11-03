@@ -11,6 +11,8 @@ from .patch import diff
 class Handlers:
     def __init__(self, runtime, broadcast):
         self.runtime, self.broadcast = runtime, broadcast
+        # Each client may only queue tracks its own last search returned: (origin, player id) -> entries.
+        self.search_results = {}
 
     async def _apply(self, rebuild, replace=False):
         """Rebuild the graph and tell every client: a snapshot for a fresh graph, a patch for an edit."""
@@ -228,18 +230,17 @@ class Handlers:
         if self.runtime.players.get(payload["nodeId"]) is not node:
             raise ValueError("Playlist changed during search")
         results = results or []
-        session.search_results[node.name()] = results
+        self.search_results[session, node.name()] = results
         tracks = [{"id": self._track_id(entry), "title": entry.get("title", ""), "artist": entry.get("uploader", ""), "duration": entry.get("duration") or 0}
                   for entry in results]
-        await session.send(event("player.results", {"nodeId": node.name(), "query": payload["query"], "tracks": tracks}, self.runtime.revision))
-        return {"count": len(tracks)}
+        return {"nodeId": node.name(), "query": payload["query"], "tracks": tracks}
 
     async def playlist_add(self, session, payload):
         node = self._player(payload)
         track_id = payload["trackId"]
         if any(self._track_id(entry) == track_id for entry in node._entries):
             raise ValueError("Track already queued")
-        track = next((entry for entry in session.search_results.get(node.name(), []) if self._track_id(entry) == track_id), None)
+        track = next((entry for entry in self.search_results.get((session, node.name()), []) if self._track_id(entry) == track_id), None)
         if track is None:
             raise ValueError("Choose a track returned by search")
         node.add_music(track)

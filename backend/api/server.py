@@ -33,7 +33,6 @@ class Session:
         self.in_flight = None
         self.sequence = 0
         self.jobs = set()
-        self.search_results = {}
 
     async def send(self, message):
         # Never grow an unbounded reliable queue for an unresponsive client.

@@ -340,3 +340,28 @@ test("a command does not wait for a revision once the connection is lost", async
   store.receive({ type: "error", payload: { message: "Backend disconnected" } });
   assert.deepEqual(await removed, { revision: 9 });
 });
+
+test("playback and Jev commands are HTTP requests on their resources", async () => {
+  const requests = [];
+  const store = new BackendStore("http://backend", async (request) => {
+    const url = new URL(request.url);
+    requests.push([
+      request.method,
+      url.pathname + url.search,
+      request.method === "GET" || request.method === "DELETE" ? null : await request.json(),
+    ]);
+    return Response.json({ status: "running" }, { status: request.url.endsWith("/generations") ? 202 : 200 });
+  });
+  await store.playback.play("sc", "https://soundcloud.com/a/b");
+  await store.playback.search("sc", "kick drum");
+  await store.playback.unqueue("sc", "https://soundcloud.com/a/b");
+  assert.deepEqual(await store.jev.generate("pulse", "edit"), { status: "running" });
+  await store.jev.cancel();
+  assert.deepEqual(requests, [
+    ["POST", "/api/v1/players/sc/play", { trackId: "https://soundcloud.com/a/b" }],
+    ["GET", "/api/v1/players/sc/search?query=kick%20drum", null],
+    ["DELETE", "/api/v1/players/sc/playlist?trackId=https%3A%2F%2Fsoundcloud.com%2Fa%2Fb", null],
+    ["POST", "/api/v1/generations", { prompt: "pulse", mode: "edit" }],
+    ["DELETE", "/api/v1/generations/current", null],
+  ]);
+});

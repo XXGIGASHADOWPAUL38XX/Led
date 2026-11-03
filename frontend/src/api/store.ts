@@ -41,7 +41,6 @@ export class BackendStore {
   private originals = new Map<string, NodeDescriptor>();
   private arrays = new Map<string, ArrayValue>();
   private players = new Map<string, PlayerState>();
-  private results = new Map<string, { query: string; tracks: PlayerState["tracks"] }>();
   private edits = new Map<string, { version: number; value: unknown }>();
   private version = 0;
   private historyGroup = 0;
@@ -109,6 +108,39 @@ export class BackendStore {
     this.emit("status");
   }
 
+  /** Playlist players over HTTP; their state streams back in frames and player.update events. */
+  readonly playback = {
+    play: (nodeId: string, trackId?: string) =>
+      this.attempt(
+        this.http.POST("/api/v1/players/{nodeId}/play", { params: { path: { nodeId } }, body: { trackId } }),
+      ),
+    pause: (nodeId: string) =>
+      this.attempt(this.http.POST("/api/v1/players/{nodeId}/pause", { params: { path: { nodeId } } })),
+    seek: (nodeId: string, position: number) =>
+      this.attempt(
+        this.http.POST("/api/v1/players/{nodeId}/seek", { params: { path: { nodeId } }, body: { position } }),
+      ),
+    search: (nodeId: string, query: string) =>
+      this.attempt(
+        this.http.GET("/api/v1/players/{nodeId}/search", { params: { path: { nodeId }, query: { query } } }),
+      ),
+    queue: (nodeId: string, trackId: string) =>
+      this.attempt(
+        this.http.POST("/api/v1/players/{nodeId}/playlist", { params: { path: { nodeId } }, body: { trackId } }),
+      ),
+    unqueue: (nodeId: string, trackId: string) =>
+      this.attempt(
+        this.http.DELETE("/api/v1/players/{nodeId}/playlist", { params: { path: { nodeId }, query: { trackId } } }),
+      ),
+  };
+
+  /** Jev generations: accepted over HTTP (202), then reported by jev.update and jev.preview events. */
+  readonly jev = {
+    generate: (prompt: string, mode: "generate" | "edit") =>
+      this.attempt(this.http.POST("/api/v1/generations", { body: { prompt, mode } })),
+    cancel: () => this.attempt(this.http.DELETE("/api/v1/generations/current")),
+  };
+
   /** Graph edits over HTTP; their effects reach every tab, this one included, as WebSocket patches. */
   readonly graph = {
     undo: () => this.attempt(this.http.POST("/api/v1/graph/undo", { headers: this.headers() })),
@@ -175,9 +207,6 @@ export class BackendStore {
   }
   player(id: string) {
     return this.players.get(id) ?? null;
-  }
-  searchResults(id: string) {
-    return this.results.get(id) ?? null;
   }
 
   viewSettings(nodeId: string, viewId: string) {
@@ -261,7 +290,6 @@ export class BackendStore {
     "state.update": (message) => this.receiveState(message),
     "history.update": (message) => this.receiveHistory(message),
     "player.update": (message) => this.receivePlayer(message),
-    "player.results": (message) => this.receiveResults(message),
   };
 
   private receive(message: Message) {
@@ -391,13 +419,6 @@ export class BackendStore {
   private setPlayer(player: PlayerState) {
     this.players.set(player.nodeId, player);
     this.emit(`player:${player.nodeId}`);
-  }
-  private receiveResults(message: Message) {
-    this.results.set(
-      String(message.payload.nodeId),
-      message.payload as { query: string; tracks: PlayerState["tracks"] },
-    );
-    this.emit(`results:${message.payload.nodeId}`);
   }
 
   async command(type: string, payload: Record<string, unknown> = {}) {

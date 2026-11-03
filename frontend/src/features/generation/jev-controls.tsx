@@ -14,14 +14,15 @@ export function JevControls() {
   const connected = status.connection === "connected";
   const disabled = !connected || running || pending || !prompt.trim();
 
-  async function command(type: string, mode: "generate" | "edit" = "generate") {
+  async function command(start: () => Promise<unknown>) {
     setPending(true);
     try {
-      await backend.command(type, type === "jev.generate" ? { prompt, mode } : {});
+      await start();
     } finally {
       setPending(false);
     }
   }
+  const generate = (mode: "generate" | "edit") => command(() => backend.jev.generate(prompt, mode));
 
   return (
     <details className="rounded-xl border border-violet-400/20 bg-violet-400/5 p-3" open={running || undefined}>
@@ -32,7 +33,7 @@ export function JevControls() {
         className="mt-3 space-y-3"
         onSubmit={(event) => {
           event.preventDefault();
-          void command("jev.generate");
+          void generate("generate");
         }}
       >
         <label className="block text-xs text-zinc-400">
@@ -59,7 +60,7 @@ export function JevControls() {
             type="button"
             disabled={disabled || !snapshot?.graph.nodes.length}
             onClick={() => {
-              void command("jev.generate", "edit");
+              void generate("edit");
             }}
             className="rounded-lg border border-violet-400/30 px-3 py-2 text-xs text-violet-200 disabled:opacity-40"
           >
@@ -70,7 +71,7 @@ export function JevControls() {
               type="button"
               disabled={!connected || pending}
               onClick={() => {
-                void command("jev.cancel");
+                void command(() => backend.jev.cancel());
               }}
               className="rounded-lg border border-white/10 px-3 py-2 text-xs text-zinc-300 disabled:opacity-40"
             >

@@ -264,7 +264,7 @@ class Error(Model):
 
 EVENTS = {
     "graph.snapshot": Snapshot, "graph.patch": GraphPatch, "state.update": StateUpdate, "history.update": HistoryUpdate, "frame": Frame,
-    "player.update": PlayerState, "player.results": PlayerResults, "jev.update": GenerationState,
+    "player.update": PlayerState, "jev.update": GenerationState,
     "jev.preview": GenerationPreview, "ack": Ack, "error": Error,
 }
 

@@ -23,9 +23,7 @@ class PlayerTests(unittest.IsolatedAsyncioTestCase):
         self.messages = []
         async def send(message):
             self.messages.append(message)
-        self.session = type('Session', (), {})()
-        self.session.send = send
-        self.session.search_results = {}
+        self.session = 'this-tab'
         self.handlers = Handlers(self.runtime, send)
 
     async def asyncTearDown(self):
@@ -43,11 +41,14 @@ class PlayerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.node._entries, [])
         self.assertEqual(self.node._current_track_index, -1)
 
-    async def test_search_results_and_add_are_bound_to_the_requesting_session(self):
+    async def test_search_results_and_add_are_bound_to_the_requesting_client(self):
         result = {'url': 'https://soundcloud.com/artist/new', 'title': 'New', 'uploader': 'Artist', 'duration': 12}
         with patch('backend.nodes.playlist_player.soundcloud.api.search_tracks', return_value=[result]):
-            await self.handlers.player_search(self.session, parse_command('player.search', {'nodeId': 'player', 'query': 'new'}))
-        self.assertEqual(self.messages[-1]['type'], 'player.results')
+            found = await self.handlers.player_search(self.session, parse_command('player.search', {'nodeId': 'player', 'query': 'new'}))
+        self.assertEqual(found, {'nodeId': 'player', 'query': 'new', 'tracks': [
+            {'id': result['url'], 'title': 'New', 'artist': 'Artist', 'duration': 12}]})
+        with self.assertRaises(ValueError):
+            await self.handlers.playlist_add('another-tab', parse_command('playlist.add', {'nodeId': 'player', 'trackId': result['url']}))
         with patch.object(self.node, 'add_music') as add:
             await self.handlers.playlist_add(self.session, parse_command('playlist.add', {'nodeId': 'player', 'trackId': result['url']}))
             add.assert_called_once_with(result)

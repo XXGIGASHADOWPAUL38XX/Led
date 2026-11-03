@@ -1,4 +1,6 @@
+import asyncio
 import base64
+import os
 import unittest
 
 import httpx
@@ -6,6 +8,9 @@ import numpy as np
 from websockets.asyncio.client import connect
 
 from backend.api.protocol import from_json, to_json
+from unittest.mock import patch
+
+from backend.api.tests.test_generation import FakeGenerator
 from backend.api.tests.test_server import LiveServer, receive_kind
 
 
@@ -107,6 +112,58 @@ class RestTests(LiveServer):
         descriptor = (await self.client.get('/node-types/Amplitudes')).json()
         self.assertEqual(descriptor['type'], 'Amplitudes')
         self.assertEqual((await self.client.post('/nodes/amp/start')).json(), {'detail': 'This node has no manual stream lifecycle'})
+
+
+class PlayerAndGenerationRestTests(LiveServer):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        self.runtime.load({'nodes': [{'id': 'player', 'type': 'SCPlaylistPlayer', 'parameters': {'playlist_url': ''}}],
+                           'connections': []})
+        node = self.runtime.players['player']
+        node._entries = [{'url': 'https://soundcloud.com/artist/track'}]
+        node._tracks = [(np.zeros((40960, 2), dtype=np.float32), 40960)]
+        node._seek_ratios = [0.0]
+        self.client = httpx.AsyncClient(base_url=f'{self.http}/api/v1', headers={'X-Client-Id': 'tab-1'})
+
+    async def asyncTearDown(self):
+        await self.client.aclose()
+        await super().asyncTearDown()
+
+    async def test_playback_search_and_playlist_are_player_resources(self):
+        track = 'https://soundcloud.com/artist/track'
+        played = (await self.client.post('/players/player/play', json={'trackId': track})).json()
+        self.assertTrue(played['playing'])
+        self.assertEqual(played['activeTrackId'], track)
+        self.assertEqual((await self.client.post('/players/player/seek', json={'position': 0.5})).status_code, 200)
+        self.assertFalse((await self.client.post('/players/player/pause')).json()['playing'])
+        found = {'url': 'https://soundcloud.com/artist/new', 'title': 'New', 'uploader': 'Artist', 'duration': 3}
+        with patch('backend.nodes.playlist_player.soundcloud.api.search_tracks', return_value=[found]):
+            results = (await self.client.get('/players/player/search', params={'query': 'new'})).json()
+        self.assertEqual([item['id'] for item in results['tracks']], [found['url']])
+        other = await self.client.post('/players/player/playlist', json={'trackId': found['url']},
+                                       headers={'X-Client-Id': 'tab-2'})
+        self.assertEqual(other.json(), {'detail': 'Choose a track returned by search'})
+        with patch.object(self.runtime.players['player'], 'add_music') as add:
+            self.assertEqual((await self.client.post('/players/player/playlist', json={'trackId': found['url']})).json(),
+                             {'loading': True})
+            add.assert_called_once_with(found)
+        removed = await self.client.delete('/players/player/playlist', params={'trackId': track})
+        self.assertEqual(removed.json()['tracks'], [])
+        self.assertEqual((await self.client.post('/players/missing/pause')).status_code, 422)
+
+    async def test_a_generation_is_an_accepted_job_reported_over_the_websocket(self):
+        FakeGenerator.release = asyncio.Event()
+        with patch('ai.template_generator.agent.Generator', FakeGenerator), patch.dict(os.environ, {'OPENCODE_API_KEY': 'key'}):
+            async with connect(self.url) as socket:
+                await receive_kind(socket, 'graph.snapshot')
+                started = await self.client.post('/generations', json={'prompt': 'pulse'})
+                self.assertEqual(started.status_code, 202)
+                self.assertEqual(started.json()['status'], 'running')
+                self.assertEqual((await self.client.post('/generations', json={'prompt': 'again'})).status_code, 422)
+                cancelled = await self.client.delete('/generations/current')
+                self.assertEqual(cancelled.json()['status'], 'cancelled')
+                while (await receive_kind(socket, 'jev.update'))['payload']['status'] != 'cancelled':
+                    pass
 
 
 if __name__ == '__main__':
