@@ -268,8 +268,8 @@ export function FieldControl({
           {...common}
           value={isArrayValue(value) ? plainArray(value) : (value as NumericArray)}
           onValueChange={commit}
-          min={element.min}
-          max={element.max}
+          min={element.min ?? undefined}
+          max={element.max ?? undefined}
           integer={element.dtype ? /[iu]/.test(element.dtype) : false}
         />
       );
