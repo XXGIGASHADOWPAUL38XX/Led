@@ -412,7 +412,7 @@ class Runtime:
 
     def frame(self, subscriptions):
         return [{"nodeId": node_id, "element": name, "value": self.element(node_id, name).value}
-                for node_id, name in subscriptions if node_id in self.nodes and name in self.nodes[node_id].pending_terminals]
+                for node_id, name in sorted(subscriptions) if node_id in self.nodes and name in self.nodes[node_id].pending_terminals]
 
     def tick(self):
         drain_signals()

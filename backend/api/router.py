@@ -26,7 +26,7 @@ class Router:
             "node.add": handlers.node_add, "node.remove": handlers.node_remove, "node.move": handlers.node_move,
             "node.configure": handlers.node_configure, "node.start": handlers.node_start, "node.stop": handlers.node_stop,
             "connection.add": handlers.connection_add, "connection.remove": handlers.connection_remove,
-            "element.set": handlers.element_set, "subscribe": handlers.subscribe, "frame.ack": handlers.frame_ack,
+            "element.set": handlers.element_set, "streams.update": handlers.streams_update, "frame.ack": handlers.frame_ack,
             "player.play": handlers.player_play, "player.pause": handlers.player_pause,
             "player.seek": handlers.player_seek, "player.search": handlers.player_search,
             "playlist.add": handlers.playlist_add, "playlist.remove": handlers.playlist_remove,

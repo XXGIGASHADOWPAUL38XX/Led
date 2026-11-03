@@ -153,16 +153,14 @@ class Handlers:
         await self.broadcast(event("state.update", {**result, "node": self.runtime.describe(self.runtime.nodes[payload["nodeId"]])}, self.runtime.revision))
         return result
 
-    async def subscribe(self, session, payload):
-        subscriptions = set()
-        for item in payload["elements"]:
-            node_id, name = item["nodeId"], item["element"]
+    async def streams_update(self, session, payload):
+        added = {(item["nodeId"], item["element"]) for item in payload["add"]}
+        for node_id, name in added:
             self.runtime.element(node_id, name)
             if name not in self.runtime.nodes[node_id].pending_terminals:
                 raise ValueError("Only graph ports may be streamed")
-            subscriptions.add((node_id, name))
-        session.subscriptions = tuple(sorted(subscriptions))
-        return {"elements": payload["elements"]}
+        session.subscriptions = (session.subscriptions | added) - {(item["nodeId"], item["element"]) for item in payload["remove"]}
+        return {"streams": len(session.subscriptions)}
 
     async def frame_ack(self, session, payload):
         if payload["sequence"] == session.in_flight:

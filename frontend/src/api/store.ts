@@ -49,6 +49,8 @@ export class BackendStore {
   }
   private listeners = new Map<string, Set<Listener>>();
   private streams = new Map<string, Endpoint>();
+  /** The streams this tab's WebSocket session subscribed; a new session starts with none. */
+  private subscribed = new Set<string>();
   readonly connection: BackendConnection;
   readonly http: ReturnType<typeof createHttpClient>;
 
@@ -63,6 +65,7 @@ export class BackendStore {
       (connection) => {
         this.status = { ...this.status, connection };
         if (connection === "offline") {
+          this.subscribed.clear();
           this.edits.clear();
           this.generationPreview = null;
           this.emit("jev-preview");
@@ -257,12 +260,27 @@ export class BackendStore {
       this.syncSubscriptions();
     };
   }
+  /** Send only what changed between the streams views watch (on existing ports) and what the session has. */
   private syncSubscriptions() {
     if (this.status.connection !== "connected" || !this.snapshot) return;
-    const elements = [...this.streams.values()].filter((item) =>
-      this.nodes.get(item.nodeId)?.ports.some((port) => port.name === item.element),
+    const wanted = new Set(
+      [...this.streams].flatMap(([key, item]) =>
+        this.nodes.get(item.nodeId)?.ports.some((port) => port.name === item.element) ? [key] : [],
+      ),
     );
-    void this.command("subscribe", { elements });
+    const add = [...wanted].filter((key) => !this.subscribed.has(key));
+    const remove = [...this.subscribed].filter((key) => !wanted.has(key));
+    if (!add.length && !remove.length) return;
+    this.subscribed = wanted;
+    const endpoints = (keys: string[]) =>
+      keys.map((key) => {
+        const [nodeId, element] = JSON.parse(key) as [string, string];
+        return { nodeId, element };
+      });
+    // Adding is idempotent on the backend: after a refusal, forget the mirror and resend everything next time.
+    void this.command("streams.update", { add: endpoints(add), remove: endpoints(remove) }).then((result) => {
+      if (result === undefined) this.subscribed.clear();
+    });
   }
 
   private updateNode(node: NodeDescriptor) {

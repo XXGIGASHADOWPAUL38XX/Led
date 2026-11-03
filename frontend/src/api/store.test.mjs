@@ -94,7 +94,7 @@ test("acks at the current revision do not notify status listeners", () => {
   const store = setup();
   let updates = 0;
   store.subscribe("status", () => updates++);
-  store.receive({ type: "ack", revision: 1, requestId: 7, payload: { command: "subscribe" } });
+  store.receive({ type: "ack", revision: 1, requestId: 7, payload: { command: "streams.update" } });
   assert.equal(updates, 0);
   store.receive({ type: "ack", revision: 2, requestId: 8, payload: { command: "element.set" } });
   assert.equal(updates, 1);
@@ -177,10 +177,10 @@ test("frames from an older revision are dropped but still acknowledged", () => {
   assert.deepEqual(store.player("p"), { nodeId: "p" });
 });
 
-test("streams subscribe once connected with a snapshot, and only to ports that exist", async () => {
+test("streams subscribe once connected with a snapshot, only to ports that exist, and only once", async () => {
   const store = new BackendStore();
   const requests = [];
-  store.connection.request = async (type, payload) => requests.push([type, payload.elements]);
+  store.connection.request = async (type, payload) => requests.push([type, payload.add, payload.remove]);
   store.status = { ...store.status, connection: "connected" };
   store.watchArray("amp", "data", () => {});
   assert.deepEqual(requests, []);
@@ -190,10 +190,8 @@ test("streams subscribe once connected with a snapshot, and only to ports that e
     payload: { graph: { nodes: [], connections: [] }, nodes: [descriptor(0.5)] },
   });
   store.watchArray("amp", "missing", () => {});
-  assert.deepEqual(requests, [
-    ["subscribe", [{ nodeId: "amp", element: "data" }]],
-    ["subscribe", [{ nodeId: "amp", element: "data" }]],
-  ]);
+  store.watchArray("amp", "data", () => {});
+  assert.deepEqual(requests, [["streams.update", [{ nodeId: "amp", element: "data" }], []]]);
 });
 
 test("a node update notifies that node only, not the graph", () => {
@@ -221,18 +219,34 @@ test("a snapshot during an edit wins over the optimistic value", async () => {
   assert.equal(store.node("amp").elements[0].value, 0.3);
 });
 
-test("unwatched streams and streams of unknown nodes leave the subscription", () => {
+test("only the last viewer of a stream unsubscribes it, and only that stream", () => {
   const store = setup();
   const requests = [];
-  store.connection.request = async (type, payload) => requests.push(payload.elements);
+  store.connection.request = async (type, payload) => requests.push([payload.add, payload.remove]);
   store.status = { ...store.status, connection: "connected" };
   const first = store.watchArray("amp", "data", () => {});
   const second = store.watchArray("amp", "data", () => {});
   store.watchArray("gone", "data", () => {});
   first();
-  assert.deepEqual(requests.at(-1), [{ nodeId: "amp", element: "data" }]);
+  assert.deepEqual(requests, [[[{ nodeId: "amp", element: "data" }], []]]);
   second();
-  assert.deepEqual(requests.at(-1), []);
+  assert.deepEqual(requests.at(-1), [[], [{ nodeId: "amp", element: "data" }]]);
+});
+
+test("a new connection subscribes its streams again", () => {
+  const store = setup();
+  const requests = [];
+  store.connection.request = async (type, payload) => requests.push(payload.add);
+  store.status = { ...store.status, connection: "connected" };
+  store.watchArray("amp", "data", () => {});
+  store.connection.status("offline");
+  store.connection.status("connected");
+  store.receive({
+    type: "graph.snapshot",
+    revision: 1,
+    payload: { graph: { nodes: [], connections: [] }, nodes: [descriptor(0.5)] },
+  });
+  assert.deepEqual(requests, [[{ nodeId: "amp", element: "data" }], [{ nodeId: "amp", element: "data" }]]);
 });
 
 const patch = (base, changes) => ({
@@ -364,4 +378,32 @@ test("playback and Jev commands are HTTP requests on their resources", async () 
     ["POST", "/api/v1/generations", { prompt: "pulse", mode: "edit" }],
     ["DELETE", "/api/v1/generations/current", null],
   ]);
+});
+
+test("an offline tab sends no subscriptions, and a refused update is resent in full", async () => {
+  const store = setup();
+  const requests = [];
+  let refuse = true;
+  store.connection.request = async (type, payload) => {
+    requests.push(payload.add);
+    if (refuse) throw Error("Only graph ports may be streamed");
+  };
+  store.watchArray("amp", "data", () => {});
+  assert.deepEqual(requests, []);
+  store.status = { ...store.status, connection: "connected" };
+  store.watchArray("amp", "data", () => {});
+  await new Promise((resolve) => setTimeout(resolve));
+  refuse = false;
+  store.watchArray("amp", "data", () => {});
+  assert.deepEqual(requests, [[{ nodeId: "amp", element: "data" }], [{ nodeId: "amp", element: "data" }]]);
+});
+
+test("losing the connection drops optimistic edits; reconnecting attempts keep them", () => {
+  const store = setup();
+  store.connection.request = () => new Promise(() => {});
+  void store.setElement("amp", "powering", 0.9);
+  store.connection.status("connecting");
+  assert.equal(store.node("amp").elements[0].value, 0.9);
+  store.connection.status("offline");
+  assert.equal(store.node("amp").elements[0].value, 0.5);
 });

@@ -1277,10 +1277,16 @@ export interface components {
             /** Value */
             value: unknown;
         };
-        /** Subscribe */
-        Subscribe: {
-            /** Elements */
-            elements: components["schemas"]["Endpoint"][];
+        /**
+         * StreamsUpdate
+         * @description Changes to the session's streamed ports; adding a stream twice or removing an absent one is harmless.
+         */
+        StreamsUpdate: {
+            /**
+             * Add
+             * @default []
+             */
+            add?: components["schemas"]["Endpoint"][];
             /**
              * Historygroup
              * @default null
@@ -1291,6 +1297,11 @@ export interface components {
              * @default true
              */
             recordHistory?: boolean;
+            /**
+             * Remove
+             * @default []
+             */
+            remove?: components["schemas"]["Endpoint"][];
         };
         /** Track */
         Track: {

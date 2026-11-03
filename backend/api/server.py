@@ -29,7 +29,7 @@ class Session:
     def __init__(self, socket):
         self.socket = socket
         self.outbox = asyncio.Queue(maxsize=128)
-        self.subscriptions = ()
+        self.subscriptions = set()
         self.in_flight = None
         self.sequence = 0
         self.jobs = set()

@@ -344,8 +344,10 @@ class ElementSet(Command):
     value: Any
 
 
-class Subscribe(Command):
-    elements: list[Endpoint]
+class StreamsUpdate(Command):
+    """Changes to the session's streamed ports; adding a stream twice or removing an absent one is harmless."""
+    add: list[Endpoint] = []
+    remove: list[Endpoint] = []
 
 
 class FrameAck(Command):
@@ -383,7 +385,7 @@ COMMANDS = {
     "node.describe": NodeType, "node.add": NodeAdd, "node.remove": NodeRef, "node.move": NodeMove,
     "node.configure": NodeConfigure, "node.start": NodeRef, "node.stop": NodeRef,
     "connection.add": ConnectionAdd, "connection.remove": ConnectionRemove, "element.set": ElementSet,
-    "subscribe": Subscribe, "frame.ack": FrameAck,
+    "streams.update": StreamsUpdate, "frame.ack": FrameAck,
     "player.play": PlayerPlay, "player.pause": NodeRef, "player.seek": PlayerSeek, "player.search": PlayerSearch,
     "playlist.add": PlaylistTrack, "playlist.remove": PlaylistTrack,
     "jev.generate": JevGenerate, "jev.cancel": Empty,
