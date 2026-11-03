@@ -19,7 +19,7 @@ class FrontendNodeTests(unittest.TestCase):
         self.runtime.close()
 
     def test_every_registered_node_and_parameter_has_an_explicit_ui(self):
-        directory = Path(__file__).resolve().parents[3] / 'frontend/src/components/node'
+        directory = Path(__file__).resolve().parents[3] / 'frontend/src/features/nodes/definitions'
         definitions = {}
         for path in directory.rglob('*-node.ts'):
             source = path.read_text()

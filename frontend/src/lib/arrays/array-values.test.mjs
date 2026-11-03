@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { arrayShape, parseArrayShape, parseNumericArray } from "./array-values.ts";
-import { compatiblePorts } from "../nodes/configuration.ts";
+import { compatiblePorts } from "../../features/nodes/configuration.ts";
 
 test("accepts bounded arrays without changing dimensions or integer constraints", () => {
   assert.deepEqual(
