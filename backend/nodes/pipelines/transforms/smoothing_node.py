@@ -20,6 +20,30 @@ class SmoothingNode(CNode, AudioUpdatable):
     keeps the previous output if that copy fails."""
 
     nodeName = "Smoothing"
+    ui = {
+        "title": "Smoothing",
+        "description": "Wrap a history window and aggregation function for signal smoothing.",
+        "category": "transforms",
+        "fields": [
+            {"name": "input_value", "control": "port"},
+            {"name": "length", "control": "slider", "rebuild": True},
+            {
+                "name": "window_function",
+                "control": "node-reference",
+                "nodeTypes": [
+                    "AveragedWindowFct",
+                    "CeilWindowFct",
+                    "DecreasingAvgWindowFct",
+                    "MinWindowFct",
+                    "MaxWindowFct",
+                    "SumWindowFct",
+                ],
+            },
+            {"name": "avg_axis", "control": "axis", "label": "Reduction axes"},
+            {"name": "offset", "control": "slider"},
+        ],
+        "views": [{"kind": "bars", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(
             self,

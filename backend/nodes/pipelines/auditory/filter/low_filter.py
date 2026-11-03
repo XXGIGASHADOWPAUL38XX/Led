@@ -21,6 +21,17 @@ class LowFilterPipelineNode(ArrayInputNode, Filter):
     """
 
     nodeName = "LowFilter"
+    ui = {
+        "title": "Low Filter",
+        "description": "Apply a first-order Butterworth low-pass filter to audio. Input shape adapts when linked and is editable.",
+        "category": "auditory",
+        "fields": [
+            {"name": "buffer_data", "control": "port"},
+            {"name": "shape", "control": "shape", "label": "Input shape", "rebuild": True},
+            {"name": "lowpass_freq", "control": "slider", "unit": "Hz"},
+        ],
+        "views": [{"kind": "bars", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(
         self,

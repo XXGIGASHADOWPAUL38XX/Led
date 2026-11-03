@@ -1,3 +1,4 @@
+import { backendUrl } from "./client.ts";
 import { decodeMessage, encodeMessage, type Message } from "./protocol.ts";
 
 export type ConnectionStatus = "offline" | "connecting" | "connected";
@@ -27,7 +28,7 @@ export class BackendConnection {
 
   private open() {
     this.status("connecting");
-    const url = import.meta.env.VITE_BACKEND_URL ?? `ws://${window.location.hostname}:8000/ws`;
+    const url = `${backendUrl().replace(/^http/, "ws")}/ws`;
     const socket = new WebSocket(url);
     this.socket = socket;
     socket.binaryType = "arraybuffer";

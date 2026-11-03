@@ -90,15 +90,71 @@ class NodeDescriptor(Model):
     ports: list[PortDescriptor]
 
 
-class CatalogEntry(Model):
-    type: str
-    description: str
-
-
 class Snapshot(Model):
     graph: Graph
     nodes: list[NodeDescriptor]
-    catalog: list[CatalogEntry]
+
+
+# --- Catalog: how the editor presents each node type ----------------------------------------------------
+
+ControlKind = Literal["port", "slider", "switch", "select", "axis", "text", "color", "interval", "array", "shape",
+                      "curve", "reference", "node-reference", "sequence", "expression", "managed"]
+Scale = Literal["linear", "logarithmic"]
+
+
+class Bounds(Model):
+    """Limits of a field that follow another field's value (e.g. a frequency range bounded by the sample rate)."""
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+    source: str = Field(alias="from")
+    min: float
+    max: float
+
+
+class FieldUi(Model):
+    name: str
+    control: ControlKind
+    label: str = None
+    unit: str = None
+    scale: Scale = None
+    min: float = None
+    max: float = None
+    item: Literal["reference", "node", "token"] = None
+    nodeTypes: list[str] = None
+    rebuild: bool = None
+    bounds: Bounds = None
+    matchInput: str = None
+    ordered: bool = None
+    hidden: bool = None
+    portsPrefix: str = None
+    channels: list[str] = None
+    addPort: str = None
+
+
+class ViewUi(Model):
+    kind: Literal["bars", "history", "color", "lights", "trigger", "meter", "playlist"]
+    data: str = None
+    colors: str = None
+    label: str = None
+    series: list[str] = None
+    open: bool = None
+    unit: str = None
+    xScale: Scale = None
+    xMinField: str = None
+    xMaxField: str = None
+
+
+class NodeUi(Model):
+    """A node class's `ui` attribute: its title, help text, one control per constructor parameter and its views."""
+    title: str
+    description: str
+    category: str
+    fields: list[FieldUi]
+    views: list[ViewUi]
+    actions: list[Literal["start", "stop"]] = None
+
+
+class CatalogNode(NodeUi):
+    type: str
 
 
 # --- Player and generation ---------------------------------------------------------------------------

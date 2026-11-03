@@ -15,6 +15,13 @@ class BroadcastRescalerNode(CNode, AudioUpdatable):
     length at construction to match its allocated buffer."""
 
     nodeName = "BroadcastRescalerNode"
+    ui = {
+        "title": "Broadcast Rescaler",
+        "description": "Resize an array along its first axis by nearest lower-index sampling.",
+        "category": "broadcast",
+        "fields": [{"name": "input_data", "control": "port"}, {"name": "length", "control": "slider", "rebuild": True}],
+        "views": [{"kind": "bars", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(
         self,

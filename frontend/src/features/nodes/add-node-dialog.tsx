@@ -5,7 +5,7 @@ import type { NodeDescriptor, Endpoint } from "@/api/protocol";
 import { TextElement } from "./elements";
 import { FieldControl, ReferenceControl } from "./forms/field-control";
 import { completeConfiguration } from "./configuration";
-import { nodeDefinitions } from "./registry";
+import { useCatalog } from "../catalog/catalog-context";
 import { availableNodeName } from "./node-name";
 
 export function AddNodeDialog({ onClose, position }: { onClose: () => void; position: [number, number] }) {
@@ -13,6 +13,7 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
   const dialog = useRef<HTMLDialogElement>(null);
   const search = useRef<HTMLInputElement>(null);
   const snapshot = useGraph();
+  const catalog = useCatalog();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
   const [type, setType] = useState("");
@@ -21,24 +22,16 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const choices = (snapshot?.catalog ?? [])
-    .filter((item) =>
-      `${item.type} ${nodeDefinitions[item.type].title} ${nodeDefinitions[item.type].category}`
-        .toLowerCase()
-        .includes(query.toLowerCase()),
-    )
-    .sort(
-      (a, b) =>
-        nodeDefinitions[a.type].category.localeCompare(nodeDefinitions[b.type].category) ||
-        nodeDefinitions[a.type].title.localeCompare(nodeDefinitions[b.type].title),
-    );
+  const choices = Object.values(catalog)
+    .filter((item) => `${item.type} ${item.title} ${item.category}`.toLowerCase().includes(query.toLowerCase()))
+    .sort((a, b) => a.category.localeCompare(b.category) || a.title.localeCompare(b.title));
   const folders = new Map<string, { type: string; index: number }[]>();
   choices.forEach((item, index) => {
-    const folder = nodeDefinitions[item.type].category;
+    const folder = item.category;
     if (!folders.has(folder)) folders.set(folder, []);
     folders.get(folder)!.push({ type: item.type, index });
   });
-  const definition = nodeDefinitions[type];
+  const definition = catalog[type];
   const automaticName = type
     ? availableNodeName(definition.title, snapshot?.graph.nodes.map((node) => node.id) ?? [])
     : "";
@@ -157,7 +150,7 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
                       onClick={() => choose(item.type)}
                       className={`block w-full rounded-md px-3 py-2 text-left text-xs ${selected === item.index ? "bg-violet-400/15 text-violet-200" : "text-zinc-400 hover:bg-white/5"}`}
                     >
-                      {nodeDefinitions[item.type].title}
+                      {catalog[item.type].title}
                     </button>
                   ))}
                 </div>

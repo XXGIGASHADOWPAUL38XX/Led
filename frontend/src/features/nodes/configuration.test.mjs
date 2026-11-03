@@ -1,28 +1,18 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { nodeDefinitions } from "./registry.ts";
 import { completeConfiguration, compatiblePorts } from "./configuration.ts";
 
-test("each node definition covers unique controls and existing visual outputs", () => {
-  assert.equal(Object.keys(nodeDefinitions).length, 66);
-  for (const [type, node] of Object.entries(nodeDefinitions)) {
-    assert.equal(node.type, type);
-    assert.ok(node.description && node.category && node.title);
-    assert.equal(new Set(node.fields.map((field) => field.name)).size, node.fields.length);
-    assert.ok(node.views.every((view) => view.kind === "playlist" || view.data));
-  }
-  assert.equal(nodeDefinitions.Function.fields.find((field) => field.name === "points").control, "curve");
-  assert.equal(nodeDefinitions.OperatorPipeline.fields.find((field) => field.name === "arguments").item, "token");
-  assert.equal(nodeDefinitions.AveragedWindowFct.fields.find((field) => field.name === "avg_axis").control, "axis");
-});
+// OperatorPipeline.arguments and GroupNode.nodes, as their Python classes declare them.
+const expression = { name: "arguments", control: "expression", addPort: "add_element", item: "token" };
+const sequence = { name: "nodes", control: "sequence", item: "node" };
 
 test("unfinished references cannot be applied; literals and completed references can", () => {
-  const fields = nodeDefinitions.OperatorPipeline.fields;
+  const fields = [expression];
   assert.equal(completeConfiguration(fields, { arguments: [null, "*", 1] }), false);
   assert.equal(completeConfiguration(fields, { arguments: [{}, "*", 1] }), false);
   assert.equal(completeConfiguration(fields, { arguments: [{ nodeId: "a" }, "*", 1] }), false);
   assert.equal(completeConfiguration(fields, { arguments: [{ nodeId: "a", element: "data" }, "*", 1] }), true);
-  assert.equal(completeConfiguration(nodeDefinitions.GroupNode.fields, { nodes: [{ nodeId: "a" }] }), true);
+  assert.equal(completeConfiguration([sequence], { nodes: [{ nodeId: "a" }] }), true);
 });
 
 test("connection choices exclude incompatible array ranks and fixed dimensions", () => {

@@ -19,6 +19,18 @@ class StreamMicNode(CNode, AudioUpdatable):
     device. Changing chunk size restarts an active stream."""
 
     nodeName = "StreamMic"
+    ui = {
+        "title": "Stream Mic",
+        "description": "Capture mono microphone blocks for audio processing.",
+        "category": "stream",
+        "fields": [
+            {"name": "user_callback", "control": "managed"},
+            {"name": "sample_rate", "control": "slider", "unit": "Hz", "rebuild": True},
+            {"name": "chunk_size", "control": "slider", "rebuild": True},
+        ],
+        "views": [{"kind": "history", "data": "chunk", "label": "Chunk", "open": False}],
+        "actions": ["start", "stop"],
+    }
 
     def __init__(
         self,

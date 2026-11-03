@@ -19,6 +19,21 @@ class ESP32Node(ControllerNode):
     Alpha processing modifies the input; `close()` stops the worker/socket."""
 
     nodeName = "ESP32"
+    ui = {
+        "title": "ESP32",
+        "description": "Send an RGBA strip to an ESP32 over UDP using DDP.",
+        "category": "controllers",
+        "fields": [
+            {"name": "rgba", "control": "port"},
+            {"name": "power_log", "control": "slider"},
+            {"name": "min_alpha", "control": "slider"},
+            {"name": "remove_alpha", "control": "slider"},
+            {"name": "esp32_ip", "control": "text", "label": "Device address"},
+            {"name": "ddp_port", "control": "slider", "unit": ""},
+            {"name": "led_count", "control": "slider"},
+        ],
+        "views": [],
+    }
 
     def __init__(
         self,

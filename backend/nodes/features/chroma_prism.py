@@ -17,6 +17,26 @@ class ChromaPrismNode(VisualPipeline, CNode):
     update with spectrum memory and animation phase each visual frame."""
 
     nodeName = "ChromaPrism"
+    ui = {
+        "title": "Chroma Prism",
+        "description": "Convert spectrum and audio features into animated bars and RGBA colors.",
+        "category": "features",
+        "fields": [
+            {"name": "amplitudes", "control": "port"},
+            {"name": "chroma", "control": "port"},
+            {"name": "spectral_centroid", "control": "port"},
+            {"name": "spectral_flux", "control": "port"},
+            {"name": "onset_strength", "control": "port"},
+            {"name": "entropy", "control": "port"},
+            {"name": "zero_crossing_rate", "control": "port"},
+            {"name": "crest_factor", "control": "port"},
+            {"name": "mid_side_energy", "control": "port"},
+        ],
+        "views": [
+            {"kind": "bars", "data": "data", "label": "Data", "open": True},
+            {"kind": "color", "data": "brushes", "label": "Brushes", "open": False},
+        ],
+    }
 
     def __init__(
         self,

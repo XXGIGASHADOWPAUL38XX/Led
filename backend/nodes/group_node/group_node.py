@@ -9,6 +9,16 @@ class GroupNode(CNode):
     `nodes` contains child pipelines; `start()` starts `auto_start_nodes`.
     Grouping does not render or position nodes."""
     nodeName = 'GroupNode'
+    ui = {
+        "title": "Group",
+        "description": "Own related processing nodes and expose their pipeline outputs.",
+        "category": "groups",
+        "fields": [
+            {"name": "nodes", "control": "sequence", "item": "node"},
+            {"name": "auto_start_nodes", "control": "sequence", "item": "node"},
+        ],
+        "views": [],
+    }
     is_group_node = True
 
     def __init__(self, nodes: Iterable[CNode] | None=None, auto_start_nodes: Iterable[CNode] | None=None, terminals: dict | None=None, alias: str | None=None) -> None:

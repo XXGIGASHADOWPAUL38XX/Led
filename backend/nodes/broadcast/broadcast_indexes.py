@@ -19,6 +19,17 @@ class BroadcastIndexesNode(CNode, AudioUpdatable):
     """
 
     nodeName = 'BroadcastIndexesNode'
+    ui = {
+        "title": "Broadcast Indexes",
+        "description": "Sample rows using normalized indexes, preserving RGB and other trailing dimensions.",
+        "category": "broadcast",
+        "fields": [
+            {"name": "input_data", "control": "port"},
+            {"name": "shape", "control": "shape", "label": "Input shape", "rebuild": True},
+            {"name": "indexes", "control": "array"},
+        ],
+        "views": [{"kind": "bars", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(self, input_data=None, indexes: np.ndarray = np.zeros(FREQ_BINS),
                  alias: str | None = None, shape=(FREQ_BINS,)):

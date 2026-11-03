@@ -1,12 +1,13 @@
-import { useEffect, useRef } from "react";
+import { useContext, useEffect, useRef } from "react";
 import { useGenerationPreview } from "@/api/hooks";
 import type { Endpoint } from "@/api/protocol";
-import { nodeDefinitions } from "../nodes/registry";
+import { CatalogContext } from "../catalog/catalog-context";
 import { layoutGraph } from "../graph/graph-layout";
 import { connectionPath } from "../graph/connection-path";
 
 export function JevPreview() {
   const preview = useGenerationPreview();
+  const catalog = useContext(CatalogContext);
   const viewport = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const element = viewport.current;
@@ -78,7 +79,7 @@ export function JevPreview() {
                 stroke={index === nodes.length - 1 ? "#a78bfa" : "#3f3f46"}
               />
               <text x={16} y={24} fill="#e4e4e7" fontSize={13} fontWeight={500}>
-                {(nodeDefinitions[node.type]?.title ?? node.type).slice(0, 32)}
+                {(catalog?.[node.type]?.title ?? node.type).slice(0, 32)}
               </text>
               <text x={16} y={43} fill="#71717a" fontSize={10}>
                 {node.id.slice(0, 40)}

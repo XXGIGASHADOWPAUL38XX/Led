@@ -3,13 +3,14 @@ import { useBackendNode } from "@/api/hooks";
 import { Node } from "./node";
 import { NodeFields } from "./node-fields";
 import { NodeView } from "./node-views";
-import { nodeDefinitions } from "./registry";
+import { useCatalog } from "../catalog/catalog-context";
 
 export function LiveNode({ id, selected }: { id: string; selected: boolean }) {
   const backend = useBackend();
   const node = useBackendNode(id);
+  const catalog = useCatalog();
   if (!node) return null;
-  const definition = nodeDefinitions[node.type];
+  const definition = catalog[node.type];
   if (!definition) return <p role="alert">Missing UI definition for {node.type}</p>;
   // Dynamic stems and argument ports follow the live processing schema.
   const inlineOutputs = new Set(

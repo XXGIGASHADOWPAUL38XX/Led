@@ -13,6 +13,16 @@ class ConstantArrayNode(CNode):
     Output `data` has shape (length,) and refreshes when either input changes."""
 
     nodeName = "ConstantArray"
+    ui = {
+        "title": "Constant Array",
+        "description": "Generate a constant vector for masks, levels, or array arithmetic.",
+        "category": "simple",
+        "fields": [
+            {"name": "input_value", "control": "slider"},
+            {"name": "length", "control": "slider", "rebuild": True},
+        ],
+        "views": [{"kind": "bars", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(
         self,

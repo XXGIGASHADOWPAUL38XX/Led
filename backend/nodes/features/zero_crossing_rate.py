@@ -14,6 +14,13 @@ class ZeroCrossingRateNode(CNode, AudioPipeline):
     samples changing sign each audio update; fewer than two samples gives zero."""
 
     nodeName = "ZeroCrossingRate"
+    ui = {
+        "title": "Zero Crossing Rate",
+        "description": "Measure waveform sign changes as a rough noisiness feature.",
+        "category": "features",
+        "fields": [{"name": "buffer_data", "control": "port"}],
+        "views": [{"kind": "meter", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(self, buffer_data=np.zeros((2, 0)), alias: str | None = None) -> None:
         terminals = {

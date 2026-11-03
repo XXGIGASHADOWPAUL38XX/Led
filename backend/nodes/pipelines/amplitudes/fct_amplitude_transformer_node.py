@@ -16,6 +16,23 @@ class FctAmplitudesTransformerNode(CNode, AmplitudesTransformer):
     transform mutates the function result; `powering` is currently unused."""
 
     nodeName = "FctAmplitudesTransformer"
+    ui = {
+        "title": "Fct Amplitudes Transformer",
+        "description": "Shape a spectrum with a supplied amplitude-level function.",
+        "category": "amplitudes",
+        "fields": [
+            {"name": "input_data", "control": "port"},
+            {"name": "powering", "control": "slider", "label": "Weighting"},
+            {"name": "log", "control": "slider"},
+            {
+                "name": "amplitudes_level_fct",
+                "control": "node-reference",
+                "matchInput": "input_data",
+                "nodeTypes": ["AmplitudeLevelFunction"],
+            },
+        ],
+        "views": [{"kind": "bars", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(
         self,

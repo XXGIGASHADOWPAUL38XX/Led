@@ -15,6 +15,19 @@ class SingleColorNode(CNode):
     output `data` shaped (number_points, 3). Refreshes when either input changes."""
 
     nodeName = "SingleColor"
+    ui = {
+        "title": "Single Color",
+        "description": "Generate a uniform RGB strip for coloring a visualization.",
+        "category": "visual",
+        "fields": [
+            {"name": "color", "control": "color", "channels": ["color_red", "color_green", "color_blue"]},
+            {"name": "number_points", "control": "slider", "label": "Points", "rebuild": True},
+            {"name": "color_red", "control": "port", "hidden": True},
+            {"name": "color_green", "control": "port", "hidden": True},
+            {"name": "color_blue", "control": "port", "hidden": True},
+        ],
+        "views": [{"kind": "color", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(
         self,

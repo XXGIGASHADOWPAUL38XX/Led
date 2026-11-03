@@ -9,12 +9,15 @@ import { JevControls } from "../generation/jev-controls";
 import { WorkspaceCanvas, type CanvasHandle } from "./workspace-canvas";
 import { AddNodeDialog } from "../nodes/add-node-dialog";
 import { isTyping } from "./shortcuts";
+import { CatalogContext } from "../catalog/catalog-context";
+import { useCatalogQuery } from "../catalog/use-catalog-query";
 
 export function LiveWorkspace() {
   const backend = useBackend();
   const status = useBackendStatus();
   const snapshot = useGraph();
   const templateRevision = useTemplateRevision();
+  const catalog = useCatalogQuery();
   const canvas = useRef<CanvasHandle>(null);
   const [adding, setAdding] = useState<[number, number] | null>(null);
   const [source, setSource] = useState("");
@@ -65,99 +68,101 @@ export function LiveWorkspace() {
         })),
     );
   return (
-    <section aria-label="Live backend workspace" className="space-y-5 border-b border-white/10 p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-sm font-medium">Live workspace</h2>
-          <p role="status" className="mt-1 text-xs text-zinc-500">
-            {status.connection} · revision {status.revision} · 50 ms frames
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            disabled={status.connection !== "connected" || !status.canUndo}
-            onClick={() => {
-              void backend.command("graph.undo");
-            }}
-            className="rounded border border-white/10 px-3 py-2 text-xs text-zinc-300 disabled:opacity-40"
-          >
-            Undo ⌘Z
-          </button>
-          <button
-            type="button"
-            disabled={status.connection !== "connected"}
-            onClick={() => setAdding(canvas.current!.insertionPosition())}
-            className="rounded bg-violet-400/15 px-3 py-2 text-xs text-violet-200 disabled:opacity-40"
-          >
-            Add node ⌃A
-          </button>
-        </div>
-      </div>
-      <TemplateControls />
-      <JevControls />
-      {adding && <AddNodeDialog position={adding} onClose={() => setAdding(null)} />}
-      {status.connection !== "connected" && (
-        <p className="text-xs text-zinc-500">
-          Start Python with <code>.venv/bin/python -m backend.api.server</code>.
-        </p>
-      )}
-      {status.error && (
-        <p role="alert" className="rounded border border-rose-400/20 bg-rose-400/5 p-3 text-xs text-rose-300">
-          {status.error}
-        </p>
-      )}
-      {snapshot && (
-        <details className="rounded border border-white/10 p-3">
-          <summary className="cursor-pointer text-xs text-zinc-400">
-            Connections ({snapshot.graph.connections.length})
-          </summary>
-          <div className="mt-3 grid gap-2 sm:grid-cols-3">
-            <SelectElement
-              label="From"
-              value={source}
-              onValueChange={(value) => {
-                setSource(value);
-                setTarget("");
-              }}
-              options={outputs}
-            />
-            <SelectElement label="To" value={target} onValueChange={setTarget} options={inputs} />
+    <CatalogContext value={catalog ?? null}>
+      <section aria-label="Live backend workspace" className="space-y-5 border-b border-white/10 p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-medium">Live workspace</h2>
+            <p role="status" className="mt-1 text-xs text-zinc-500">
+              {status.connection} · revision {status.revision} · 50 ms frames
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              disabled={!source || !inputs.some((input) => input.value === target)}
+              disabled={status.connection !== "connected" || !status.canUndo}
               onClick={() => {
-                void backend.command("connection.add", { source: JSON.parse(source), target: JSON.parse(target) });
+                void backend.command("graph.undo");
               }}
-              className="rounded bg-violet-400/15 py-2 text-xs text-violet-200 disabled:opacity-30"
+              className="rounded border border-white/10 px-3 py-2 text-xs text-zinc-300 disabled:opacity-40"
             >
-              Connect
+              Undo ⌘Z
+            </button>
+            <button
+              type="button"
+              disabled={status.connection !== "connected"}
+              onClick={() => setAdding(canvas.current!.insertionPosition())}
+              className="rounded bg-violet-400/15 px-3 py-2 text-xs text-violet-200 disabled:opacity-40"
+            >
+              Add node ⌃A
             </button>
           </div>
-          {snapshot.graph.connections.map((edge) => (
-            <div key={edge.id} className="mt-2 flex justify-between gap-2 text-xs text-zinc-400">
-              <span>
-                {edge.source.nodeId}.{edge.source.element} → {edge.target.nodeId}.{edge.target.element}
-              </span>
+        </div>
+        <TemplateControls />
+        <JevControls />
+        {adding && catalog && <AddNodeDialog position={adding} onClose={() => setAdding(null)} />}
+        {status.connection !== "connected" && (
+          <p className="text-xs text-zinc-500">
+            Start Python with <code>.venv/bin/python -m backend.api.server</code>.
+          </p>
+        )}
+        {status.error && (
+          <p role="alert" className="rounded border border-rose-400/20 bg-rose-400/5 p-3 text-xs text-rose-300">
+            {status.error}
+          </p>
+        )}
+        {snapshot && (
+          <details className="rounded border border-white/10 p-3">
+            <summary className="cursor-pointer text-xs text-zinc-400">
+              Connections ({snapshot.graph.connections.length})
+            </summary>
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              <SelectElement
+                label="From"
+                value={source}
+                onValueChange={(value) => {
+                  setSource(value);
+                  setTarget("");
+                }}
+                options={outputs}
+              />
+              <SelectElement label="To" value={target} onValueChange={setTarget} options={inputs} />
               <button
                 type="button"
+                disabled={!source || !inputs.some((input) => input.value === target)}
                 onClick={() => {
-                  void backend.command("connection.remove", { connectionId: edge.id });
+                  void backend.command("connection.add", { source: JSON.parse(source), target: JSON.parse(target) });
                 }}
-                className="text-rose-300"
+                className="rounded bg-violet-400/15 py-2 text-xs text-violet-200 disabled:opacity-30"
               >
-                Disconnect
+                Connect
               </button>
             </div>
-          ))}
-        </details>
-      )}
-      {snapshot && (
-        // A loaded template starts from a fresh canvas: node state, selection and viewport.
-        <ReactFlowProvider key={templateRevision}>
-          <WorkspaceCanvas ref={canvas} graph={snapshot.graph} />
-        </ReactFlowProvider>
-      )}
-    </section>
+            {snapshot.graph.connections.map((edge) => (
+              <div key={edge.id} className="mt-2 flex justify-between gap-2 text-xs text-zinc-400">
+                <span>
+                  {edge.source.nodeId}.{edge.source.element} → {edge.target.nodeId}.{edge.target.element}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void backend.command("connection.remove", { connectionId: edge.id });
+                  }}
+                  className="text-rose-300"
+                >
+                  Disconnect
+                </button>
+              </div>
+            ))}
+          </details>
+        )}
+        {snapshot && catalog && (
+          // A loaded template starts from a fresh canvas: node state, selection and viewport.
+          <ReactFlowProvider key={templateRevision}>
+            <WorkspaceCanvas ref={canvas} graph={snapshot.graph} />
+          </ReactFlowProvider>
+        )}
+      </section>
+    </CatalogContext>
   );
 }

@@ -16,6 +16,24 @@ class BroadcastFractionNode(CNode, AudioUpdatable):
     the normalized position to [0, 1]; interval endpoints must differ."""
 
     nodeName = "BroadcastFractionNode"
+    ui = {
+        "title": "Broadcast Fraction",
+        "description": "Select a movable contiguous slice along the first array axis.",
+        "category": "broadcast",
+        "fields": [
+            {"name": "input_data", "control": "port"},
+            {"name": "fraction", "control": "slider"},
+            {
+                "name": "interval_input",
+                "control": "interval",
+                "label": "Input range",
+                "min": -10000,
+                "max": 10000,
+            },
+            {"name": "input", "control": "slider"},
+        ],
+        "views": [{"kind": "bars", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(
         self,

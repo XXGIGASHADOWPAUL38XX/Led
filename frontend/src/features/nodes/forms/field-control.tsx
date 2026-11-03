@@ -211,6 +211,15 @@ export function FieldControl({
         unit={field.unit}
       />
     );
+  const text = (
+    <TextElement
+      {...common}
+      value={String(value ?? "")}
+      onValueChange={onChange}
+      onValueCommit={onCommit}
+      kind={field.name.includes("url") ? "url" : field.name.includes("path") ? "path" : "name"}
+    />
+  );
   switch (field.control) {
     case "slider": {
       const props = {
@@ -373,15 +382,11 @@ export function FieldControl({
       );
     case "managed":
       return <p className="px-1 text-[10px] text-zinc-500">{label} · managed by Python</p>;
+    case "text":
+      return text;
     default:
-      return (
-        <TextElement
-          {...common}
-          value={String(value ?? "")}
-          onValueChange={onChange}
-          onValueCommit={onCommit}
-          kind={field.name.includes("url") ? "url" : field.name.includes("path") ? "path" : "name"}
-        />
-      );
+      // A control kind the backend gained and this switch lacks fails to compile; at runtime it falls back to text.
+      field.control satisfies never;
+      return text;
   }
 }

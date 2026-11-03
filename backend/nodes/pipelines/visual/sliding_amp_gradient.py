@@ -19,6 +19,19 @@ class SlidingAmpGradientNode(VisualPipeline, CNode):
     Construction expects input_amplitudes to expose its array through `.value`."""
 
     nodeName = "SlidingAmpGradientNode"
+    ui = {
+        "title": "Sliding Amp Gradient",
+        "description": "Move an RGB gradient window according to spectral center frequency.",
+        "category": "visual",
+        "fields": [
+            {"name": "input_frequencies", "control": "port"},
+            {"name": "input_amplitudes", "control": "port"},
+            {"name": "slide_window_fraction", "control": "slider", "rebuild": True},
+            {"name": "slide_min_avg_amp", "control": "slider"},
+            {"name": "slide_max_avg_amp", "control": "slider"},
+        ],
+        "views": [{"kind": "color", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(
         self,

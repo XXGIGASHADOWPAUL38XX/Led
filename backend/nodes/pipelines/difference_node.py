@@ -13,6 +13,13 @@ class DifferenceNode(CNode, AudioUpdatable):
     original clipped subtraction on every audio update.
     """
     nodeName = 'Difference'
+    ui = {
+        "title": "Difference",
+        "description": "Subtract matching vectors and clip their difference to [0, 1].",
+        "category": "transforms",
+        "fields": [{"name": "a", "control": "port"}, {"name": "b", "control": "port"}],
+        "views": [{"kind": "bars", "data": "diff", "label": "Diff", "open": True}],
+    }
 
     def __init__(self, a=np.zeros(FREQ_BINS), b=np.zeros(FREQ_BINS), alias=None):
         CNode.__init__(self, self.nodeName, {'a': {'io': 'in'}, 'b': {'io': 'in'}, 'diff': {'io': 'out'}}, alias=alias)

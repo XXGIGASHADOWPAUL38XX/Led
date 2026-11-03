@@ -17,6 +17,17 @@ class EdgeToCenterTriggerNode(GroupNode):
     shape (length,). Child nodes retain a weighted-max `decay_length` history,
     vary the center level against fixed edges, and multiply by decay strength."""
     nodeName = 'EdgeToCenterTrigger'
+    ui = {
+        "title": "Edge To Center Trigger",
+        "description": "Turn a trigger pulse into a fading edge-to-center intensity profile.",
+        "category": "groups",
+        "fields": [
+            {"name": "input_trigger", "control": "port"},
+            {"name": "length", "control": "slider", "rebuild": True},
+            {"name": "decay_length", "control": "slider", "scale": "logarithmic", "rebuild": True},
+        ],
+        "views": [{"kind": "bars", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(self, input_trigger=np.zeros(1), length=FREQ_BINS, decay_length=5, alias=None):
         super().__init__(nodes=[], terminals={'input_trigger': {'io': 'in'}, 'data': {'io': 'out'}}, alias=alias)

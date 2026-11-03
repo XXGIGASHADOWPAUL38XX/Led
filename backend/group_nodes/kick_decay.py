@@ -19,6 +19,18 @@ class KickDecayNode(GroupNode):
     and weighted-max history. Configure `lowpass_freq` in Hz, `threshold`
     in RMS units, and `decay_length` in audio updates."""
     nodeName = 'KickDecay'
+    ui = {
+        "title": "Kick Decay",
+        "description": "Detect low-frequency attacks and produce a decaying intensity signal.",
+        "category": "groups",
+        "fields": [
+            {"name": "buffer_data", "control": "port"},
+            {"name": "lowpass_freq", "control": "slider", "unit": "Hz"},
+            {"name": "threshold", "control": "slider"},
+            {"name": "decay_length", "control": "slider", "scale": "logarithmic", "rebuild": True},
+        ],
+        "views": [{"kind": "meter", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(self, buffer_data: np.ndarray=np.zeros((2, FFT_SIZE)), lowpass_freq: float=300, threshold: float=0.35, decay_length: int=5, alias: str | None=None) -> None:
         super().__init__(nodes=[], terminals={'buffer_data': {'io': 'in'}, 'data': {'io': 'out'}}, alias=alias)

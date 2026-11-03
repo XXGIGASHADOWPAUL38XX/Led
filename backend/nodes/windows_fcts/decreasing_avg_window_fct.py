@@ -13,6 +13,16 @@ class DecreasingAvgWindowFct(WindowFct, CNode):
     connect Window.data to input `window`, or use the NodeSelector."""
 
     nodeName = "DecreasingAvgWindowFct"
+    ui = {
+        "title": "Decreasing Avg Window Fct",
+        "description": "Produce a decaying peak envelope from a WindowNode history.",
+        "category": "windows",
+        "fields": [
+            {"name": "window", "control": "reference", "nodeTypes": ["Window"]},
+            {"name": "avg_axis", "control": "axis", "label": "Reduction axes"},
+        ],
+        "views": [{"kind": "meter", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(
         self,

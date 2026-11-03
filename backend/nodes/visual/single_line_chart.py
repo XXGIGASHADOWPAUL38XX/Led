@@ -12,6 +12,16 @@ class SingleLineChartNode(LineChartNode):
     `number_points` sets history length. Output `data` contains the
     numerical history for subscribers."""
     nodeName = 'SingleLineChart'
+    ui = {
+        "title": "Single Line Chart",
+        "description": "Plot a selected Element's latest scalar value over time.",
+        "category": "visual",
+        "fields": [
+            {"name": "input_data", "control": "reference"},
+            {"name": "number_points", "control": "slider", "label": "Points", "rebuild": True},
+        ],
+        "views": [{"kind": "history", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(self, node_selector=None, input_data=None, number_points=100, alias=None):
         super().__init__(self.nodeName, terminals={'data': {'io': 'out'}}, alias=alias)

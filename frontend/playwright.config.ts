@@ -32,7 +32,7 @@ export default defineConfig({
       // The production bundle is what ships, and it renders several times faster than the dev server.
       command: `npx vite build --outDir ${DIST} && npx vite preview --outDir ${DIST} --port ${FRONTEND_PORT} --strictPort`,
       port: FRONTEND_PORT,
-      env: { VITE_BACKEND_URL: `ws://127.0.0.1:${BACKEND_PORT}/ws` },
+      env: { VITE_BACKEND_URL: `http://127.0.0.1:${BACKEND_PORT}` },
       reuseExistingServer: false,
     },
   ],

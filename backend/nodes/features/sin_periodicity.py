@@ -12,6 +12,13 @@ class SinPeriodicityNode(CNode, AudioPipeline):
     """
 
     nodeName = "SinPeriodicity"
+    ui = {
+        "title": "Sin Periodicity",
+        "description": "Analyze sinusoidal periodicity from an audio buffer.",
+        "category": "features",
+        "fields": [{"name": "buffer_data", "control": "port"}],
+        "views": [{"kind": "meter", "data": "data", "label": "Periodicity", "open": True}],
+    }
 
     def __init__(self, buffer_data=np.zeros((2, 0)), alias: str | None = None) -> None:
         terminals = {

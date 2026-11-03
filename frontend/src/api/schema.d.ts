@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/api/v1/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Catalog */
+        get: operations["catalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health": {
         parameters: {
             query?: never;
@@ -32,12 +49,34 @@ export interface components {
             /** Result */
             result: unknown;
         };
-        /** CatalogEntry */
-        CatalogEntry: {
+        /**
+         * Bounds
+         * @description Limits of a field that follow another field's value (e.g. a frequency range bounded by the sample rate).
+         */
+        Bounds: {
+            /** From */
+            from: string;
+            /** Max */
+            max: number;
+            /** Min */
+            min: number;
+        };
+        /** CatalogNode */
+        CatalogNode: {
+            /** Actions */
+            actions?: ("start" | "stop")[];
+            /** Category */
+            category: string;
             /** Description */
             description: string;
+            /** Fields */
+            fields: components["schemas"]["FieldUi"][];
+            /** Title */
+            title: string;
             /** Type */
             type: string;
+            /** Views */
+            views: components["schemas"]["ViewUi"][];
         };
         /** Connection */
         Connection: {
@@ -197,6 +236,51 @@ export interface components {
              * @default null
              */
             processing?: boolean;
+        };
+        /** FieldUi */
+        FieldUi: {
+            /** Addport */
+            addPort?: string;
+            bounds?: components["schemas"]["Bounds"];
+            /** Channels */
+            channels?: string[];
+            /**
+             * Control
+             * @enum {string}
+             */
+            control: "port" | "slider" | "switch" | "select" | "axis" | "text" | "color" | "interval" | "array" | "shape" | "curve" | "reference" | "node-reference" | "sequence" | "expression" | "managed";
+            /** Hidden */
+            hidden?: boolean;
+            /**
+             * Item
+             * @enum {string}
+             */
+            item?: "reference" | "node" | "token";
+            /** Label */
+            label?: string;
+            /** Matchinput */
+            matchInput?: string;
+            /** Max */
+            max?: number;
+            /** Min */
+            min?: number;
+            /** Name */
+            name: string;
+            /** Nodetypes */
+            nodeTypes?: string[];
+            /** Ordered */
+            ordered?: boolean;
+            /** Portsprefix */
+            portsPrefix?: string;
+            /** Rebuild */
+            rebuild?: boolean;
+            /**
+             * Scale
+             * @enum {string}
+             */
+            scale?: "linear" | "logarithmic";
+            /** Unit */
+            unit?: string;
         };
         /** Frame */
         Frame: {
@@ -721,8 +805,6 @@ export interface components {
         };
         /** Snapshot */
         Snapshot: {
-            /** Catalog */
-            catalog: components["schemas"]["CatalogEntry"][];
             graph: components["schemas"]["Graph-Output"];
             /** Nodes */
             nodes: components["schemas"]["NodeDescriptor"][];
@@ -802,6 +884,35 @@ export interface components {
             /** Title */
             title: string;
         };
+        /** ViewUi */
+        ViewUi: {
+            /** Colors */
+            colors?: string;
+            /** Data */
+            data?: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "bars" | "history" | "color" | "lights" | "trigger" | "meter" | "playlist";
+            /** Label */
+            label?: string;
+            /** Open */
+            open?: boolean;
+            /** Series */
+            series?: string[];
+            /** Unit */
+            unit?: string;
+            /** Xmaxfield */
+            xMaxField?: string;
+            /** Xminfield */
+            xMinField?: string;
+            /**
+             * Xscale
+             * @enum {string}
+             */
+            xScale?: "linear" | "logarithmic";
+        };
     };
     responses: never;
     parameters: never;
@@ -811,6 +922,26 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    catalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogNode"][];
+                };
+            };
+        };
+    };
     health: {
         parameters: {
             query?: never;

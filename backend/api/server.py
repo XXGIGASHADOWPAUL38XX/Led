@@ -6,15 +6,16 @@ import logging
 import re
 import time
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
+from .catalog import Catalog
 from .handlers import Handlers
 from .openapi import document
 from .protocol import MAX_BYTES, decode, encode, event
 from .router import Router
-from .schemas import Model
+from .schemas import CatalogNode, Model
 
 logger = logging.getLogger(__name__)
 # Only the local frontend (any port) or non-browser clients may drive the lights.
@@ -49,6 +50,7 @@ class Server:
     def __init__(self, runtime):
         self.runtime = runtime
         self.sessions = set()
+        self.catalog = Catalog(runtime.catalog.classes)
         self.handlers = Handlers(runtime, self.broadcast)
         self.router = Router(self.handlers)
 
@@ -154,6 +156,14 @@ def create_app(server):
     @app.get("/api/v1/health")
     async def health() -> Health:
         return Health(status="ok", revision=server.runtime.revision)
+
+    @app.get("/api/v1/catalog", response_model=list[CatalogNode], response_model_exclude_none=True)
+    async def catalog(request: Request):
+        # The catalog only changes with the backend code: clients revalidate and usually get a bodiless 304.
+        headers = {"ETag": server.catalog.etag, "Cache-Control": "no-cache"}
+        if request.headers.get("if-none-match") == server.catalog.etag:
+            return Response(status_code=304, headers=headers)
+        return Response(server.catalog.body, media_type="application/json", headers=headers)
 
     @app.websocket("/ws")
     async def stream(socket: WebSocket):

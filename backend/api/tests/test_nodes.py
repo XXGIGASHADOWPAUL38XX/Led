@@ -1,16 +1,15 @@
-import json
-from pathlib import Path
 import unittest
 
 import numpy as np
 
 from backend.api.protocol import encode
 from backend.api.runtime import Runtime
+from backend.api.schemas import NodeUi
 from backend.components.elements.element import Element
 from backend.updatable.updatable import Updatable
 
 
-class FrontendNodeTests(unittest.TestCase):
+class NodeTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.runtime = Runtime()
@@ -18,25 +17,16 @@ class FrontendNodeTests(unittest.TestCase):
     def tearDown(self):
         self.runtime.close()
 
-    def test_every_registered_node_and_parameter_has_an_explicit_ui(self):
-        directory = Path(__file__).resolve().parents[3] / 'frontend/src/features/nodes/definitions'
-        definitions = {}
-        for path in directory.rglob('*-node.ts'):
-            source = path.read_text()
-            if 'satisfies NodeDefinition' in source:
-                definition = json.loads(source.split('export default ', 1)[1].rsplit(' satisfies NodeDefinition;', 1)[0])
-                self.assertNotIn(definition['type'], definitions)
-                definitions[definition['type']] = definition
-        self.assertEqual(set(definitions), set(self.runtime.catalog.classes))
+    def test_every_node_class_presents_each_parameter_and_output(self):
         for node in self.runtime.catalog.prototypes[1:]:
             with self.subTest(node=node.nodeName):
-                definition = definitions[node.nodeName]
+                ui = NodeUi.model_validate(type(node).ui)
                 parameters = {name for name, _ in self.runtime._parameters(node)}
-                self.assertEqual(parameters, {field['name'] for field in definition['fields']})
+                self.assertEqual(parameters, {field.name for field in ui.fields})
                 self.assertEqual(parameters, {field['name'] for field in self.runtime.describe(node)['elements']})
                 outputs = {name for name, options in node.pending_terminals.items()
                            if options['io'] == 'out' and isinstance(vars(node).get(node.terminal_element_name(name)), Element)}
-                self.assertTrue(outputs.issubset({view.get('data') for view in definition['views']}))
+                self.assertTrue(outputs.issubset({view.data for view in ui.views}))
                 encode(self.runtime.describe(node))
 
     def test_nonzero_values_propagate_through_processing_nodes(self):

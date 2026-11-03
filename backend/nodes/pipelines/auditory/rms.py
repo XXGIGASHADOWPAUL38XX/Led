@@ -12,6 +12,13 @@ class RMSPipelineNode(CNode, AudioPipeline):
     one-element level array; an empty input produces zero.
     """
     nodeName = 'RMS'
+    ui = {
+        "title": "RMS",
+        "description": "Measure overall audio level with root mean square amplitude.",
+        "category": "auditory",
+        "fields": [{"name": "buffer_data", "control": "port"}],
+        "views": [{"kind": "meter", "data": "data", "label": "RMS", "open": True}],
+    }
 
     def __init__(self, buffer_data=np.zeros((2, 0)), alias=None):
         super().__init__(self.nodeName, {'buffer_data': {'io': 'in'}, 'data': {'io': 'out'}}, alias=alias)

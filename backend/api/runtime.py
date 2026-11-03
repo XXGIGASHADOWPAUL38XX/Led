@@ -408,8 +408,7 @@ class Runtime:
         return self.load(graph)
 
     def snapshot(self):
-        return {"graph": self.graph, "nodes": [self.describe(node) for node in self.nodes.values()],
-                "catalog": [{"type": key, "description": value} for key, value in self.catalog.descriptions.items()]}
+        return {"graph": self.graph, "nodes": [self.describe(node) for node in self.nodes.values()]}
 
     def frame(self, subscriptions):
         return [{"nodeId": node_id, "element": name, "value": self.element(node_id, name).value}

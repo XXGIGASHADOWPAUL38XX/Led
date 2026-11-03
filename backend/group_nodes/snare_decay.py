@@ -23,6 +23,30 @@ class SnareDecayNode(GroupNode):
     energy with delayed history and require weighted frequency above 500 Hz.
     The final trigger currently uses EQUAL against 0.5 on a boolean condition."""
     nodeName = 'SnareDecay'
+    ui = {
+        "title": "Snare Decay",
+        "description": "Combine band energy and spectral change into a trigger pipeline.",
+        "category": "groups",
+        "fields": [
+            {"name": "buffer_data", "control": "port"},
+            {
+                "name": "min_frequency",
+                "control": "slider",
+                "label": "Min frequency",
+                "unit": "Hz",
+                "scale": "logarithmic",
+            },
+            {
+                "name": "max_frequency",
+                "control": "slider",
+                "label": "Max frequency",
+                "unit": "Hz",
+                "scale": "logarithmic",
+            },
+            {"name": "threshold", "control": "slider"},
+        ],
+        "views": [{"kind": "meter", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(self, buffer_data: np.ndarray=np.zeros((2, FFT_SIZE)), min_frequency: float=300, max_frequency: float=1000, threshold: float=0.35, alias: str | None=None) -> None:
         super().__init__(nodes=[], terminals={'buffer_data': {'io': 'in'}, 'data': {'io': 'out'}}, alias=alias)

@@ -15,6 +15,13 @@ class EntropyNode(CNode, AudioPipeline):
     update. Negative amplitudes are ignored; silence gives zero."""
 
     nodeName = "Entropy"
+    ui = {
+        "title": "Entropy",
+        "description": "Measure how evenly spectral amplitude is distributed.",
+        "category": "features",
+        "fields": [{"name": "amplitudes", "control": "port"}],
+        "views": [{"kind": "meter", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(self, amplitudes=np.zeros(FREQ_BINS), alias: str | None = None) -> None:
         terminals = {

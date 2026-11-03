@@ -14,6 +14,13 @@ class CrestFactorNode(CNode, AudioPipeline):
     channels and samples each audio update; empty or silent input gives zero."""
 
     nodeName = "CrestFactor"
+    ui = {
+        "title": "Crest Factor",
+        "description": "Measure waveform peak relative to RMS for transient detection.",
+        "category": "features",
+        "fields": [{"name": "buffer_data", "control": "port"}],
+        "views": [{"kind": "meter", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(self, buffer_data=np.zeros((2, 0)), alias: str | None = None) -> None:
         terminals = {

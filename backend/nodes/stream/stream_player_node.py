@@ -19,6 +19,21 @@ class StreamPlayerNode(CNode, AudioUpdatable):
     `chunk_size`; direct `enqueue()` appends tracks with matching sample rates."""
 
     nodeName = "StreamPlayer"
+    ui = {
+        "title": "Stream Player",
+        "description": "Play stereo audio and expose channels-first blocks for analysis.",
+        "category": "stream",
+        "fields": [
+            {"name": "audio_in", "control": "port"},
+            {"name": "sample_rate_in", "control": "port", "unit": "Hz"},
+            {"name": "enqueue_token", "control": "port"},
+            {"name": "sample_rate", "control": "slider", "unit": "Hz", "rebuild": True},
+            {"name": "chunk_size", "control": "slider", "rebuild": True},
+            {"name": "user_callback", "control": "managed"},
+        ],
+        "views": [{"kind": "history", "data": "chunk", "label": "Chunk", "open": False}],
+        "actions": ["start", "stop"],
+    }
 
     def __init__(
         self,

@@ -15,6 +15,13 @@ class AvgFrequenciesNode(CNode, AudioUpdatable):
     small denominator epsilon so silent spectra produce zero."""
 
     nodeName = "AvgFrequencies"
+    ui = {
+        "title": "Avg Frequencies",
+        "description": "Compute the amplitude-weighted average frequency.",
+        "category": "amplitudes",
+        "fields": [{"name": "input_frequencies", "control": "port"}, {"name": "input_amplitudes", "control": "port"}],
+        "views": [{"kind": "meter", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(
         self,

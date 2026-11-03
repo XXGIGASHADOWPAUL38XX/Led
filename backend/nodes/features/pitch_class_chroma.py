@@ -16,6 +16,17 @@ class PitchClassChromaNode(CNode, AudioPipeline):
     by semitones. Nonpositive frequencies are ignored; silence gives zeros."""
 
     nodeName = "PitchClassChroma"
+    ui = {
+        "title": "Pitch Class Chroma",
+        "description": "Fold spectral amplitudes into twelve pitch classes across octaves.",
+        "category": "features",
+        "fields": [
+            {"name": "amplitudes", "control": "port"},
+            {"name": "frequencies", "control": "port"},
+            {"name": "reference_frequency", "control": "slider", "unit": "Hz"},
+        ],
+        "views": [{"kind": "bars", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(
         self,

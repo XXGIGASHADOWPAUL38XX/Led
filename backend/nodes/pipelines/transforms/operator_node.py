@@ -24,6 +24,18 @@ class OperatorPipelineNode(CNode, AudioPipeline):
     """
 
     nodeName = 'OperatorPipeline'
+    ui = {
+        "title": "Operator Pipeline",
+        "description": "Evaluate an expression assembled from Elements and literal tokens.",
+        "category": "transforms",
+        "fields": [
+            {"name": "operations", "control": "managed", "hidden": True},
+            {"name": "input_names", "control": "managed", "hidden": True},
+            {"name": "arguments", "control": "expression", "addPort": "add_element", "item": "token"},
+            {"name": "length", "hidden": True, "control": "slider", "rebuild": True},
+        ],
+        "views": [{"kind": "bars", "data": "data", "label": "Data", "open": False}],
+    }
     operations_string = ['(', '+', '-', '*', '**', '/', ')', '<', '<=', '==', '>=', '>', '&', '|']
 
     def __init__(self, arguments=None, length=0, parent=None, alias=None, input_names=None, operations=None):

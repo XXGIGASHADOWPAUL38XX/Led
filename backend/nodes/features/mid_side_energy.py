@@ -15,6 +15,24 @@ class MidSideEnergyNode(CNode, AudioPipeline):
     (L + R) / 2 and (L - R) / 2 across the full incoming buffer."""
 
     nodeName = "MidSideEnergy"
+    ui = {
+        "title": "Mid Side Energy",
+        "description": "Measure stereo center energy and stereo width.",
+        "category": "features",
+        "fields": [{"name": "buffer_data", "control": "port"}],
+        "views": [
+            {"kind": "meter", "data": "mid_energy", "label": "Mid energy", "open": False},
+            {"kind": "meter", "data": "side_energy", "label": "Side energy", "open": False},
+            {"kind": "meter", "data": "mid_ratio", "label": "Mid ratio", "open": False},
+            {
+                "kind": "meter",
+                "data": "data",
+                "label": "Mid / Side energy",
+                "open": True,
+                "series": ["Mid", "Side"],
+            },
+        ],
+    }
     input_shapes = {"buffer_data": (2, 0)}
 
     def __init__(self, buffer_data=np.zeros((2, 0)), alias: str | None = None) -> None:

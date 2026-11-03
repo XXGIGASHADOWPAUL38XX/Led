@@ -19,6 +19,17 @@ class SinglePeakTriggerNode(GroupNode):
     FFT amplitudes, subtract a `window_length` frame mean, keep one local peak,
     and zero it unless it reaches `threshold`."""
     nodeName = 'SinglePeakTrigger'
+    ui = {
+        "title": "Single Peak Trigger",
+        "description": "Isolate the strongest spectral peak above its recent average.",
+        "category": "groups",
+        "fields": [
+            {"name": "buffer_data", "control": "port"},
+            {"name": "window_length", "control": "slider", "scale": "logarithmic", "rebuild": True},
+            {"name": "threshold", "control": "slider"},
+        ],
+        "views": [{"kind": "bars", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(self, buffer_data: np.ndarray=np.zeros((2, FFT_SIZE)), window_length: int=50, threshold: float=7.0, alias: str | None=None) -> None:
         super().__init__(nodes=[], terminals={'buffer_data': {'io': 'in'}, 'data': {'io': 'out'}}, alias=alias)

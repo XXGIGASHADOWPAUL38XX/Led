@@ -14,7 +14,7 @@ function setup() {
   store.receive({
     type: "graph.snapshot",
     revision: 1,
-    payload: { graph: { nodes: [], connections: [] }, nodes: [descriptor(0.5)], catalog: [] },
+    payload: { graph: { nodes: [], connections: [] }, nodes: [descriptor(0.5)] },
   });
   return store;
 }
@@ -169,7 +169,7 @@ test("streams subscribe once connected with a snapshot, and only to ports that e
   store.receive({
     type: "graph.snapshot",
     revision: 1,
-    payload: { graph: { nodes: [], connections: [] }, nodes: [descriptor(0.5)], catalog: [] },
+    payload: { graph: { nodes: [], connections: [] }, nodes: [descriptor(0.5)] },
   });
   store.watchArray("amp", "missing", () => {});
   assert.deepEqual(requests, [
@@ -196,7 +196,7 @@ test("a snapshot during an edit wins over the optimistic value", async () => {
   store.receive({
     type: "graph.snapshot",
     revision: 2,
-    payload: { graph: { nodes: [], connections: [] }, nodes: [descriptor(0.3)], catalog: [] },
+    payload: { graph: { nodes: [], connections: [] }, nodes: [descriptor(0.3)] },
   });
   resolve({ value: 0.75 });
   await edit;

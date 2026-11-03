@@ -55,6 +55,20 @@ class ServerTests(unittest.IsolatedAsyncioTestCase):
             schemas = (await client.get('/openapi.json')).json()['components']['schemas']
             self.assertIn('Snapshot', schemas)
 
+    async def test_catalog_is_served_once_per_version_and_left_out_of_snapshots(self):
+        async with httpx.AsyncClient(base_url=self.http) as client:
+            response = await client.get('/api/v1/catalog')
+            nodes = response.json()
+            self.assertEqual({node['type'] for node in nodes}, set(self.runtime.catalog.classes))
+            buffer = next(node for node in nodes if node['type'] == 'Buffer')
+            self.assertEqual(buffer['title'], 'Buffer')
+            self.assertNotIn('actions', buffer)
+            cached = await client.get('/api/v1/catalog', headers={'If-None-Match': response.headers['etag']})
+            self.assertEqual(cached.status_code, 304)
+            self.assertEqual(cached.content, b'')
+        async with connect(self.url) as socket:
+            self.assertNotIn('catalog', (await receive_kind(socket, 'graph.snapshot'))['payload'])
+
     async def test_websocket_refuses_foreign_origins_and_other_paths(self):
         with self.assertRaises(InvalidStatus):
             async with connect(self.url, origin='https://example.com'):
