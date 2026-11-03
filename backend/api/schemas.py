@@ -318,11 +318,6 @@ class NodeRef(Command):
     nodeId: str
 
 
-class NodeMove(Command):
-    nodeId: str
-    position: Position
-
-
 class NodeConfigure(Command):
     nodeId: str
     parameters: dict[str, Any]
@@ -380,9 +375,9 @@ class JevGenerate(Command):
 
 
 COMMANDS = {
-    "graph.get": Empty, "graph.copy": NodeIds, "graph.paste": GraphPaste, "graph.load": GraphLoad,
+    "graph.copy": NodeIds, "graph.paste": GraphPaste, "graph.load": GraphLoad,
     "graph.move": GraphMove, "graph.restore": GraphRestore, "graph.undo": Empty,
-    "node.describe": NodeType, "node.add": NodeAdd, "node.remove": NodeRef, "node.move": NodeMove,
+    "node.describe": NodeType, "node.add": NodeAdd, "node.remove": NodeRef,
     "node.configure": NodeConfigure, "node.start": NodeRef, "node.stop": NodeRef,
     "connection.add": ConnectionAdd, "connection.remove": ConnectionRemove, "element.set": ElementSet,
     "streams.update": StreamsUpdate, "frame.ack": FrameAck,

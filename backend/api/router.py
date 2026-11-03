@@ -21,9 +21,9 @@ class Router:
         self.routes = {
             "graph.copy": handlers.graph_copy, "graph.paste": handlers.graph_paste,
             "jev.generate": self.generation.start, "jev.cancel": self.generation.cancel,
-            "graph.get": handlers.graph_get, "graph.load": handlers.graph_load, "graph.move": handlers.graph_move,
+            "graph.load": handlers.graph_load, "graph.move": handlers.graph_move,
             "graph.restore": handlers.graph_restore, "node.describe": handlers.node_describe,
-            "node.add": handlers.node_add, "node.remove": handlers.node_remove, "node.move": handlers.node_move,
+            "node.add": handlers.node_add, "node.remove": handlers.node_remove,
             "node.configure": handlers.node_configure, "node.start": handlers.node_start, "node.stop": handlers.node_stop,
             "connection.add": handlers.connection_add, "connection.remove": handlers.connection_remove,
             "element.set": handlers.element_set, "streams.update": handlers.streams_update, "frame.ack": handlers.frame_ack,

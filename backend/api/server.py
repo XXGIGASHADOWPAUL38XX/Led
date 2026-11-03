@@ -22,6 +22,8 @@ logger = logging.getLogger(__name__)
 # Only the local frontend (any port) or non-browser clients may drive the lights.
 LOCAL_ORIGIN = r"http://(localhost|127\.0\.0\.1)(:\d+)?"
 # Compression trades CPU for bandwidth; packed numeric frames stay raw.
+# The WebSocket carries what must stay live; everything else is an HTTP resource (backend/api/rest.py).
+WEBSOCKET_COMMANDS = {"element.set", "streams.update", "frame.ack"}
 uvicorn_options = {"ws_max_size": MAX_BYTES, "ws_max_queue": 16, "ws_per_message_deflate": False}
 
 
@@ -32,7 +34,6 @@ class Session:
         self.subscriptions = set()
         self.in_flight = None
         self.sequence = 0
-        self.jobs = set()
 
     async def send(self, message):
         # Never grow an unbounded reliable queue for an unresponsive client.
@@ -75,10 +76,6 @@ class Server:
             pass
         finally:
             self.sessions.discard(session)
-            for job in session.jobs:
-                job.cancel()
-            if session.jobs:
-                await asyncio.gather(*session.jobs, return_exceptions=True)
             writer.cancel()
             with suppress(asyncio.CancelledError, WebSocketDisconnect, RuntimeError):
                 await writer
@@ -92,17 +89,15 @@ class Server:
             await session.send(event("jev.preview", self.router.generation.preview, self.runtime.revision))
 
     async def receive(self, session, packet):
+        request_id = None
         try:
             message = decode(packet.get("bytes"))
-            if message["type"] == "player.search":
-                # Network searches must not block control messages or frame ACKs.
-                job = asyncio.create_task(self.router.dispatch(session, message))
-                session.jobs.add(job)
-                job.add_done_callback(session.jobs.discard)
-            else:
-                await self.router.dispatch(session, message)
+            request_id = message.get("requestId")
+            if message["type"] not in WEBSOCKET_COMMANDS:
+                raise ValueError(f"{message['type']} is served by the HTTP API")
+            await self.router.dispatch(session, message)
         except (ValueError, TypeError, KeyError) as error:
-            await session.send(event("error", {"message": str(error)}, self.runtime.revision))
+            await session.send(event("error", {"message": str(error)}, self.runtime.revision, request_id))
 
     async def processing(self):
         next_frame = time.monotonic()

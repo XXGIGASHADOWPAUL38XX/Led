@@ -25,10 +25,6 @@ class Handlers:
     async def _load(self, graph, replace=False):
         return await self._apply(lambda: self.runtime.load(graph, replace=replace), replace)
 
-    async def graph_get(self, session, payload):
-        await session.send(event("graph.snapshot", self.runtime.snapshot(), self.runtime.revision))
-        return {"graph": self.runtime.graph}
-
     async def graph_copy(self, session, payload):
         return {"graph": copy_nodes(self.runtime, payload['nodeIds'])}
 
@@ -94,10 +90,6 @@ class Handlers:
         if node.nodeName not in {"StreamMic", "StreamPlayer"}:
             raise ValueError("This node has no manual stream lifecycle")
         node.stop()
-
-    async def node_move(self, session, payload):
-        await self.graph_move(session, {"positions": {payload["nodeId"]: payload["position"]}})
-        return payload
 
     async def graph_move(self, session, payload):
         positions = payload["positions"]

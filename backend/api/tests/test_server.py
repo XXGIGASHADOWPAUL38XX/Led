@@ -103,9 +103,9 @@ class ServerTests(LiveServer):
     async def test_text_frames_are_rejected_without_closing_the_session(self):
         async with connect(self.url) as socket:
             await receive_kind(socket, 'graph.snapshot')
-            await socket.send('{"type": "graph.get"}')
+            await socket.send('{"type": "streams.update"}')
             self.assertIn('binary', (await receive_kind(socket, 'error'))['payload']['message'])
-            await socket.send(encode({'type': 'graph.get', 'requestId': 1, 'payload': {}}))
+            await socket.send(encode({'type': 'streams.update', 'requestId': 1, 'payload': {}}))
             self.assertEqual((await receive_kind(socket, 'ack'))['requestId'], 1)
 
     async def test_binary_frames_backpressure_and_reliable_controls(self):
@@ -129,27 +129,24 @@ class ServerTests(LiveServer):
             self.assertGreater(second['payload']['sequence'], first['payload']['sequence'])
             self.assertEqual(second['revision'], update['revision'])
 
-    async def test_graph_commands_and_correlated_errors(self):
+    async def test_graph_edits_keep_unchanged_nodes_and_live_errors_name_their_request(self):
+        original = self.runtime.nodes['amp']
+        async with httpx.AsyncClient(base_url=f'{self.http}/api/v1') as client:
+            for method, path, body in [
+                ('POST', '/nodes', {'nodeId': 'constant', 'nodeType': 'ConstantArray'}),
+                ('PATCH', '/graph/positions', {'positions': {'constant': [10, 20], 'buffer': [24, 24], 'amp': [424, 24]}}),
+                ('DELETE', '/nodes/constant', None),
+                ('DELETE', '/connections/wire', None),
+                ('POST', '/connections', {'connectionId': 'wire', 'source': {'nodeId': 'buffer', 'element': 'data'},
+                                          'target': {'nodeId': 'amp', 'element': 'buffer'}}),
+            ]:
+                response = await client.request(method, path, json=body)
+                self.assertEqual(response.status_code, 200, (path, response.text))
+                if path in ('/nodes', '/graph/positions'):
+                    self.assertIs(self.runtime.nodes['amp'], original)
+        self.assertEqual(next(node['position'] for node in self.runtime.graph['nodes'] if node['id'] == 'amp'), [424, 24])
         async with connect(self.url) as socket:
             await receive_kind(socket, 'graph.snapshot')
-            original = self.runtime.nodes['amp']
-            commands = [
-                ('node.add', {'nodeId': 'constant', 'nodeType': 'ConstantArray'}),
-                ('node.move', {'nodeId': 'constant', 'position': [10, 20]}),
-                ('graph.move', {'positions': {'buffer': [24, 24], 'amp': [424, 24]}}),
-                ('node.remove', {'nodeId': 'constant'}),
-                ('connection.remove', {'connectionId': 'wire'}),
-                ('connection.add', {'connectionId': 'wire', 'source': {'nodeId': 'buffer', 'element': 'data'}, 'target': {'nodeId': 'amp', 'element': 'buffer'}}),
-            ]
-            for request_id, (kind, payload) in enumerate(commands, 1):
-                await socket.send(encode({'type': kind, 'requestId': request_id, 'payload': payload}))
-                ack = await receive_kind(socket, 'ack')
-                self.assertEqual(ack['requestId'], request_id)
-                if kind == 'node.add':
-                    self.assertIs(self.runtime.nodes['amp'], original)
-                if kind == 'graph.move':
-                    self.assertIs(self.runtime.nodes['amp'], original)
-                    self.assertEqual(next(node['position'] for node in self.runtime.graph['nodes'] if node['id'] == 'amp'), [424, 24])
             await socket.send(encode({'type': 'element.set', 'requestId': 99, 'payload': {'nodeId': 'amp', 'element': 'powering', 'value': 100}}))
             error = await receive_kind(socket, 'error')
             self.assertEqual(error['requestId'], 99)
@@ -183,6 +180,14 @@ class ServerTests(LiveServer):
             self.assertEqual((await receive_kind(socket, 'ack'))['requestId'], 2)
             release.set()
             self.assertEqual((await search).json()['tracks'], [])
+
+    async def test_the_websocket_only_carries_live_controls_and_streams(self):
+        async with connect(self.url) as socket:
+            await receive_kind(socket, 'graph.snapshot')
+            await socket.send(encode({'type': 'node.remove', 'requestId': 1, 'payload': {'nodeId': 'amp'}}))
+            error = await receive_kind(socket, 'error')
+            self.assertEqual((error['requestId'], error['payload']['message']), (1, 'node.remove is served by the HTTP API'))
+            self.assertIn('amp', self.runtime.nodes)
 
     async def test_python_side_settings_reach_connected_clients(self):
         async with connect(self.url) as socket:

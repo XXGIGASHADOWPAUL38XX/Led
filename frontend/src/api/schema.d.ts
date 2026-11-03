@@ -992,26 +992,6 @@ export interface components {
              */
             recordHistory?: boolean;
         };
-        /** NodeMove */
-        NodeMove: {
-            /**
-             * Historygroup
-             * @default null
-             */
-            historyGroup?: number | null;
-            /** Nodeid */
-            nodeId: string;
-            /** Position */
-            position: [
-                number,
-                number
-            ];
-            /**
-             * Recordhistory
-             * @default true
-             */
-            recordHistory?: boolean;
-        };
         /** NodeParameters */
         NodeParameters: {
             /** Historygroup */
