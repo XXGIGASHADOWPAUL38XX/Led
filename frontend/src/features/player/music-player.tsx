@@ -1,5 +1,5 @@
 import { Pause, Play } from "lucide-react";
-import * as Slider from "@radix-ui/react-slider";
+import { Slider } from "@/components/ui/slider";
 import { useState } from "react";
 import { formatTime } from "@/features/player/format-time";
 
@@ -66,7 +66,7 @@ export function MusicPlayer({ track, playing, position, duration, onPlay, onPaus
           {playing ? <Pause className="size-4 fill-current" /> : <Play className="size-4 fill-current" />}
         </button>
       </div>
-      <Slider.Root
+      <Slider
         min={0}
         max={Math.max(1, duration)}
         step={0.1}
@@ -77,17 +77,14 @@ export function MusicPlayer({ track, playing, position, duration, onPlay, onPaus
         }}
         onPointerCancel={() => setSeeking(null)}
         disabled={committing || !track || track.loaded === false || duration <= 0}
-        className="group/seek relative flex h-6 w-full touch-none items-center select-none"
-      >
-        <Slider.Track className="relative h-1 w-full overflow-hidden rounded-full bg-white/10">
-          <Slider.Range className="absolute h-full rounded-full bg-violet-400" />
-        </Slider.Track>
-        <Slider.Thumb
-          aria-label="Playback position"
-          aria-valuetext={`${formatTime(elapsed)} of ${formatTime(duration)}`}
-          className="block h-3 w-3 rounded-full bg-violet-200 shadow focus:outline-2 focus:outline-offset-2 focus:outline-violet-400"
-        />
-      </Slider.Root>
+        className="h-6"
+        thumbs={[
+          {
+            "aria-label": "Playback position",
+            "aria-valuetext": `${formatTime(elapsed)} of ${formatTime(duration)}`,
+          },
+        ]}
+      />
       <div className="flex justify-between gap-2 font-mono text-2xs text-zinc-400 tabular-nums">
         <span>{formatTime(elapsed)}</span>
         <span>{duration > 0 ? formatTime(duration) : "—:—"}</span>

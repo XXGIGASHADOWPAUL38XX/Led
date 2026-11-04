@@ -1,4 +1,4 @@
-import * as Slider from "@radix-ui/react-slider";
+import { Slider } from "@/components/ui/slider";
 import { useId } from "react";
 import { CoreElement } from "./core-element";
 
@@ -60,7 +60,7 @@ export function IntervalElement({
           ))}
         </div>
       </CoreElement>
-      <Slider.Root
+      <Slider
         value={reversed ? [value[1], value[0]] : [...value]}
         min={min}
         max={max}
@@ -68,19 +68,11 @@ export function IntervalElement({
         disabled={disabled}
         onValueChange={([low, high]) => onValueChange(reversed ? [high, low] : [low, high])}
         onValueCommit={onValueCommit}
-        className="relative mx-2 flex h-4 touch-none items-center select-none data-[disabled]:opacity-40"
-      >
-        <Slider.Track className="relative h-1 w-full rounded-full bg-white/10">
-          <Slider.Range className="absolute h-full rounded-full bg-violet-400/70" />
-        </Slider.Track>
-        {(reversed ? ["maximum", "minimum"] : ["minimum", "maximum"]).map((end) => (
-          <Slider.Thumb
-            key={end}
-            aria-label={`${label} ${end} handle`}
-            className="block h-2.5 w-2.5 rounded-full bg-violet-200 outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-card"
-          />
-        ))}
-      </Slider.Root>
+        className="mx-2 w-auto"
+        thumbs={(reversed ? ["maximum", "minimum"] : ["minimum", "maximum"]).map((end) => ({
+          "aria-label": `${label} ${end} handle`,
+        }))}
+      />
     </fieldset>
   );
 }

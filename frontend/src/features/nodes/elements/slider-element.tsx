@@ -1,4 +1,4 @@
-import * as Slider from "@radix-ui/react-slider";
+import { Slider } from "@/components/ui/slider";
 import { useId, useState } from "react";
 import { CoreElement } from "./core-element";
 
@@ -64,7 +64,8 @@ export function SliderElement({
 
   return (
     <CoreElement id={id} label={label} disabled={disabled} error={error}>
-      <Slider.Root
+      <Slider
+        look="fill"
         min={logarithmic ? 0 : min}
         max={logarithmic ? 1000 : max}
         step={logarithmic ? 1 : step}
@@ -72,20 +73,16 @@ export function SliderElement({
         disabled={disabled || editing}
         onValueChange={([next]) => changePosition(next)}
         onValueCommit={onValueCommit}
-        className="absolute inset-0 flex cursor-ew-resize touch-none items-center rounded-[inherit] select-none"
-      >
-        <Slider.Track className="relative h-full w-full overflow-hidden rounded-[inherit]">
-          <Slider.Range className="absolute inset-y-0 bg-gradient-to-r from-violet-500/25 to-violet-400/45 group-hover:from-violet-500/35 group-hover:to-violet-400/55" />
-        </Slider.Track>
-        <Slider.Thumb
-          aria-labelledby={`${id}-label`}
-          aria-valuemin={min}
-          aria-valuemax={max}
-          aria-valuenow={value}
-          aria-valuetext={`${formatted} ${unit}`.trim()}
-          className="block h-7 w-0.5 rounded-full bg-violet-200/70 opacity-0 transition-opacity outline-none group-hover:opacity-100 focus:opacity-100"
-        />
-      </Slider.Root>
+        thumbs={[
+          {
+            "aria-labelledby": `${id}-label`,
+            "aria-valuemin": min,
+            "aria-valuemax": max,
+            "aria-valuenow": value,
+            "aria-valuetext": `${formatted} ${unit}`.trim(),
+          },
+        ]}
+      />
       {editing ? (
         <input
           id={id}
