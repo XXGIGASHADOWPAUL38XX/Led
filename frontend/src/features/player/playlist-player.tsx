@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { formatTime } from "@/features/player/format-time";
 import { MusicPlayer, type MusicPlayerProps, type Track } from "./music-player";
 
@@ -59,13 +60,15 @@ export function PlaylistPlayer({
           onChange={(event) => onQueryChange(event.target.value)}
           className="h-8 min-w-32 flex-1 rounded-md border border-border bg-black/20 px-2.5 text-xs text-zinc-200 outline-none placeholder:text-zinc-600 focus:border-violet-400/70 focus:ring-2 focus:ring-violet-400/10"
         />
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           type="submit"
           disabled={searching || !query.trim()}
-          className="rounded-md border border-border bg-white/5 px-2.5 text-2xs text-zinc-300 transition-colors hover:bg-violet-400/15 focus-visible:outline-2 focus-visible:outline-violet-400 disabled:opacity-35"
+          className="px-2.5 text-2xs"
         >
           {searching ? "Searching…" : "Search"}
-        </button>
+        </Button>
       </form>
       {error && (
         <p role="alert" className="text-xs text-rose-300">
@@ -97,15 +100,16 @@ export function PlaylistPlayer({
                     <p className="truncate text-xs text-zinc-200">{track.title}</p>
                     <p className="mt-0.5 truncate text-2xs text-muted-foreground">{track.artist}</p>
                   </div>
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     disabled={added}
                     onClick={() => onAdd(track)}
                     aria-label={`Add ${track.title}`}
-                    className="rounded px-1.5 py-1 text-violet-300 hover:bg-violet-400/15 focus-visible:outline-2 focus-visible:outline-violet-400 disabled:text-zinc-600"
+                    className="text-violet-300"
                   >
                     <span aria-hidden="true">{added ? "✓" : "+"}</span>
-                  </button>
+                  </Button>
                 </li>
               );
             })}
@@ -177,14 +181,15 @@ export function PlaylistPlayer({
                   {track.duration > 0 ? formatTime(track.duration) : "—:—"}
                 </span>
               </button>
-              <button
-                type="button"
+              <Button
+                variant="destructive"
+                size="icon"
                 onClick={() => onRemove(track.id)}
                 aria-label={`Remove ${track.title}`}
-                className="mr-1 rounded p-1.5 text-xs text-zinc-600 transition-colors hover:bg-rose-400/10 hover:text-rose-300 focus-visible:outline-2 focus-visible:outline-violet-400"
+                className="mr-1"
               >
                 ×
-              </button>
+              </Button>
             </li>
           );
         })}

@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { useRef, useState } from "react";
 import { useBackend } from "@/api/backend-context";
 import { useBackendStatus } from "@/api/hooks";
@@ -56,44 +57,35 @@ export function TemplateControls() {
   return (
     <div className="space-y-1 text-xs">
       <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
+        <Button
+          variant="outline"
           disabled={disabled}
           onClick={() => {
             void load();
           }}
-          className="rounded border border-border px-3 py-2 text-zinc-300 hover:bg-white/5 disabled:opacity-40"
         >
           {busy === "init" ? "Loading…" : "init_template"}
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
           disabled={disabled}
           onClick={() => {
             void save();
           }}
-          className="rounded border border-violet-400/25 bg-violet-400/10 px-3 py-2 text-violet-200 hover:bg-violet-400/20 disabled:opacity-40"
         >
           {busy === "save" ? "Saving…" : "Save template"}
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="outline"
           disabled={disabled}
           onClick={() => {
             void save(true);
           }}
-          className="rounded border border-border px-3 py-2 text-zinc-300 hover:bg-white/5 disabled:opacity-40"
         >
           Replace existing .led…
-        </button>
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => input.current?.click()}
-          className="rounded border border-border px-3 py-2 text-zinc-300 hover:bg-white/5 disabled:opacity-40"
-        >
+        </Button>
+        <Button variant="outline" disabled={disabled} onClick={() => input.current?.click()}>
           {busy === "load" ? "Loading…" : "Load template"}
-        </button>
+        </Button>
         <input
           ref={input}
           type="file"

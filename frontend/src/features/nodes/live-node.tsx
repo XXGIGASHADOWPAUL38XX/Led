@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { useBackend } from "@/api/backend-context";
 import { useBackendNode } from "@/api/hooks";
 import { Node } from "./node";
@@ -71,31 +72,30 @@ export function LiveNode({ id, selected }: { id: string; selected: boolean }) {
         <span>
           {definition.category} · {id}
         </span>
-        <button
-          type="button"
+        <Button
+          variant="destructive"
+          size="sm"
           onClick={() => {
             void backend.graph.removeNode(id);
           }}
           aria-label={`Remove ${id}`}
-          className="rounded px-2 py-1 text-rose-300 hover:bg-rose-400/10"
         >
           Remove
-        </button>
+        </Button>
       </div>
       <NodeFields key={node.id} node={node} definition={definition} />
       {definition.actions && (
         <div className="flex gap-2">
           {definition.actions.map((action) => (
-            <button
+            <Button
               key={action}
-              type="button"
               onClick={() => {
                 void backend.graph.runNode(id, action);
               }}
-              className="flex-1 rounded bg-violet-400/15 py-2 text-xs text-violet-200 capitalize"
+              className="flex-1 capitalize"
             >
               {action}
-            </button>
+            </Button>
           ))}
         </div>
       )}

@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import type { ReactNode } from "react";
 import type { Endpoint } from "@/api/protocol";
 import { Terminal } from "../../graph/terminal";
@@ -40,35 +41,35 @@ export function SequenceElement<T>({
         <div key={index} className="space-y-1 rounded border border-white/5 p-1.5">
           {renderItem(item, index, (next) => onValueChange(value.map((entry, at) => (at === index ? next : entry))))}
           <div className="flex justify-end gap-1 text-2xs text-muted-foreground">
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
               aria-label={`Move ${label} item ${index + 1} up`}
               disabled={disabled || index === 0}
               onClick={() => move(index, -1)}
-              className="rounded px-2 py-1 hover:bg-white/5 disabled:opacity-25"
             >
               ↑
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               aria-label={`Move ${label} item ${index + 1} down`}
               disabled={disabled || index === value.length - 1}
               onClick={() => move(index, 1)}
-              className="rounded px-2 py-1 hover:bg-white/5 disabled:opacity-25"
             >
               ↓
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
               aria-label={`Remove ${label} item ${index + 1}`}
               onClick={() => {
                 onValueChange(value.filter((_, at) => at !== index));
                 onValueCommit?.();
               }}
-              className="rounded px-2 py-1 hover:bg-rose-400/10 hover:text-rose-300"
             >
               Remove
-            </button>
+            </Button>
           </div>
         </div>
       ))}
@@ -77,16 +78,16 @@ export function SequenceElement<T>({
         {addEndpoint && !disabled && (
           <Terminal endpoint={addEndpoint} direction="input" className="absolute top-2 -left-4" />
         )}
-        <button
-          type="button"
+        <Button
+          variant="dashed"
           onClick={() => {
             onValueChange([...value, createItem()]);
             onValueCommit?.();
           }}
-          className="w-full rounded border border-dashed border-border py-1.5 text-2xs text-violet-300 hover:bg-violet-400/10"
+          className="w-full py-1.5 text-2xs"
         >
           + Add item
-        </button>
+        </Button>
       </div>
     </fieldset>
   );

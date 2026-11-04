@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useBackend } from "@/api/backend-context";
 import { useQuery } from "@tanstack/react-query";
@@ -103,9 +104,9 @@ function StreamView({ node, view }: { node: NodeDescriptor; view: ViewDefinition
                   if (low < high) setSettings({ range: [low, high] });
                 }}
               />
-              <button type="button" className="px-1 text-violet-300" onClick={() => setSettings({ range: null })}>
+              <Button variant="link" size="inline" onClick={() => setSettings({ range: null })}>
                 Auto range
-              </button>
+              </Button>
             </>
           )}
         </div>
@@ -128,16 +129,14 @@ function LivePlaylist({ nodeId }: { nodeId: string }) {
   });
   return (
     <div className="space-y-2">
-      <button
-        type="button"
+      <Button
         disabled={player?.loading && !player.tracks.some((track) => track.loaded)}
         onClick={() => {
           void backend.playback.play(nodeId);
         }}
-        className="rounded bg-violet-400/15 px-3 py-1.5 text-xs text-violet-200 disabled:opacity-40"
       >
         {player?.loading && !player.tracks.length ? "Loading playlist…" : "Load playlist / play"}
-      </button>
+      </Button>
       <PlaylistPlayer
         loading={player?.loading ?? false}
         tracks={player?.tracks ?? []}
@@ -194,14 +193,15 @@ export function NodeView({
           unit={view.unit}
         />
       )}
-      <button
-        type="button"
+      <Button
+        variant="link"
+        size="inline"
         aria-expanded={open}
         onClick={() => backend.setViewSettings(node.id, viewKey(view.kind, view.data), { open: !open })}
-        className="px-1 text-2xs text-violet-300"
+        className="text-2xs"
       >
         {open ? "Hide view" : "Show view"}
-      </button>
+      </Button>
       {open && <StreamView node={node} view={view} />}
     </div>
   );

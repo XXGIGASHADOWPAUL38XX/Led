@@ -7,9 +7,11 @@
   --foreground: #e5e7eb;
   --card: #1c1d26;
   --popover: #23232e;
+  --primary: var(--color-violet-400);
   --primary-foreground: #181322;
   --muted-foreground: var(--color-zinc-500);
   --border: color-mix(in oklab, var(--color-white) 10%, transparent);
+  --ring: var(--color-violet-400);
   --grid-dot: #34353f;
 }
 @theme inline {
@@ -17,9 +19,11 @@
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-popover: var(--popover);
+  --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
+  --color-ring: var(--ring);
   --text-2xs: 10px;
 }
 

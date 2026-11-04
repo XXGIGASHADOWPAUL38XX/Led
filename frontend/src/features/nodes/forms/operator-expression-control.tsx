@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { useRef, useState } from "react";
 import { useGraph } from "@/api/hooks";
 import { isArrayValue, type ElementDescriptor, type NodeDescriptor } from "@/api/protocol";
@@ -124,20 +125,20 @@ export function OperatorExpressionControl({
               />
             )}
           </div>
-          <button
-            type="button"
+          <Button
+            variant="link"
+            size="inline"
             aria-label={`Insert ${input.name}`}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => insert(input.name)}
-            className="px-1 text-xs text-violet-300"
           >
             ↳
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="destructive"
+            size="icon"
             aria-label={`Remove input ${input.name}`}
             onMouseDown={(event) => event.preventDefault()}
-            className="px-1 text-muted-foreground hover:text-rose-300"
             onClick={() => {
               const next = {
                 inputs: draft.inputs.filter((_, i) => i !== index),
@@ -151,7 +152,7 @@ export function OperatorExpressionControl({
             }}
           >
             ×
-          </button>
+          </Button>
           {input.port && (
             <Terminal
               endpoint={{ nodeId: node.id, element: `${input.port}_out` }}
@@ -189,11 +190,11 @@ export function OperatorExpressionControl({
               onBlur={() => commit()}
             />
             {index > 0 && (
-              <button
-                type="button"
+              <Button
+                variant="destructive"
+                size="icon"
                 aria-label={`Remove output ${output.name}`}
                 onMouseDown={(event) => event.preventDefault()}
-                className="text-muted-foreground hover:text-rose-300"
                 onClick={() => {
                   const next = { ...draft, outputs: draft.outputs.filter((_, i) => i !== index) };
                   setDraft(next);
@@ -202,7 +203,7 @@ export function OperatorExpressionControl({
                 }}
               >
                 ×
-              </button>
+              </Button>
             )}
           </div>
           {node.ports.some((port) => port.name === output.name && port.direction === "out") && (
@@ -270,10 +271,10 @@ export function OperatorExpressionControl({
           )}
         </div>
       ))}
-      <button
-        type="button"
+      <Button
+        variant="dashed"
         onMouseDown={(event) => event.preventDefault()}
-        className="w-full rounded border border-dashed border-violet-400/25 px-3 py-2 text-xs text-violet-300 hover:bg-violet-400/10"
+        className="w-full"
         onClick={() => {
           let index = draft.outputs.length + 1;
           while (draft.outputs.some((output) => output.name === `result_${index}`)) index++;
@@ -287,7 +288,7 @@ export function OperatorExpressionControl({
         }}
       >
         + Add operation / output
-      </button>
+      </Button>
       <p className="text-2xs text-muted-foreground">NumPy broadcasting · Tab to complete · ⌘/Ctrl Enter to apply</p>
       {error && (
         <p role="alert" className="text-2xs text-rose-300">

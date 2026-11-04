@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useBackend } from "@/api/backend-context";
 import { useBackendStatus, useGeneration, useGraph } from "@/api/hooks";
@@ -49,34 +50,28 @@ export function JevControls() {
           />
         </label>
         <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="submit"
-            disabled={disabled}
-            className="rounded-lg bg-violet-400/20 px-3 py-2 text-xs text-violet-200 disabled:opacity-40"
-          >
+          <Button type="submit" disabled={disabled}>
             Generate graph
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="outline"
             disabled={disabled || !snapshot?.graph.nodes.length}
             onClick={() => {
               void generate("edit");
             }}
-            className="rounded-lg border border-violet-400/30 px-3 py-2 text-xs text-violet-200 disabled:opacity-40"
           >
             Edit current graph
-          </button>
+          </Button>
           {running && (
-            <button
-              type="button"
+            <Button
+              variant="outline"
               disabled={!connected || pending}
               onClick={() => {
                 void command(() => backend.jev.cancel());
               }}
-              className="rounded-lg border border-border px-3 py-2 text-xs text-zinc-300 disabled:opacity-40"
             >
               Cancel
-            </button>
+            </Button>
           )}
           <p role="status" className={`text-xs ${generation.status === "error" ? "text-rose-300" : "text-zinc-400"}`}>
             {generation.message || "Loads the completed graph. Undo restores your previous graph."}

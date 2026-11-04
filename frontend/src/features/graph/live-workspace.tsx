@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { useEffect, useRef, useState } from "react";
 import { useBackend } from "@/api/backend-context";
 import { useBackendStatus, useGraph, useGraphEpoch } from "@/api/hooks";
@@ -78,24 +79,21 @@ export function LiveWorkspace() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
+            <Button
+              variant="outline"
               disabled={status.connection !== "connected" || !status.canUndo}
               onClick={() => {
                 void backend.graph.undo();
               }}
-              className="rounded border border-border px-3 py-2 text-xs text-zinc-300 disabled:opacity-40"
             >
               Undo ⌘Z
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
               disabled={status.connection !== "connected"}
               onClick={() => setAdding(canvas.current!.insertionPosition())}
-              className="rounded bg-violet-400/15 px-3 py-2 text-xs text-violet-200 disabled:opacity-40"
             >
               Add node ⌃A
-            </button>
+            </Button>
           </div>
         </div>
         <TemplateControls />
@@ -127,31 +125,29 @@ export function LiveWorkspace() {
                 options={outputs}
               />
               <SelectElement label="To" value={target} onValueChange={setTarget} options={inputs} />
-              <button
-                type="button"
+              <Button
                 disabled={!source || !inputs.some((input) => input.value === target)}
                 onClick={() => {
                   void backend.graph.connect(JSON.parse(source), JSON.parse(target));
                 }}
-                className="rounded bg-violet-400/15 py-2 text-xs text-violet-200 disabled:opacity-30"
               >
                 Connect
-              </button>
+              </Button>
             </div>
             {snapshot.graph.connections.map((edge) => (
               <div key={edge.id} className="mt-2 flex justify-between gap-2 text-xs text-zinc-400">
                 <span>
                   {edge.source.nodeId}.{edge.source.element} → {edge.target.nodeId}.{edge.target.element}
                 </span>
-                <button
-                  type="button"
+                <Button
+                  variant="destructive"
+                  size="inline"
                   onClick={() => {
                     void backend.graph.disconnect(edge.id);
                   }}
-                  className="text-rose-300"
                 >
                   Disconnect
-                </button>
+                </Button>
               </div>
             ))}
           </details>

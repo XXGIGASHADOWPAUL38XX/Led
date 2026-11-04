@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { SelectElement } from "./select-element";
 
 export type ElementReference = { nodeId: string; elementId: string | null };
@@ -38,15 +39,16 @@ export function ReferenceElement({ label, nodes, value, onValueChange, disabled 
         }}
       />
       {value && (
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="sm"
           disabled={disabled}
           onClick={() => onValueChange(null)}
           aria-label={`Clear ${label}`}
-          className="ml-auto block rounded px-1.5 py-1 text-2xs text-muted-foreground hover:bg-white/5 hover:text-zinc-200 focus-visible:outline-2 focus-visible:outline-violet-400 disabled:opacity-40"
+          className="ml-auto flex text-2xs text-muted-foreground hover:text-zinc-200"
         >
           Clear
-        </button>
+        </Button>
       )}
     </fieldset>
   );
