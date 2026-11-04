@@ -8,7 +8,7 @@ import { TemplateControls } from "../templates/template-controls";
 import { JevControls } from "../generation/jev-controls";
 import { WorkspaceCanvas, type CanvasHandle } from "./workspace-canvas";
 import { AddNodeDialog } from "../nodes/add-node-dialog";
-import { isTyping } from "./shortcuts";
+import { isDialogOpen, isTyping } from "./shortcuts";
 import { CatalogContext } from "../catalog/catalog-context";
 import { useCatalogQuery } from "../catalog/use-catalog-query";
 
@@ -26,7 +26,7 @@ export function LiveWorkspace() {
     const begin = () => backend.beginAction();
     const key = (event: KeyboardEvent) => {
       begin();
-      if (document.querySelector("dialog[open]")) return;
+      if (isDialogOpen()) return;
       if (event.ctrlKey && !event.metaKey && event.key.toLowerCase() === "a") {
         event.preventDefault();
         if (backend.status.connection === "connected") setAdding(canvas.current!.insertionPosition());

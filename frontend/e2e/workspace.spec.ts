@@ -157,3 +157,14 @@ test("select menus open, pick an option and show it on the trigger", async ({ wo
   await expect(page.getByRole("listbox")).toHaveScreenshot("select-menu.png");
   await page.keyboard.press("Escape");
 });
+
+test("Delete inside the add-node dialog leaves the selected wire alone", async ({ workspace, page }) => {
+  await workspace.handle("amplitudes-1", "buffer", "input").click();
+  await expect(workspace.selectedEdges()).toHaveCount(1);
+  await page.getByRole("button", { name: "Add node ⌃A" }).click();
+  await page.getByRole("button", { name: "Close add node" }).focus();
+  await page.keyboard.press("Delete");
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(workspace.edges()).toHaveCount(1);
+});

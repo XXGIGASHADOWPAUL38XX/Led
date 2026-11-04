@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useBackend } from "@/api/backend-context";
 import type { Graph } from "@/api/protocol";
-import { isTyping } from "./shortcuts";
+import { isDialogOpen, isTyping } from "./shortcuts";
 
 export function useNodeClipboard(
   insertionPosition: () => [number, number],
@@ -16,7 +16,8 @@ export function useNodeClipboard(
       if (
         !(event.metaKey || event.ctrlKey) ||
         isTyping() ||
-        document.querySelector('dialog[open], [role="listbox"]') ||
+        isDialogOpen() ||
+        document.querySelector('[role="listbox"]') ||
         backend.status.connection !== "connected"
       )
         return;

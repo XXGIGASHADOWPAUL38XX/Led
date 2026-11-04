@@ -34,7 +34,7 @@ import { useBackendStatus } from "@/api/hooks";
 import { compatiblePorts } from "@/features/nodes/configuration";
 import { LiveNode } from "../nodes/live-node";
 import { layoutGraph } from "./graph-layout";
-import { isTyping } from "./shortcuts";
+import { isDialogOpen, isTyping } from "./shortcuts";
 import { compatibleTerminals, terminalKey } from "./terminal-compatibility";
 import { useNodeClipboard } from "./use-node-clipboard";
 import { WorkspaceContext } from "./workspace-context";
@@ -239,7 +239,7 @@ export function WorkspaceCanvas({ graph, ref }: { graph: Graph; ref?: Ref<Canvas
   const onBeforeDelete: NonNullable<ReactFlowProps["onBeforeDelete"]> = useCallback(
     // Delete only acts on a wire selection; nodes have an explicit Remove button, and a node selection
     // (which also selects the wires between its nodes) is left untouched.
-    async ({ nodes, edges }) => !nodes.length && !document.querySelector("dialog[open]") && { nodes: [], edges },
+    async ({ nodes, edges }) => !nodes.length && !isDialogOpen() && { nodes: [], edges },
     [],
   );
   const onEdgesDelete = useCallback(
@@ -251,7 +251,7 @@ export function WorkspaceCanvas({ graph, ref }: { graph: Graph; ref?: Ref<Canvas
 
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
-      if (isTyping() || document.querySelector("dialog[open]")) return;
+      if (isTyping() || isDialogOpen()) return;
       if (event.key === "Escape") {
         setNodes((items) => items.map((node) => (node.selected ? { ...node, selected: false } : node)));
         setEdges((items) => items.map((edge) => (edge.selected ? { ...edge, selected: false } : edge)));
