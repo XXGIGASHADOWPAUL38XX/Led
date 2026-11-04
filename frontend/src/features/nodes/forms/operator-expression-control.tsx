@@ -1,3 +1,5 @@
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { CornerDownRight, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRef, useState } from "react";
@@ -91,9 +93,9 @@ export function OperatorExpressionControl({
               className="absolute top-2.5 -left-5"
             />
           )}
-          <input
+          <Input
             aria-label={`Input ${index + 1} name`}
-            className="w-12 rounded border border-border bg-black/20 px-2 py-2 font-mono text-xs text-violet-200 outline-none focus:border-violet-400"
+            className="w-12 px-2 py-2 font-mono text-violet-200"
             value={input.name}
             onChange={(event) => {
               const name = event.target.value;
@@ -214,7 +216,7 @@ export function OperatorExpressionControl({
               className="absolute top-3 -right-5"
             />
           )}
-          <textarea
+          <Textarea
             ref={index === active ? text : undefined}
             onFocus={() => {
               setActive(index);
@@ -225,7 +227,7 @@ export function OperatorExpressionControl({
             rows={2}
             placeholder="clip(v0 + v1 * 0.2, 0, 1)"
             value={output.expression}
-            className="w-full resize-y rounded-lg border border-border bg-black/25 px-3 py-2 font-mono text-xs leading-6 text-violet-100 outline-none focus:border-violet-400/70"
+            className="font-mono leading-6 text-violet-100"
             onChange={(event) => {
               setDraft({
                 ...draft,

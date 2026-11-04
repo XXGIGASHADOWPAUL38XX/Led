@@ -1,3 +1,4 @@
+import { Input } from "@/components/ui/input";
 import { Check, Pause, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/features/player/format-time";
@@ -53,13 +54,13 @@ export function PlaylistPlayer({
         }}
         className="flex flex-wrap gap-1.5"
       >
-        <input
+        <Input
           type="search"
           aria-label="Search music"
           placeholder="Find a track or artist…"
           value={query}
           onChange={(event) => onQueryChange(event.target.value)}
-          className="h-8 min-w-32 flex-1 rounded-md border border-border bg-black/20 px-2.5 text-xs text-zinc-200 outline-none placeholder:text-zinc-600 focus:border-violet-400/70 focus:ring-2 focus:ring-violet-400/10"
+          className="h-8 min-w-32 flex-1"
         />
         <Button
           variant="outline"

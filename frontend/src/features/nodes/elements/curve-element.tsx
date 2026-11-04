@@ -1,3 +1,4 @@
+import { Input } from "@/components/ui/input";
 import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
 import { clamp, curvePath, type CurveAxis, type CurvePoint, type CurveValue } from "../../../lib/curves/curve";
 export type { CurvePoint } from "../../../lib/curves/curve";
@@ -33,7 +34,7 @@ function NumberInput({
   return (
     <label className="flex min-w-0 items-center gap-1 text-2xs text-zinc-400">
       {label}
-      <input
+      <Input
         aria-label={label}
         type="number"
         step="any"
@@ -57,7 +58,7 @@ function NumberInput({
             setDraft(null);
           }
         }}
-        className="w-full min-w-0 rounded border border-border bg-black/30 px-2 py-1 font-mono text-zinc-100 outline-none focus:border-violet-400 disabled:opacity-40"
+        className="min-w-0 px-2 py-1 font-mono text-2xs text-zinc-100"
       />
     </label>
   );

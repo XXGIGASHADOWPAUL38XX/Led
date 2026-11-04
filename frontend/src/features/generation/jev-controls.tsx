@@ -1,3 +1,4 @@
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useBackend } from "@/api/backend-context";
@@ -39,14 +40,14 @@ export function JevControls() {
       >
         <label className="block text-xs text-zinc-400">
           Describe your lighting
-          <textarea
+          <Textarea
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}
             disabled={running || pending}
             maxLength={16000}
             rows={2}
             placeholder="Deep violet techno lights with sharp bass pulses and gentle high-frequency flashes…"
-            className="mt-2 block w-full resize-y rounded-lg border border-border bg-zinc-950/70 p-3 text-sm text-zinc-200 outline-none focus:border-violet-400/60 disabled:opacity-50"
+            className="mt-2 block bg-zinc-950/70 p-3 text-sm"
           />
         </label>
         <div className="flex flex-wrap items-center gap-3">

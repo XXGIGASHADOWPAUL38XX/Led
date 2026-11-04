@@ -1,3 +1,4 @@
+import { Textarea } from "@/components/ui/textarea";
 import { useId, useState } from "react";
 import { CoreElement } from "./core-element";
 
@@ -58,7 +59,7 @@ export function ArrayElement({
       </CoreElement>
       {editing && (
         <fieldset disabled={disabled} id={`${id}-editor`} className="space-y-1.5">
-          <textarea
+          <Textarea
             aria-label={`Edit ${label}`}
             aria-invalid={Boolean(error)}
             aria-describedby={error ? `${id}-error` : undefined}
@@ -71,7 +72,7 @@ export function ArrayElement({
                 apply();
               }
             }}
-            className="h-24 w-full resize-y rounded border border-border bg-black/20 p-2 font-mono text-xs text-zinc-300 outline-violet-400"
+            className="h-24 p-2 font-mono text-zinc-300"
           />
           <p className="text-2xs text-muted-foreground">Commit on blur or ⌘Enter</p>
         </fieldset>

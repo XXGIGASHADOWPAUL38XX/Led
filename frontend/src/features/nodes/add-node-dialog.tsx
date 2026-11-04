@@ -1,3 +1,4 @@
+import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
@@ -98,7 +99,7 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
         </div>
         {!type ? (
           <>
-            <input
+            <Input
               ref={search}
               aria-label="Search nodes"
               placeholder="Search nodes…"
@@ -119,7 +120,7 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
                   choose(choices[selected].type);
                 }
               }}
-              className="mb-3 w-full rounded-lg border border-border bg-black/20 p-3 text-sm outline-none focus:border-violet-400"
+              className="mb-3 p-3 text-sm"
             />
             <div className="max-h-80 space-y-1 overflow-y-auto">
               {[...folders].map(([folder, items]) => (
