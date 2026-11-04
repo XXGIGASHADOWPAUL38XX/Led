@@ -1,3 +1,4 @@
+import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
 import { Check, Pause, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -66,7 +67,8 @@ export function PlaylistPlayer({
           variant="outline"
           size="sm"
           type="submit"
-          disabled={searching || !query.trim()}
+          loading={searching}
+          disabled={!query.trim()}
           className="px-2.5 text-2xs"
         >
           {searching ? "Searching…" : "Search"}
@@ -102,16 +104,16 @@ export function PlaylistPlayer({
                     <p className="truncate text-xs text-zinc-200">{track.title}</p>
                     <p className="mt-0.5 truncate text-2xs text-muted-foreground">{track.artist}</p>
                   </div>
-                  <Button
+                  <IconButton
                     variant="ghost"
-                    size="icon"
+
                     disabled={added}
                     onClick={() => onAdd(track)}
-                    aria-label={`Add ${track.title}`}
+                    label={`Add ${track.title}`}
                     className="text-violet-300"
                   >
                     {added ? <Check /> : <Plus />}
-                  </Button>
+                  </IconButton>
                 </li>
               );
             })}
@@ -183,15 +185,15 @@ export function PlaylistPlayer({
                   {track.duration > 0 ? formatTime(track.duration) : "—:—"}
                 </span>
               </button>
-              <Button
+              <IconButton
                 variant="destructive"
-                size="icon"
+
                 onClick={() => onRemove(track.id)}
-                aria-label={`Remove ${track.title}`}
+                label={`Remove ${track.title}`}
                 className="mr-1"
               >
                 <X />
-              </Button>
+              </IconButton>
             </li>
           );
         })}

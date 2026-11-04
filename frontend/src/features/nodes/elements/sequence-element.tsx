@@ -1,3 +1,4 @@
+import { IconButton } from "@/components/ui/icon-button";
 import { ArrowDown, ArrowUp, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ReactNode } from "react";
@@ -42,24 +43,24 @@ export function SequenceElement<T>({
         <div key={index} className="space-y-1 rounded border border-white/5 p-1.5">
           {renderItem(item, index, (next) => onValueChange(value.map((entry, at) => (at === index ? next : entry))))}
           <div className="flex justify-end gap-1 text-2xs text-muted-foreground">
-            <Button
+            <IconButton
               variant="ghost"
               size="sm"
-              aria-label={`Move ${label} item ${index + 1} up`}
+              label={`Move ${label} item ${index + 1} up`}
               disabled={disabled || index === 0}
               onClick={() => move(index, -1)}
             >
               <ArrowUp />
-            </Button>
-            <Button
+            </IconButton>
+            <IconButton
               variant="ghost"
               size="sm"
-              aria-label={`Move ${label} item ${index + 1} down`}
+              label={`Move ${label} item ${index + 1} down`}
               disabled={disabled || index === value.length - 1}
               onClick={() => move(index, 1)}
             >
               <ArrowDown />
-            </Button>
+            </IconButton>
             <Button
               variant="destructive"
               size="sm"

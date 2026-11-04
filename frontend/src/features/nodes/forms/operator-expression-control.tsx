@@ -1,3 +1,4 @@
+import { IconButton } from "@/components/ui/icon-button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { CornerDownRight, Plus, X } from "lucide-react";
@@ -128,19 +129,19 @@ export function OperatorExpressionControl({
               />
             )}
           </div>
-          <Button
+          <IconButton
             variant="link"
             size="inline"
-            aria-label={`Insert ${input.name}`}
+            label={`Insert ${input.name}`}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => insert(input.name)}
           >
             <CornerDownRight />
-          </Button>
-          <Button
+          </IconButton>
+          <IconButton
             variant="destructive"
-            size="icon"
-            aria-label={`Remove input ${input.name}`}
+
+            label={`Remove input ${input.name}`}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => {
               const next = {
@@ -155,7 +156,7 @@ export function OperatorExpressionControl({
             }}
           >
             <X />
-          </Button>
+          </IconButton>
           {input.port && (
             <Terminal
               endpoint={{ nodeId: node.id, element: `${input.port}_out` }}
@@ -193,10 +194,10 @@ export function OperatorExpressionControl({
               onBlur={() => commit()}
             />
             {index > 0 && (
-              <Button
+              <IconButton
                 variant="destructive"
-                size="icon"
-                aria-label={`Remove output ${output.name}`}
+
+                label={`Remove output ${output.name}`}
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => {
                   const next = { ...draft, outputs: draft.outputs.filter((_, i) => i !== index) };
@@ -206,7 +207,7 @@ export function OperatorExpressionControl({
                 }}
               >
                 <X />
-              </Button>
+              </IconButton>
             )}
           </div>
           {node.ports.some((port) => port.name === output.name && port.direction === "out") && (

@@ -164,7 +164,15 @@ test("Delete inside the add-node dialog leaves the selected wire alone", async (
   await page.getByRole("button", { name: "Add node ⌃A" }).click();
   await page.getByRole("button", { name: "Close add node" }).focus();
   await page.keyboard.press("Delete");
+  // The focused close button shows its tooltip: the first Escape dismisses it, the second the dialog.
+  await page.keyboard.press("Escape");
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toBeHidden();
   await expect(workspace.edges()).toHaveCount(1);
+});
+
+test("icon buttons show their name in a tooltip on hover", async ({ workspace, page }) => {
+  await expect(workspace.nodes()).toHaveCount(2);
+  await page.getByRole("button", { name: "Zoom in" }).hover();
+  await expect(page.getByRole("tooltip")).toHaveText("Zoom in");
 });

@@ -1,3 +1,4 @@
+import { IconButton } from "@/components/ui/icon-button";
 import { Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -306,7 +307,8 @@ export function WorkspaceCanvas({ graph, ref }: { graph: Graph; ref?: Ref<Canvas
       <div className="flex items-center gap-3">
         <Button
           variant="outline"
-          disabled={arranging || !graph.nodes.length || status.connection !== "connected"}
+          loading={arranging}
+          disabled={!graph.nodes.length || status.connection !== "connected"}
           onClick={() => {
             void arrange();
           }}
@@ -318,32 +320,35 @@ export function WorkspaceCanvas({ graph, ref }: { graph: Graph; ref?: Ref<Canvas
           aria-label="Workspace zoom"
           className="flex items-center rounded border border-border text-xs text-zinc-300"
         >
-          <Button
+          <IconButton
+            size="default"
             variant="ghost"
-            aria-label="Zoom out"
+            label="Zoom out"
             disabled={zoom <= MIN_ZOOM}
             onClick={() => void flow.zoomOut()}
             className="rounded-none"
           >
             <Minus />
-          </Button>
-          <Button
+          </IconButton>
+          <IconButton
+            size="default"
             variant="ghost"
-            aria-label="Reset zoom"
+            label="Reset zoom"
             onClick={() => void flow.zoomTo(1)}
             className="w-14 rounded-none font-mono text-2xs"
           >
             {Math.round(zoom * 100)}%
-          </Button>
-          <Button
+          </IconButton>
+          <IconButton
+            size="default"
             variant="ghost"
-            aria-label="Zoom in"
+            label="Zoom in"
             disabled={zoom >= MAX_ZOOM}
             onClick={() => void flow.zoomIn()}
             className="rounded-none"
           >
             <Plus />
-          </Button>
+          </IconButton>
         </div>
       </div>
       <p className="text-2xs text-muted-foreground">

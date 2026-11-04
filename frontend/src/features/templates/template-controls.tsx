@@ -58,6 +58,7 @@ export function TemplateControls() {
     <div className="space-y-1 text-xs">
       <div className="flex flex-wrap gap-2">
         <Button
+          loading={busy === "init"}
           variant="outline"
           disabled={disabled}
           onClick={() => {
@@ -67,6 +68,7 @@ export function TemplateControls() {
           {busy === "init" ? "Loading…" : "init_template"}
         </Button>
         <Button
+          loading={busy === "save"}
           disabled={disabled}
           onClick={() => {
             void save();
@@ -83,7 +85,7 @@ export function TemplateControls() {
         >
           Replace existing .led…
         </Button>
-        <Button variant="outline" disabled={disabled} onClick={() => input.current?.click()}>
+        <Button loading={busy === "load"} variant="outline" disabled={disabled} onClick={() => input.current?.click()}>
           {busy === "load" ? "Loading…" : "Load template"}
         </Button>
         <input

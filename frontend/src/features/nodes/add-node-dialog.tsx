@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -93,8 +95,10 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
       >
         <div className="mb-4 flex items-center justify-between">
           <DialogTitle className="text-sm font-semibold">{type ? definition.title : "Add node"}</DialogTitle>
-          <DialogClose type="button" aria-label="Close add node" className="text-muted-foreground">
-            <X className="size-4" />
+          <DialogClose asChild>
+            <IconButton variant="ghost" label="Close add node" className="-m-1.5 text-muted-foreground">
+              <X className="size-4" />
+            </IconButton>
           </DialogClose>
         </div>
         {!type ? (
@@ -229,24 +233,26 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
               </p>
             )}
             <div className="flex justify-between gap-2 pt-2">
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
                 disabled={busy}
                 onClick={() => {
                   setType("");
                   setName("");
                 }}
-                className="text-xs text-zinc-400"
+                className="text-zinc-400"
               >
                 Back
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
-                disabled={busy || !node || !completeConfiguration(definition.fields, parameters)}
-                className="rounded-lg bg-violet-400/20 px-4 py-2 text-xs text-violet-200 disabled:opacity-40"
+                loading={busy}
+                disabled={!node || !completeConfiguration(definition.fields, parameters)}
+                className="px-4"
               >
                 {busy ? "Creating…" : "Create node"}
-              </button>
+              </Button>
             </div>
           </form>
         )}

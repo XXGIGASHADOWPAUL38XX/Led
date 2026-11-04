@@ -1,3 +1,4 @@
+import { LoaderCircle } from "lucide-react";
 import { cva, type VariantProps } from "class-variance-authority";
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
@@ -29,14 +30,29 @@ const buttonVariants = cva(
   },
 );
 
+/** `loading` shows a spinner and disables the button until the action settles. */
 function Button({
   className,
   variant,
   size,
   type = "button",
+  loading = false,
+  disabled,
+  children,
   ...props
-}: ComponentProps<"button"> & VariantProps<typeof buttonVariants>) {
-  return <button type={type} className={cn(buttonVariants({ variant, size }), className)} {...props} />;
+}: ComponentProps<"button"> & VariantProps<typeof buttonVariants> & { loading?: boolean }) {
+  return (
+    <button
+      type={type}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
+      className={cn(buttonVariants({ variant, size }), className)}
+      {...props}
+    >
+      {loading && <LoaderCircle className="animate-spin" />}
+      {children}
+    </button>
+  );
 }
 
 export { Button };
