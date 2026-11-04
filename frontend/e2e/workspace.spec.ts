@@ -127,7 +127,8 @@ test("add-node dialog renders a node's fields outside the canvas", async ({ work
   await page.getByRole("button", { name: "Add node ⌃A" }).click();
   await page.getByLabel("Search nodes").fill("smoothing");
   await page.keyboard.press("Enter");
-  await expect(page.locator("dialog[open]")).toBeVisible();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveScreenshot("add-node-dialog.png");
   await page.keyboard.press("Escape");
 });
 
@@ -153,5 +154,6 @@ test("select menus open, pick an option and show it on the trigger", async ({ wo
   await expect(page.getByRole("combobox", { name: "From" })).toHaveText(/buffer-1\.data/);
   await page.getByRole("combobox", { name: "To" }).click();
   await expect(page.getByRole("option", { name: "amplitudes-1.buffer" })).toBeVisible();
+  await expect(page.getByRole("listbox")).toHaveScreenshot("select-menu.png");
   await page.keyboard.press("Escape");
 });
