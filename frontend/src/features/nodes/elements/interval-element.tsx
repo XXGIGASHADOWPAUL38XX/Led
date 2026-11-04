@@ -30,7 +30,7 @@ export function IntervalElement({
   return (
     <fieldset disabled={disabled} aria-label={label} className="space-y-1.5">
       <CoreElement id={id} label={label} disabled={disabled}>
-        <div className="absolute inset-y-0 right-2 flex items-center gap-1 font-mono text-[10px]">
+        <div className="absolute inset-y-0 right-2 flex items-center gap-1 font-mono text-2xs">
           {value.map((number, index) => (
             <input
               key={index}
@@ -77,7 +77,7 @@ export function IntervalElement({
           <Slider.Thumb
             key={end}
             aria-label={`${label} ${end} handle`}
-            className="block h-2.5 w-2.5 rounded-full bg-violet-200 outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1c1d26]"
+            className="block h-2.5 w-2.5 rounded-full bg-violet-200 outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-card"
           />
         ))}
       </Slider.Root>

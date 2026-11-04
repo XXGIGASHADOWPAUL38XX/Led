@@ -51,7 +51,7 @@ export function ArrayElement({
           }}
           aria-expanded={editing}
           aria-controls={`${id}-editor`}
-          className="absolute inset-0 rounded-[inherit] pr-3 text-right font-mono text-[10px] text-violet-300 outline-violet-400"
+          className="absolute inset-0 rounded-[inherit] pr-3 text-right font-mono text-2xs text-violet-300 outline-violet-400"
         >
           {(shape ? value : arrayShape(value)).join(" × ")} · Edit
         </button>
@@ -71,9 +71,9 @@ export function ArrayElement({
                 apply();
               }
             }}
-            className="h-24 w-full resize-y rounded border border-white/10 bg-black/20 p-2 font-mono text-xs text-zinc-300 outline-violet-400"
+            className="h-24 w-full resize-y rounded border border-border bg-black/20 p-2 font-mono text-xs text-zinc-300 outline-violet-400"
           />
-          <p className="text-[10px] text-zinc-500">Commit on blur or ⌘Enter</p>
+          <p className="text-2xs text-muted-foreground">Commit on blur or ⌘Enter</p>
         </fieldset>
       )}
     </div>

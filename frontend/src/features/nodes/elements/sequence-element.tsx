@@ -33,13 +33,13 @@ export function SequenceElement<T>({
   return (
     <fieldset
       disabled={disabled}
-      className="space-y-2 rounded-lg border border-white/10 bg-black/10 p-2 disabled:opacity-40"
+      className="space-y-2 rounded-lg border border-border bg-black/10 p-2 disabled:opacity-40"
     >
-      <legend className="px-1 text-[10px] text-zinc-400">{label}</legend>
+      <legend className="px-1 text-2xs text-zinc-400">{label}</legend>
       {value.map((item, index) => (
         <div key={index} className="space-y-1 rounded border border-white/5 p-1.5">
           {renderItem(item, index, (next) => onValueChange(value.map((entry, at) => (at === index ? next : entry))))}
-          <div className="flex justify-end gap-1 text-[10px] text-zinc-500">
+          <div className="flex justify-end gap-1 text-2xs text-muted-foreground">
             <button
               type="button"
               aria-label={`Move ${label} item ${index + 1} up`}
@@ -83,7 +83,7 @@ export function SequenceElement<T>({
             onValueChange([...value, createItem()]);
             onValueCommit?.();
           }}
-          className="w-full rounded border border-dashed border-white/10 py-1.5 text-[10px] text-violet-300 hover:bg-violet-400/10"
+          className="w-full rounded border border-dashed border-border py-1.5 text-2xs text-violet-300 hover:bg-violet-400/10"
         >
           + Add item
         </button>

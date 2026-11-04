@@ -38,14 +38,14 @@ export function SelectElement({
               {options.find((option) => option.value === value)?.label}
             </Select.Value>
           </span>
-          <Select.Icon className="shrink-0 text-zinc-500">▾</Select.Icon>
+          <Select.Icon className="shrink-0 text-muted-foreground">▾</Select.Icon>
         </Select.Trigger>
         <Select.Portal container={trigger?.closest("dialog") ?? undefined}>
           <Select.Content
             position="popper"
             sideOffset={6}
             collisionPadding={12}
-            className="z-50 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-lg border border-white/10 bg-[#23232e] p-1 shadow-xl shadow-black/40"
+            className="z-50 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-lg border border-border bg-popover p-1 shadow-xl shadow-black/40"
           >
             <Select.ScrollUpButton className="flex h-5 items-center justify-center text-violet-300">
               ▴

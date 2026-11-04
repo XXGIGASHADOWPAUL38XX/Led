@@ -58,7 +58,7 @@ export function Terminal({
           workspace!.disconnect(key!);
         }
       }}
-      className={`group/terminal z-10 inline-block h-3 w-3 shrink-0 cursor-crosshair touch-none rounded-full border-2 outline-none focus-visible:ring-2 focus-visible:ring-white/70 data-[compatible=false]:opacity-25 data-[compatible=true]:ring-4 data-[compatible=true]:ring-emerald-400/60 ${direction === "input" ? "border-sky-400 data-[linked]:bg-sky-400" : "border-violet-400 data-[linked]:bg-violet-400"} bg-[#1c1d26] ${className}`}
+      className={`group/terminal z-10 inline-block h-3 w-3 shrink-0 cursor-crosshair touch-none rounded-full border-2 outline-none focus-visible:ring-2 focus-visible:ring-white/70 data-[compatible=false]:opacity-25 data-[compatible=true]:ring-4 data-[compatible=true]:ring-emerald-400/60 ${direction === "input" ? "border-sky-400 data-[linked]:bg-sky-400" : "border-violet-400 data-[linked]:bg-violet-400"} bg-card ${className}`}
     >
       <span aria-hidden="true" className="relative block h-full w-full">
         <span className="absolute -inset-2 rounded-full transition-colors group-focus/terminal:bg-violet-400/15 group-focus/terminal:ring-2 group-focus/terminal:ring-violet-300/60 hover:bg-violet-400/20" />

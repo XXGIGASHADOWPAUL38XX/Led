@@ -31,7 +31,7 @@ function NumberInput({
 }) {
   const [draft, setDraft] = useState<string | null>(null);
   return (
-    <label className="flex min-w-0 items-center gap-1 text-[10px] text-zinc-400">
+    <label className="flex min-w-0 items-center gap-1 text-2xs text-zinc-400">
       {label}
       <input
         aria-label={label}
@@ -57,7 +57,7 @@ function NumberInput({
             setDraft(null);
           }
         }}
-        className="w-full min-w-0 rounded border border-white/10 bg-black/30 px-2 py-1 font-mono text-zinc-100 outline-none focus:border-violet-400 disabled:opacity-40"
+        className="w-full min-w-0 rounded border border-border bg-black/30 px-2 py-1 font-mono text-zinc-100 outline-none focus:border-violet-400 disabled:opacity-40"
       />
     </label>
   );
@@ -141,8 +141,8 @@ export function CurveElement({
   }
   const selectedIndex = ids.indexOf(selected.id);
   return (
-    <fieldset disabled={disabled} className="rounded-lg border border-white/10 bg-black/20 p-2 disabled:opacity-40">
-      <legend className="px-1 text-[10px] text-zinc-400">{label}</legend>
+    <fieldset disabled={disabled} className="rounded-lg border border-border bg-black/20 p-2 disabled:opacity-40">
+      <legend className="px-1 text-2xs text-zinc-400">{label}</legend>
       <svg
         viewBox="0 0 240 120"
         preserveAspectRatio="none"
@@ -287,8 +287,8 @@ export function CurveElement({
         ))}
       </svg>
       {selectedIndex >= 0 && (
-        <div className="mt-2 space-y-2 rounded border border-white/10 bg-black/10 p-2">
-          <div className="text-[10px] text-violet-200">
+        <div className="mt-2 space-y-2 rounded border border-border bg-black/10 p-2">
+          <div className="text-2xs text-violet-200">
             {selected.kind === "point" ? `Point ${selectedIndex + 1}` : `Segment ${selectedIndex + 1} slope`}
           </div>
           {selected.kind === "point" ? (
@@ -331,7 +331,7 @@ export function CurveElement({
       {renderTerminal && (
         <div className="mt-2 space-y-1">
           {points.map((_, i) => (
-            <div key={ids[i]} className="flex items-center gap-3 text-[9px] text-zinc-500">
+            <div key={ids[i]} className="flex items-center gap-3 text-[9px] text-muted-foreground">
               <button
                 type="button"
                 className="w-10 text-left hover:text-violet-200"

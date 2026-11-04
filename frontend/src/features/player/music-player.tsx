@@ -50,7 +50,7 @@ export function MusicPlayer({ track, playing, position, duration, onPlay, onPaus
           <p className="line-clamp-2 text-xs font-medium break-words text-zinc-100" title={track?.title}>
             {track?.title ?? "Choose a track"}
           </p>
-          <p className="mt-1 truncate text-[10px] text-zinc-400" title={track?.artist}>
+          <p className="mt-1 truncate text-2xs text-zinc-400" title={track?.artist}>
             {track?.artist ?? "Your playlist is ready"}
           </p>
         </div>
@@ -60,7 +60,7 @@ export function MusicPlayer({ track, playing, position, duration, onPlay, onPaus
           onClick={playing ? onPause : onPlay}
           aria-label={playing ? "Pause" : "Play"}
           aria-pressed={playing}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-400 text-sm text-[#181322] shadow-lg shadow-violet-500/10 transition-colors hover:bg-violet-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-200 disabled:cursor-default disabled:opacity-30"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-400 text-sm text-primary-foreground shadow-lg shadow-violet-500/10 transition-colors hover:bg-violet-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-200 disabled:cursor-default disabled:opacity-30"
         >
           <span aria-hidden="true">{playing ? "Ⅱ" : "▶"}</span>
         </button>
@@ -87,7 +87,7 @@ export function MusicPlayer({ track, playing, position, duration, onPlay, onPaus
           className="block h-3 w-3 rounded-full bg-violet-200 shadow focus:outline-2 focus:outline-offset-2 focus:outline-violet-400"
         />
       </Slider.Root>
-      <div className="flex justify-between gap-2 font-mono text-[10px] text-zinc-400 tabular-nums">
+      <div className="flex justify-between gap-2 font-mono text-2xs text-zinc-400 tabular-nums">
         <span>{formatTime(elapsed)}</span>
         <span>{duration > 0 ? formatTime(duration) : "—:—"}</span>
       </div>

@@ -308,14 +308,14 @@ export function WorkspaceCanvas({ graph, ref }: { graph: Graph; ref?: Ref<Canvas
           onClick={() => {
             void arrange();
           }}
-          className="rounded border border-white/10 px-3 py-2 text-xs text-zinc-300 hover:bg-white/5 disabled:opacity-40"
+          className="rounded border border-border px-3 py-2 text-xs text-zinc-300 hover:bg-white/5 disabled:opacity-40"
         >
           {arranging ? "Arranging…" : "Arrange nodes"}
         </button>
         <div
           role="group"
           aria-label="Workspace zoom"
-          className="flex items-center rounded border border-white/10 text-xs text-zinc-300"
+          className="flex items-center rounded border border-border text-xs text-zinc-300"
         >
           <button
             type="button"
@@ -330,7 +330,7 @@ export function WorkspaceCanvas({ graph, ref }: { graph: Graph; ref?: Ref<Canvas
             type="button"
             aria-label="Reset zoom"
             onClick={() => void flow.zoomTo(1)}
-            className="w-14 py-2 font-mono text-[10px]"
+            className="w-14 py-2 font-mono text-2xs"
           >
             {Math.round(zoom * 100)}%
           </button>
@@ -345,7 +345,7 @@ export function WorkspaceCanvas({ graph, ref }: { graph: Graph; ref?: Ref<Canvas
           </button>
         </div>
       </div>
-      <p className="text-[10px] text-zinc-500">
+      <p className="text-2xs text-muted-foreground">
         Drag empty space to select nodes · Ctrl/Cmd-click to extend selection · Drag a node header to move the selection
         · Drag terminals to connect · Click a terminal to select its wires
       </p>
@@ -383,7 +383,7 @@ export function WorkspaceCanvas({ graph, ref }: { graph: Graph; ref?: Ref<Canvas
           colorMode="dark"
           fitView
         >
-          <Background variant={BackgroundVariant.Dots} color="#34353f" gap={24} size={2} />
+          <Background variant={BackgroundVariant.Dots} color="var(--grid-dot)" gap={24} size={2} />
         </ReactFlow>
       </div>
     </WorkspaceContext>

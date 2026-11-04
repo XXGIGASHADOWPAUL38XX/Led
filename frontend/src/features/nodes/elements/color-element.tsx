@@ -60,7 +60,7 @@ export function ColorElement({
     <div className="space-y-1">
       <CoreElement id={id} label={label} disabled={disabled}>
         <span className="absolute inset-y-0 right-3 flex items-center gap-2">
-          <span className="font-mono text-[10px] text-zinc-400 uppercase">
+          <span className="font-mono text-2xs text-zinc-400 uppercase">
             {hex}
             {value.length === 4 ? Math.round(value[3]).toString(16).padStart(2, "0") : ""}
           </span>
@@ -89,7 +89,7 @@ export function ColorElement({
         channels
       ) : (
         <details className="rounded-md border border-white/5 bg-black/10">
-          <summary className="cursor-pointer px-3 py-1.5 text-[10px] text-zinc-500 outline-violet-400">
+          <summary className="cursor-pointer px-3 py-1.5 text-2xs text-muted-foreground outline-violet-400">
             {value.length === 4 ? "RGBA" : "RGB"} channels
           </summary>
           {channels}

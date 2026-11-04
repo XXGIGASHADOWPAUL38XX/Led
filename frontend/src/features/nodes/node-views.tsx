@@ -27,12 +27,12 @@ function StreamView({ node, view }: { node: NodeDescriptor; view: ViewDefinition
         onToggle={(event) => {
           if (event.currentTarget.open !== expanded) setSettings({ expanded: event.currentTarget.open });
         }}
-        className="overflow-hidden rounded-lg border border-white/10 bg-black/20"
+        className="overflow-hidden rounded-lg border border-border bg-black/20"
       >
-        <summary className="cursor-pointer px-3 py-2 text-[10px] text-zinc-400">{title}</summary>
+        <summary className="cursor-pointer px-3 py-2 text-2xs text-zinc-400">{title}</summary>
         {expanded && <StreamCanvas nodeId={node.id} view={view} settings={settings} title={title} />}
         {view.kind === "bars" && (
-          <div className="flex justify-between px-3 pb-2 font-mono text-[9px] text-zinc-500">
+          <div className="flex justify-between px-3 pb-2 font-mono text-[9px] text-muted-foreground">
             <span>
               {view.xMinField ? Number(node.elements.find((field) => field.name === view.xMinField)?.value) : 0}{" "}
               {view.unit}
@@ -56,7 +56,7 @@ function StreamView({ node, view }: { node: NodeDescriptor; view: ViewDefinition
                 key={id}
                 type="button"
                 aria-pressed={!hidden.includes(id)}
-                className="text-[10px]"
+                className="text-2xs"
                 style={{ color: seriesColor(settings, row), opacity: hidden.includes(id) ? 0.4 : 1 }}
                 onClick={() =>
                   setSettings({
@@ -70,7 +70,7 @@ function StreamView({ node, view }: { node: NodeDescriptor; view: ViewDefinition
           })}
         </div>
       )}
-      <details className="px-1 text-[10px] text-zinc-500">
+      <details className="px-1 text-2xs text-muted-foreground">
         <summary className="cursor-pointer">Display settings</summary>
         <div className="mt-2 space-y-2">
           <TextElement label="Title" value={title} onValueChange={(title) => setSettings({ title })} />
@@ -198,7 +198,7 @@ export function NodeView({
         type="button"
         aria-expanded={open}
         onClick={() => backend.setViewSettings(node.id, viewKey(view.kind, view.data), { open: !open })}
-        className="px-1 text-[10px] text-violet-300"
+        className="px-1 text-2xs text-violet-300"
       >
         {open ? "Hide view" : "Show view"}
       </button>

@@ -69,11 +69,11 @@ export function LiveWorkspace() {
     );
   return (
     <CatalogContext value={catalog ?? null}>
-      <section aria-label="Live backend workspace" className="space-y-5 border-b border-white/10 p-6">
+      <section aria-label="Live backend workspace" className="space-y-5 border-b border-border p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-sm font-medium">Live workspace</h2>
-            <p role="status" className="mt-1 text-xs text-zinc-500">
+            <p role="status" className="mt-1 text-xs text-muted-foreground">
               {status.connection} · revision {status.revision} · 50 ms frames
             </p>
           </div>
@@ -84,7 +84,7 @@ export function LiveWorkspace() {
               onClick={() => {
                 void backend.graph.undo();
               }}
-              className="rounded border border-white/10 px-3 py-2 text-xs text-zinc-300 disabled:opacity-40"
+              className="rounded border border-border px-3 py-2 text-xs text-zinc-300 disabled:opacity-40"
             >
               Undo ⌘Z
             </button>
@@ -102,7 +102,7 @@ export function LiveWorkspace() {
         <JevControls />
         {adding && catalog && <AddNodeDialog position={adding} onClose={() => setAdding(null)} />}
         {status.connection !== "connected" && (
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-muted-foreground">
             Start Python with <code>.venv/bin/python -m backend.api.server</code>.
           </p>
         )}
@@ -112,7 +112,7 @@ export function LiveWorkspace() {
           </p>
         )}
         {snapshot && (
-          <details className="rounded border border-white/10 p-3">
+          <details className="rounded border border-border p-3">
             <summary className="cursor-pointer text-xs text-zinc-400">
               Connections ({snapshot.graph.connections.length})
             </summary>

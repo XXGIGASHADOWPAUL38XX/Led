@@ -45,7 +45,7 @@ export function JevControls() {
             maxLength={16000}
             rows={2}
             placeholder="Deep violet techno lights with sharp bass pulses and gentle high-frequency flashes…"
-            className="mt-2 block w-full resize-y rounded-lg border border-white/10 bg-zinc-950/70 p-3 text-sm text-zinc-200 outline-none focus:border-violet-400/60 disabled:opacity-50"
+            className="mt-2 block w-full resize-y rounded-lg border border-border bg-zinc-950/70 p-3 text-sm text-zinc-200 outline-none focus:border-violet-400/60 disabled:opacity-50"
           />
         </label>
         <div className="flex flex-wrap items-center gap-3">
@@ -73,7 +73,7 @@ export function JevControls() {
               onClick={() => {
                 void command(() => backend.jev.cancel());
               }}
-              className="rounded-lg border border-white/10 px-3 py-2 text-xs text-zinc-300 disabled:opacity-40"
+              className="rounded-lg border border-border px-3 py-2 text-xs text-zinc-300 disabled:opacity-40"
             >
               Cancel
             </button>

@@ -152,7 +152,7 @@ function TokenControl({
         }}
       />
       {array ? (
-        <p className="px-1 text-[10px] text-zinc-500">Constant array · {array.shape.join(" × ")}</p>
+        <p className="px-1 text-2xs text-muted-foreground">Constant array · {array.shape.join(" × ")}</p>
       ) : kind === "source" ? (
         <ReferenceControl nodeId={nodeId} field={field} value={value as Reference} onChange={commit} />
       ) : kind === "operator" ? (
@@ -381,7 +381,7 @@ export function FieldControl({
         />
       );
     case "managed":
-      return <p className="px-1 text-[10px] text-zinc-500">{label} · managed by Python</p>;
+      return <p className="px-1 text-2xs text-muted-foreground">{label} · managed by Python</p>;
     case "text":
       return text;
     default:

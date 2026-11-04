@@ -115,12 +115,12 @@ export function NodeFields({ node, definition }: { node: NodeDescriptor; definit
           );
         })}
       {error && (
-        <p role="alert" className="text-[10px] text-rose-300">
+        <p role="alert" className="text-2xs text-rose-300">
           {error}
         </p>
       )}
       {!complete && (
-        <p role="status" className="text-[10px] text-zinc-500">
+        <p role="status" className="text-2xs text-muted-foreground">
           Choose a source for each reference to finish the change.
         </p>
       )}

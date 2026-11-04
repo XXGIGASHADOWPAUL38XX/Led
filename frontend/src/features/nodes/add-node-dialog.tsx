@@ -83,7 +83,7 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
     <dialog
       ref={dialog}
       onClose={onClose}
-      className="m-auto max-h-[85vh] w-[min(90vw,420px)] overflow-y-auto rounded-xl border border-white/15 bg-[#1c1d26] p-5 text-zinc-200 shadow-2xl backdrop:bg-black/65"
+      className="m-auto max-h-[85vh] w-[min(90vw,420px)] overflow-y-auto rounded-xl border border-white/15 bg-card p-5 text-zinc-200 shadow-2xl backdrop:bg-black/65"
     >
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-sm font-semibold">{type ? definition.title : "Add node"}</h2>
@@ -91,7 +91,7 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
           type="button"
           aria-label="Close add node"
           onClick={() => dialog.current!.close()}
-          className="text-zinc-500"
+          className="text-muted-foreground"
         >
           ✕
         </button>
@@ -119,7 +119,7 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
                 choose(choices[selected].type);
               }
             }}
-            className="mb-3 w-full rounded-lg border border-white/10 bg-black/20 p-3 text-sm outline-none focus:border-violet-400"
+            className="mb-3 w-full rounded-lg border border-border bg-black/20 p-3 text-sm outline-none focus:border-violet-400"
           />
           <div className="max-h-80 space-y-1 overflow-y-auto">
             {[...folders].map(([folder, items]) => (
@@ -130,7 +130,7 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
               >
                 <summary className="cursor-pointer px-3 py-2 text-xs text-zinc-300">
                   <span className="ml-1 capitalize">{folder}</span>
-                  <span className="ml-2 text-[10px] text-zinc-500">{items.length}</span>
+                  <span className="ml-2 text-2xs text-muted-foreground">{items.length}</span>
                 </summary>
                 <div className="space-y-0.5 px-2 pb-2">
                   {items.map((item) => (
@@ -147,7 +147,7 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
                 </div>
               </details>
             ))}
-            {!choices.length && <p className="p-3 text-xs text-zinc-500">No matching nodes.</p>}
+            {!choices.length && <p className="p-3 text-xs text-muted-foreground">No matching nodes.</p>}
           </div>
         </>
       ) : (
@@ -161,7 +161,7 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
           <p className="text-xs text-zinc-400">{definition.description}</p>
           <TextElement label="Name" value={name} onValueChange={setName} placeholder={automaticName} />
           {!node ? (
-            <p className="text-xs text-zinc-500">Loading parameters…</p>
+            <p className="text-xs text-muted-foreground">Loading parameters…</p>
           ) : (
             definition.fields
               .filter((field) => !field.hidden && field.control !== "managed")

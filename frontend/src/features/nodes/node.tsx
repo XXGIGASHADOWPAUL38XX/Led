@@ -21,12 +21,12 @@ export function Node({ id, title, description, inputs = [], outputs = [], childr
       onContextMenu={(event) => {
         if (event.ctrlKey) event.preventDefault();
       }}
-      className="w-72 rounded-xl border border-violet-400/50 bg-[#1c1d26] shadow-2xl shadow-black/40 data-[selected]:border-violet-200 data-[selected]:ring-2 data-[selected]:ring-violet-400/70"
+      className="w-72 rounded-xl border border-violet-400/50 bg-card shadow-2xl shadow-black/40 data-[selected]:border-violet-200 data-[selected]:ring-2 data-[selected]:ring-violet-400/70"
     >
-      <header className="node-drag-handle flex w-full cursor-grab touch-none items-center gap-3 rounded-t-xl border-b border-white/10 px-4 py-3 text-left select-none active:cursor-grabbing">
+      <header className="node-drag-handle flex w-full cursor-grab touch-none items-center gap-3 rounded-t-xl border-b border-border px-4 py-3 text-left select-none active:cursor-grabbing">
         <span className="h-2 w-2 rounded-full bg-violet-400" />
         <span className="flex-1 text-sm font-semibold">{title}</span>
-        <span aria-hidden="true" className="text-zinc-500">
+        <span aria-hidden="true" className="text-muted-foreground">
           ⠿
         </span>
       </header>

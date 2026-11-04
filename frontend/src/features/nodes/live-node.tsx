@@ -67,7 +67,7 @@ export function LiveNode({ id, selected }: { id: string; selected: boolean }) {
         )
         .map((port) => port.name)}
     >
-      <div className="flex items-center justify-between text-[10px] text-zinc-500">
+      <div className="flex items-center justify-between text-2xs text-muted-foreground">
         <span>
           {definition.category} · {id}
         </span>

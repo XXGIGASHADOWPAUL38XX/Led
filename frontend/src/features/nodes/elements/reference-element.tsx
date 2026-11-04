@@ -18,7 +18,7 @@ export function ReferenceElement({ label, nodes, value, onValueChange, disabled 
   const node = nodes.find((item) => item.id === value?.nodeId);
   return (
     <fieldset disabled={disabled} className="space-y-1.5 rounded-lg border border-white/5 bg-black/10 p-2">
-      <legend className="px-1 text-[10px] text-zinc-400">{label}</legend>
+      <legend className="px-1 text-2xs text-zinc-400">{label}</legend>
       <SelectElement
         label="Node"
         value={node?.id ?? ""}
@@ -43,7 +43,7 @@ export function ReferenceElement({ label, nodes, value, onValueChange, disabled 
           disabled={disabled}
           onClick={() => onValueChange(null)}
           aria-label={`Clear ${label}`}
-          className="ml-auto block rounded px-1.5 py-1 text-[10px] text-zinc-500 hover:bg-white/5 hover:text-zinc-200 focus-visible:outline-2 focus-visible:outline-violet-400 disabled:opacity-40"
+          className="ml-auto block rounded px-1.5 py-1 text-2xs text-muted-foreground hover:bg-white/5 hover:text-zinc-200 focus-visible:outline-2 focus-visible:outline-violet-400 disabled:opacity-40"
         >
           Clear
         </button>

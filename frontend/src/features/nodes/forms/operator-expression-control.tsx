@@ -79,7 +79,7 @@ export function OperatorExpressionControl({
     : [];
   return (
     <fieldset disabled={disabled} className="space-y-2">
-      <legend className="mb-2 text-[10px] tracking-wider text-zinc-500 uppercase">Inputs & expressions</legend>
+      <legend className="mb-2 text-2xs tracking-wider text-muted-foreground uppercase">Inputs & expressions</legend>
       {draft.inputs.map((input, index) => (
         <div key={index} className="relative flex items-center gap-1">
           {input.port && (
@@ -91,7 +91,7 @@ export function OperatorExpressionControl({
           )}
           <input
             aria-label={`Input ${index + 1} name`}
-            className="w-12 rounded border border-white/10 bg-black/20 px-2 py-2 font-mono text-xs text-violet-200 outline-none focus:border-violet-400"
+            className="w-12 rounded border border-border bg-black/20 px-2 py-2 font-mono text-xs text-violet-200 outline-none focus:border-violet-400"
             value={input.name}
             onChange={(event) => {
               const name = event.target.value;
@@ -107,7 +107,7 @@ export function OperatorExpressionControl({
           />
           <div className="min-w-0 flex-1">
             {isArrayValue(input.value) ? (
-              <span className="text-[10px] text-zinc-400">Constant · {input.value.shape.join(" × ")}</span>
+              <span className="text-2xs text-zinc-400">Constant · {input.value.shape.join(" × ")}</span>
             ) : (
               <SelectElement
                 label="Source"
@@ -137,7 +137,7 @@ export function OperatorExpressionControl({
             type="button"
             aria-label={`Remove input ${input.name}`}
             onMouseDown={(event) => event.preventDefault()}
-            className="px-1 text-zinc-500 hover:text-rose-300"
+            className="px-1 text-muted-foreground hover:text-rose-300"
             onClick={() => {
               const next = {
                 inputs: draft.inputs.filter((_, i) => i !== index),
@@ -162,7 +162,7 @@ export function OperatorExpressionControl({
         </div>
       ))}
       <div
-        className="relative rounded border border-dashed border-violet-400/25 px-3 py-2 text-[10px] text-zinc-500"
+        className="relative rounded border border-dashed border-violet-400/25 px-3 py-2 text-2xs text-muted-foreground"
         data-terminal={terminalKey({ nodeId: node.id, element: "add_element" }, "input")}
       >
         <Terminal
@@ -173,7 +173,7 @@ export function OperatorExpressionControl({
         Drag an output here to add an input
       </div>
       {draft.outputs.map((output, index) => (
-        <div key={index} className="relative space-y-1 rounded-lg border border-white/10 bg-black/10 p-2">
+        <div key={index} className="relative space-y-1 rounded-lg border border-border bg-black/10 p-2">
           <div className="flex items-center gap-2">
             <input
               aria-label={`Output ${index + 1} name`}
@@ -193,7 +193,7 @@ export function OperatorExpressionControl({
                 type="button"
                 aria-label={`Remove output ${output.name}`}
                 onMouseDown={(event) => event.preventDefault()}
-                className="text-zinc-500 hover:text-rose-300"
+                className="text-muted-foreground hover:text-rose-300"
                 onClick={() => {
                   const next = { ...draft, outputs: draft.outputs.filter((_, i) => i !== index) };
                   setDraft(next);
@@ -223,7 +223,7 @@ export function OperatorExpressionControl({
             rows={2}
             placeholder="clip(v0 + v1 * 0.2, 0, 1)"
             value={output.expression}
-            className="w-full resize-y rounded-lg border border-white/10 bg-black/25 px-3 py-2 font-mono text-xs leading-6 text-violet-100 outline-none focus:border-violet-400/70"
+            className="w-full resize-y rounded-lg border border-border bg-black/25 px-3 py-2 font-mono text-xs leading-6 text-violet-100 outline-none focus:border-violet-400/70"
             onChange={(event) => {
               setDraft({
                 ...draft,
@@ -254,7 +254,7 @@ export function OperatorExpressionControl({
             }}
           />
           {index === active && suggestions.length > 0 && (
-            <div className="absolute inset-x-0 top-full z-30 rounded-lg border border-white/10 bg-[#23232e] p-1 shadow-xl">
+            <div className="absolute inset-x-0 top-full z-30 rounded-lg border border-border bg-popover p-1 shadow-xl">
               {suggestions.map((name) => (
                 <button
                   key={name}
@@ -288,9 +288,9 @@ export function OperatorExpressionControl({
       >
         + Add operation / output
       </button>
-      <p className="text-[10px] text-zinc-500">NumPy broadcasting · Tab to complete · ⌘/Ctrl Enter to apply</p>
+      <p className="text-2xs text-muted-foreground">NumPy broadcasting · Tab to complete · ⌘/Ctrl Enter to apply</p>
       {error && (
-        <p role="alert" className="text-[10px] text-rose-300">
+        <p role="alert" className="text-2xs text-rose-300">
           {error}
         </p>
       )}

@@ -13,7 +13,7 @@ export function JevPreview() {
     const element = viewport.current;
     if (element) element.scrollLeft = element.scrollWidth;
   }, [preview]);
-  if (!preview) return <p className="mt-3 text-xs text-zinc-500">Waiting for the first validated node…</p>;
+  if (!preview) return <p className="mt-3 text-xs text-muted-foreground">Waiting for the first validated node…</p>;
 
   const nodes = preview.nodes.map((node) => ({
     ...node,
@@ -40,7 +40,7 @@ export function JevPreview() {
     <div className="mt-4 space-y-2">
       <p className="text-xs text-violet-200">
         Draft preview · {nodes.length} nodes · {preview.graph.connections.length} connections{" "}
-        <span className="text-zinc-500">· Read only</span>
+        <span className="text-muted-foreground">· Read only</span>
       </p>
       <div
         ref={viewport}

@@ -62,7 +62,7 @@ export function TemplateControls() {
           onClick={() => {
             void load();
           }}
-          className="rounded border border-white/10 px-3 py-2 text-zinc-300 hover:bg-white/5 disabled:opacity-40"
+          className="rounded border border-border px-3 py-2 text-zinc-300 hover:bg-white/5 disabled:opacity-40"
         >
           {busy === "init" ? "Loading…" : "init_template"}
         </button>
@@ -82,7 +82,7 @@ export function TemplateControls() {
           onClick={() => {
             void save(true);
           }}
-          className="rounded border border-white/10 px-3 py-2 text-zinc-300 hover:bg-white/5 disabled:opacity-40"
+          className="rounded border border-border px-3 py-2 text-zinc-300 hover:bg-white/5 disabled:opacity-40"
         >
           Replace existing .led…
         </button>
@@ -90,7 +90,7 @@ export function TemplateControls() {
           type="button"
           disabled={disabled}
           onClick={() => input.current?.click()}
-          className="rounded border border-white/10 px-3 py-2 text-zinc-300 hover:bg-white/5 disabled:opacity-40"
+          className="rounded border border-border px-3 py-2 text-zinc-300 hover:bg-white/5 disabled:opacity-40"
         >
           {busy === "load" ? "Loading…" : "Load template"}
         </button>

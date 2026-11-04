@@ -18,7 +18,7 @@ export function CoreElement({ id, label, disabled = false, error, children, port
       <div
         data-disabled={disabled || undefined}
         data-error={Boolean(error) || undefined}
-        className="group relative h-9 rounded-md border border-white/10 bg-black/20 transition-colors focus-within:border-violet-400/70 focus-within:ring-2 focus-within:ring-violet-400/15 hover:border-white/20 data-[disabled]:pointer-events-none data-[disabled]:opacity-40 data-[error]:border-rose-400"
+        className="group relative h-9 rounded-md border border-border bg-black/20 transition-colors focus-within:border-violet-400/70 focus-within:ring-2 focus-within:ring-violet-400/15 hover:border-white/20 data-[disabled]:pointer-events-none data-[disabled]:opacity-40 data-[error]:border-rose-400"
       >
         {port && (
           <Terminal

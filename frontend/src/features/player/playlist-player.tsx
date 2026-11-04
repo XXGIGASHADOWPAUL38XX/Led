@@ -57,12 +57,12 @@ export function PlaylistPlayer({
           placeholder="Find a track or artist…"
           value={query}
           onChange={(event) => onQueryChange(event.target.value)}
-          className="h-8 min-w-32 flex-1 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs text-zinc-200 outline-none placeholder:text-zinc-600 focus:border-violet-400/70 focus:ring-2 focus:ring-violet-400/10"
+          className="h-8 min-w-32 flex-1 rounded-md border border-border bg-black/20 px-2.5 text-xs text-zinc-200 outline-none placeholder:text-zinc-600 focus:border-violet-400/70 focus:ring-2 focus:ring-violet-400/10"
         />
         <button
           type="submit"
           disabled={searching || !query.trim()}
-          className="rounded-md border border-white/10 bg-white/5 px-2.5 text-[10px] text-zinc-300 transition-colors hover:bg-violet-400/15 focus-visible:outline-2 focus-visible:outline-violet-400 disabled:opacity-35"
+          className="rounded-md border border-border bg-white/5 px-2.5 text-2xs text-zinc-300 transition-colors hover:bg-violet-400/15 focus-visible:outline-2 focus-visible:outline-violet-400 disabled:opacity-35"
         >
           {searching ? "Searching…" : "Search"}
         </button>
@@ -76,10 +76,10 @@ export function PlaylistPlayer({
         <section
           aria-label="Search results"
           aria-busy={searching}
-          className="rounded-md border border-white/10 bg-black/10 p-1"
+          className="rounded-md border border-border bg-black/10 p-1"
         >
           {!results.length && (
-            <p role="status" className="px-2 py-3 text-[10px] text-zinc-500">
+            <p role="status" className="px-2 py-3 text-2xs text-muted-foreground">
               {searching ? "Searching…" : "No tracks found."}
             </p>
           )}
@@ -95,7 +95,7 @@ export function PlaylistPlayer({
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-xs text-zinc-200">{track.title}</p>
-                    <p className="mt-0.5 truncate text-[10px] text-zinc-500">{track.artist}</p>
+                    <p className="mt-0.5 truncate text-2xs text-muted-foreground">{track.artist}</p>
                   </div>
                   <button
                     type="button"
@@ -112,7 +112,7 @@ export function PlaylistPlayer({
           </ul>
         </section>
       )}
-      <div className="flex items-center justify-between px-1 text-[9px] tracking-widest text-zinc-500 uppercase">
+      <div className="flex items-center justify-between px-1 text-[9px] tracking-widest text-muted-foreground uppercase">
         <span>Queue</span>
         <span>
           {ready} / {tracks.length} ready
@@ -140,7 +140,7 @@ export function PlaylistPlayer({
               >
                 <span
                   aria-hidden="true"
-                  className={`w-4 shrink-0 text-center font-mono text-[10px] ${selected ? "text-violet-300" : "text-zinc-600"}`}
+                  className={`w-4 shrink-0 text-center font-mono text-2xs ${selected ? "text-violet-300" : "text-zinc-600"}`}
                 >
                   {downloading ? (
                     <span
@@ -158,7 +158,7 @@ export function PlaylistPlayer({
                   <span className={`block truncate text-xs ${selected ? "text-violet-100" : "text-zinc-300"}`}>
                     {track.title}
                   </span>
-                  <span className="mt-0.5 block truncate text-[10px] text-zinc-500">{track.artist}</span>
+                  <span className="mt-0.5 block truncate text-2xs text-muted-foreground">{track.artist}</span>
                   {unavailable && (
                     <span
                       className={`block text-[9px] ${track.downloadState === "failed" ? "text-rose-300" : "text-violet-300"}`}
@@ -173,7 +173,7 @@ export function PlaylistPlayer({
                     </span>
                   )}
                 </span>
-                <span className="shrink-0 font-mono text-[9px] whitespace-nowrap text-zinc-500 tabular-nums">
+                <span className="shrink-0 font-mono text-[9px] whitespace-nowrap text-muted-foreground tabular-nums">
                   {track.duration > 0 ? formatTime(track.duration) : "—:—"}
                 </span>
               </button>
@@ -190,7 +190,7 @@ export function PlaylistPlayer({
         })}
       </ul>
       {loading && (
-        <p role="status" className="flex items-center justify-center gap-2 text-[10px] text-violet-300">
+        <p role="status" className="flex items-center justify-center gap-2 text-2xs text-violet-300">
           <span
             aria-hidden="true"
             className="h-3 w-3 animate-spin rounded-full border-2 border-violet-300/25 border-t-violet-300"
@@ -199,7 +199,7 @@ export function PlaylistPlayer({
         </p>
       )}
       {!loading && !tracks.length && (
-        <p className="py-4 text-center text-xs text-zinc-500">Search for music to start your playlist.</p>
+        <p className="py-4 text-center text-xs text-muted-foreground">Search for music to start your playlist.</p>
       )}
     </div>
   );
