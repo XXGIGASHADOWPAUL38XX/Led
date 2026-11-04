@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -92,7 +93,7 @@ export function AddNodeDialog({ onClose, position }: { onClose: () => void; posi
         <div className="mb-4 flex items-center justify-between">
           <DialogTitle className="text-sm font-semibold">{type ? definition.title : "Add node"}</DialogTitle>
           <DialogClose type="button" aria-label="Close add node" className="text-muted-foreground">
-            ✕
+            <X className="size-4" />
           </DialogClose>
         </div>
         {!type ? (

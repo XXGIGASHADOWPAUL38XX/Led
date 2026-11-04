@@ -1,3 +1,4 @@
+import { ArrowDown, ArrowUp, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ReactNode } from "react";
 import type { Endpoint } from "@/api/protocol";
@@ -48,7 +49,7 @@ export function SequenceElement<T>({
               disabled={disabled || index === 0}
               onClick={() => move(index, -1)}
             >
-              ↑
+              <ArrowUp />
             </Button>
             <Button
               variant="ghost"
@@ -57,7 +58,7 @@ export function SequenceElement<T>({
               disabled={disabled || index === value.length - 1}
               onClick={() => move(index, 1)}
             >
-              ↓
+              <ArrowDown />
             </Button>
             <Button
               variant="destructive"
@@ -86,7 +87,8 @@ export function SequenceElement<T>({
           }}
           className="w-full py-1.5 text-2xs"
         >
-          + Add item
+          <Plus />
+          Add item
         </Button>
       </div>
     </fieldset>

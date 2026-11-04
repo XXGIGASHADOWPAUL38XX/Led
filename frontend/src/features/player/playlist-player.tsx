@@ -1,3 +1,4 @@
+import { Check, Pause, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/features/player/format-time";
 import { MusicPlayer, type MusicPlayerProps, type Track } from "./music-player";
@@ -108,7 +109,7 @@ export function PlaylistPlayer({
                     aria-label={`Add ${track.title}`}
                     className="text-violet-300"
                   >
-                    <span aria-hidden="true">{added ? "✓" : "+"}</span>
+                    {added ? <Check /> : <Plus />}
                   </Button>
                 </li>
               );
@@ -153,7 +154,7 @@ export function PlaylistPlayer({
                       className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-violet-300/25 border-t-violet-300"
                     />
                   ) : playing ? (
-                    "Ⅱ"
+                    <Pause className="mx-auto size-3" />
                   ) : (
                     String(index + 1).padStart(2, "0")
                   )}
@@ -188,7 +189,7 @@ export function PlaylistPlayer({
                 aria-label={`Remove ${track.title}`}
                 className="mr-1"
               >
-                ×
+                <X />
               </Button>
             </li>
           );

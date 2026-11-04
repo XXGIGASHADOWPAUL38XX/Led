@@ -1,3 +1,4 @@
+import { GripVertical } from "lucide-react";
 import type { ReactNode } from "react";
 import { Terminal } from "../graph/terminal";
 
@@ -26,9 +27,7 @@ export function Node({ id, title, description, inputs = [], outputs = [], childr
       <header className="node-drag-handle flex w-full cursor-grab touch-none items-center gap-3 rounded-t-xl border-b border-border px-4 py-3 text-left select-none active:cursor-grabbing">
         <span className="h-2 w-2 rounded-full bg-violet-400" />
         <span className="flex-1 text-sm font-semibold">{title}</span>
-        <span aria-hidden="true" className="text-muted-foreground">
-          ⠿
-        </span>
+        <GripVertical aria-hidden="true" className="size-4 text-muted-foreground" />
       </header>
       {description && <p className="px-4 py-4 text-xs leading-5 text-zinc-400">{description}</p>}
       {children && <div className="space-y-2 px-3 pb-4">{children}</div>}

@@ -1,3 +1,4 @@
+import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import { Select as SelectPrimitive } from "radix-ui";
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
@@ -15,7 +16,9 @@ function SelectTrigger({ className, children, ...props }: ComponentProps<typeof 
       {...props}
     >
       <span className="truncate">{children}</span>
-      <SelectPrimitive.Icon className="shrink-0 text-muted-foreground">▾</SelectPrimitive.Icon>
+      <SelectPrimitive.Icon className="shrink-0 text-muted-foreground">
+        <ChevronDown className="size-3.5" />
+      </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );
 }
@@ -34,11 +37,11 @@ function SelectContent({ className, children, ...props }: ComponentProps<typeof 
         {...props}
       >
         <SelectPrimitive.ScrollUpButton className="flex h-5 items-center justify-center text-violet-300">
-          ▴
+          <ChevronUp className="size-3.5" />
         </SelectPrimitive.ScrollUpButton>
         <SelectPrimitive.Viewport className="max-h-60">{children}</SelectPrimitive.Viewport>
         <SelectPrimitive.ScrollDownButton className="flex h-5 items-center justify-center text-violet-300">
-          ▾
+          <ChevronDown className="size-3.5" />
         </SelectPrimitive.ScrollDownButton>
       </SelectPrimitive.Content>
     </SelectPrimitive.Portal>
@@ -56,7 +59,7 @@ function SelectItem({ className, children, ...props }: ComponentProps<typeof Sel
     >
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
       <SelectPrimitive.ItemIndicator className="absolute inset-y-0 right-3 flex items-center text-violet-300">
-        ✓
+        <Check className="size-3.5" />
       </SelectPrimitive.ItemIndicator>
     </SelectPrimitive.Item>
   );

@@ -1,3 +1,4 @@
+import { Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Background,
@@ -324,7 +325,7 @@ export function WorkspaceCanvas({ graph, ref }: { graph: Graph; ref?: Ref<Canvas
             onClick={() => void flow.zoomOut()}
             className="rounded-none"
           >
-            −
+            <Minus />
           </Button>
           <Button
             variant="ghost"
@@ -341,7 +342,7 @@ export function WorkspaceCanvas({ graph, ref }: { graph: Graph; ref?: Ref<Canvas
             onClick={() => void flow.zoomIn()}
             className="rounded-none"
           >
-            +
+            <Plus />
           </Button>
         </div>
       </div>

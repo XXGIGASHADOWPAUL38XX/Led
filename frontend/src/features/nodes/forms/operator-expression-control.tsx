@@ -1,3 +1,4 @@
+import { CornerDownRight, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRef, useState } from "react";
 import { useGraph } from "@/api/hooks";
@@ -132,7 +133,7 @@ export function OperatorExpressionControl({
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => insert(input.name)}
           >
-            ↳
+            <CornerDownRight />
           </Button>
           <Button
             variant="destructive"
@@ -151,7 +152,7 @@ export function OperatorExpressionControl({
               commit(next);
             }}
           >
-            ×
+            <X />
           </Button>
           {input.port && (
             <Terminal
@@ -202,7 +203,7 @@ export function OperatorExpressionControl({
                   commit(next);
                 }}
               >
-                ×
+                <X />
               </Button>
             )}
           </div>
@@ -287,7 +288,8 @@ export function OperatorExpressionControl({
           commit(next);
         }}
       >
-        + Add operation / output
+        <Plus />
+        Add operation / output
       </Button>
       <p className="text-2xs text-muted-foreground">NumPy broadcasting · Tab to complete · ⌘/Ctrl Enter to apply</p>
       {error && (

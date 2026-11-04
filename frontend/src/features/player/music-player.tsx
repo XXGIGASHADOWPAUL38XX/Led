@@ -1,3 +1,4 @@
+import { Pause, Play } from "lucide-react";
 import * as Slider from "@radix-ui/react-slider";
 import { useState } from "react";
 import { formatTime } from "@/features/player/format-time";
@@ -62,7 +63,7 @@ export function MusicPlayer({ track, playing, position, duration, onPlay, onPaus
           aria-pressed={playing}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-400 text-sm text-primary-foreground shadow-lg shadow-violet-500/10 transition-colors hover:bg-violet-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-200 disabled:cursor-default disabled:opacity-30"
         >
-          <span aria-hidden="true">{playing ? "Ⅱ" : "▶"}</span>
+          {playing ? <Pause className="size-4 fill-current" /> : <Play className="size-4 fill-current" />}
         </button>
       </div>
       <Slider.Root
