@@ -60,7 +60,7 @@ export function JevPreview() {
               key={edge.id}
               d={connectionPath(anchor(edge.source, true), anchor(edge.target, false))}
               fill="none"
-              stroke="#a78bfa"
+              className="stroke-primary"
               strokeWidth={2}
               strokeOpacity={0.65}
             >
@@ -75,13 +75,12 @@ export function JevPreview() {
                 width={width}
                 height={sizes.get(node.id)!.height}
                 rx={12}
-                fill="#18181b"
-                stroke={index === nodes.length - 1 ? "#a78bfa" : "#3f3f46"}
+                className={`fill-zinc-900 ${index === nodes.length - 1 ? "stroke-primary" : "stroke-zinc-700"}`}
               />
-              <text x={16} y={24} fill="#e4e4e7" fontSize={13} fontWeight={500}>
+              <text x={16} y={24} className="fill-zinc-200" fontSize={13} fontWeight={500}>
                 {(catalog?.[node.type]?.title ?? node.type).slice(0, 32)}
               </text>
-              <text x={16} y={43} fill="#71717a" fontSize={10}>
+              <text x={16} y={43} className="fill-muted-foreground" fontSize={10}>
                 {node.id.slice(0, 40)}
               </text>
               {[node.inputs, node.outputs].map((ports, side) =>
@@ -90,12 +89,12 @@ export function JevPreview() {
                     <title>
                       {port.name} · {port.shape.length ? port.shape.join(" × ") : "scalar"}
                     </title>
-                    <circle cx={side ? width : 0} cy={66 + row * 20} r={4} fill="#a78bfa" />
+                    <circle cx={side ? width : 0} cy={66 + row * 20} r={4} className="fill-primary" />
                     <text
                       x={side ? width - 12 : 12}
                       y={70 + row * 20}
                       textAnchor={side ? "end" : "start"}
-                      fill="#a1a1aa"
+                      className="fill-zinc-400"
                       fontSize={10}
                     >
                       {port.name.length > 18 ? `${port.name.slice(0, 17)}…` : port.name}

@@ -197,7 +197,7 @@ export function CurveElement({
             <path
               d={curvePath(point, points[index + 1], slopes[index])}
               fill="none"
-              stroke="#a78bfa"
+              className="stroke-primary"
               strokeWidth={2}
               pointerEvents="none"
             />
@@ -245,8 +245,6 @@ export function CurveElement({
             cx={x * 240}
             cy={(1 - y) * 120}
             r={4}
-            fill="#ddd6fe"
-            stroke="#7c3aed"
             role="slider"
             aria-label={`${label} point ${index + 1}`}
             aria-valuemin={0}
@@ -255,7 +253,7 @@ export function CurveElement({
             aria-valuetext={`x ${x.toFixed(3)}, y ${y.toFixed(3)}`}
             aria-disabled={disabled}
             tabIndex={disabled ? -1 : 0}
-            className="cursor-move outline-none focus:fill-white focus:stroke-white"
+            className="cursor-move fill-violet-200 stroke-violet-600 outline-none focus:fill-white focus:stroke-white"
             onFocus={() => setSelected({ kind: "point", id: ids[index] })}
             onPointerDown={(event) => {
               event.preventDefault();

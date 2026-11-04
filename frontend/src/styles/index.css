@@ -42,10 +42,10 @@ button {
 }
 .react-flow {
   --xy-background-color: transparent;
-  --xy-edge-stroke: #a78bfa;
-  --xy-edge-stroke-selected: #e9d5ff;
+  --xy-edge-stroke: var(--primary);
+  --xy-edge-stroke-selected: var(--color-violet-200);
   --xy-edge-stroke-width: 2;
-  --xy-connectionline-stroke: #c4b5fd;
+  --xy-connectionline-stroke: var(--color-violet-300);
   --xy-connectionline-stroke-width: 2;
 }
 .react-flow__edge.selected .react-flow__edge-path {
