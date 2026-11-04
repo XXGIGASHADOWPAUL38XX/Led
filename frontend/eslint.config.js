@@ -18,6 +18,17 @@ export default tseslint.config(
     languageOptions: { globals: globals.browser },
   },
   {
+    // Radix is styled once in components/ui; features compose those components.
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/components/ui/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        { patterns: [{ group: ["radix-ui", "@radix-ui/*"], message: "Import from @/components/ui instead." }] },
+      ],
+    },
+  },
+  {
     files: ["**/*.mjs", "e2e/**/*.ts", "*.config.ts", "eslint.config.js"],
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     languageOptions: { globals: globals.node },
