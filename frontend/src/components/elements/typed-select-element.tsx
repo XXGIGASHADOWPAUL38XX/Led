@@ -1,6 +1,8 @@
 "use client";
 
 import { SelectElement } from "./select-element";
+import { ArrayElement } from "./array-element";
+import { SwitchElement } from "./switch-element";
 
 export type TypedSelectElementProps<T> = {
   label: string;
@@ -17,8 +19,14 @@ export function TypedSelectElement<T>({ value, onValueChange, options, ...props 
     onValueChange={(selected) => onValueChange(options[Number(selected)].value)} />;
 }
 
-export function AxisElement(props: Omit<TypedSelectElementProps<number | number[] | null>, "options"> & { axes?: readonly number[] }) {
-  const { axes = [0, 1], ...rest } = props;
+export function AxisElement(props: Omit<TypedSelectElementProps<number | number[] | null>, "options"> & { axes?: readonly number[]; permutation?: boolean }) {
+  const { axes = [0, 1], permutation = false, ...rest } = props;
+  if (permutation) return <div className="space-y-2">
+    <SwitchElement label={props.label} disabled={props.disabled} checked={props.value !== null}
+      onCheckedChange={(enabled) => props.onValueChange(enabled ? [...axes].reverse() : null)} />
+    {props.value !== null && <ArrayElement label="Axis order" disabled={props.disabled} value={props.value as number[]}
+      integer min={-axes.length} max={axes.length - 1} onValueChange={(value) => props.onValueChange(value as number[])} />}
+  </div>;
   const options: { value: number | number[] | null; label: string }[] = [
     { value: null, label: "All axes" }, ...axes.map((axis) => ({ value: axis, label: `Axis ${axis}` })),
   ];

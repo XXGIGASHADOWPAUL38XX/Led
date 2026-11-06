@@ -39,10 +39,20 @@ class CNode:
     def validate_parameters(self, changes):
         """Reject coupled changes before mutating processing state."""
 
+    def initialize(self):
+        """Initialize real processing resources after graph validation."""
+
+    def recalibrate(self):
+        raise ValueError('This node does not support calibration')
+
     @staticmethod
     def migrate_parameters(parameters):
         """Normalize saved constructor parameters before building a node."""
         return parameters
+
+    @staticmethod
+    def migrate_graph(node, graph):
+        """Move legacy settings and connections when a node's structure changes."""
 
     def parameters_changed(self, name):
         """Rebuild derived state after a parameter change."""

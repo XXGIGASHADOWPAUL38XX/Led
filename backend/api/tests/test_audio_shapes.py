@@ -118,3 +118,29 @@ class AudioShapeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(amp.window.shape, (256,))
         self.assertEqual(amp.data.value.shape, (24,))
         self.assertEqual(self.runtime.tick(), [])
+
+    def test_stream_resamples_to_selected_rate_and_buffer_appends_once(self):
+        runtime = Runtime(preview=True)
+        try:
+            runtime.load({'nodes': [
+                {'id': 'stream', 'type': 'StreamPlayer', 'parameters': {'sample_rate': 16000, 'chunk_size': 800}},
+                {'id': 'buffer', 'type': 'Buffer', 'parameters': {'indata': {'nodeId': 'stream', 'element': 'chunk'},
+                    'frame_id': {'nodeId': 'stream', 'element': 'chunk_id'}, 'shape': [2, 800], 'length': 32000}},
+            ], 'connections': []})
+            stream, buffer = runtime.nodes['stream'], runtime.nodes['buffer']
+            stream.enqueue(np.ones((44100, 2), dtype=np.float32), 44100)
+            self.assertEqual(stream.sample_rate.value, 16000)
+            self.assertEqual(stream._audio.shape, (16000, 2))
+            output = np.empty((800, 2), dtype=np.float32)
+            stream._callback(output, 800, None, None)
+            buffer.c_update()
+            first = buffer.data.value.copy()
+            for _ in range(5):
+                buffer.c_update()
+            np.testing.assert_array_equal(buffer.data.value, first)
+            stream._cursor = stream._audio.shape[0]
+            stream._callback(output, 800, None, None)
+            self.assertEqual(stream.chunk_id.value[0], 2)
+            np.testing.assert_array_equal(stream.chunk.value, 0)
+        finally:
+            runtime.close()

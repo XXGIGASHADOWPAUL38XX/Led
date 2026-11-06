@@ -8,7 +8,7 @@ const graph = () => ({ nodes: [{ id: 'curve', type: 'Function', position: [125, 
   points: { dtype: '<f4', shape: [2, 2], data: new Float32Array([0, 0, 1, 1]) },
 } }], connections: [] });
 const settings = { open: false, title: 'My spectrum', range: [0, 42], historyLength: 250,
-  lineColors: { 0: [12, 34, 56, 128] }, hiddenSeries: ['1'], expanded: false };
+  lineColors: { 0: [12, 34, 56, 128] }, hiddenSeries: ['1'], expanded: false, axisRanges: { 0: [0, 2], 3: [5, -1] } };
 const template = () => ({ version: 1, graph: graph(), ui: { curve: { [viewKey('history', 'data')]: structuredClone(settings) } } });
 function snapshot(store, value) {
   store.receive({ type: 'graph.snapshot', revision: 1, payload: { graph: value,
@@ -32,10 +32,20 @@ test('bad versions, files, graphs, and display settings are rejected', () => {
     { ...template(), ui: { curve: { chart: { range: [4, 1] } } } },
     { ...template(), ui: { curve: { chart: { historyLength: 1e9 } } } },
     { ...template(), ui: { curve: { chart: { lineColors: { 0: [999, 0, 0] } } } } },
+    { ...template(), ui: { curve: { chart: { axisRanges: { 0: [1, 1] } } } } },
     { ...template(), ui: { missing: {} } },
   ]) assert.throws(() => decodeTemplate(pack(invalid)));
   assert.throws(() => decodeTemplate(encodeMessage({ type: 'frame', payload: {} })), /template file/);
   assert.throws(() => decodeTemplate(new Uint8Array([0xc1])));
+});
+
+test('axis ranges require numeric indices and two finite, distinct endpoints', () => {
+  for (const axisRanges of [{ x: [0, 1] }, { '-1': [0, 1] }, { '1.5': [0, 1] },
+    { 0: [0] }, { 0: [0, 1, 2] }, { 0: [0, NaN] }, { 0: [Infinity, 1] }, { 0: ['0', 1] }, { 0: [1, 1] }]) {
+    const invalid = template();
+    invalid.ui.curve[viewKey('history', 'data')].axisRanges = axisRanges;
+    assert.throws(() => decodeTemplate(encodeMessage({ type: 'template', payload: invalid })), /display settings/);
+  }
 });
 
 test('saving gets current Python values instead of a stale frontend graph', async () => {

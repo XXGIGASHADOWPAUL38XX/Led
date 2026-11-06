@@ -9,20 +9,23 @@ import { viewKey, type ViewSettings } from "@/lib/backend/template";
 import { ColorElement, DataElement, IntervalElement, PlaylistPlayer, SliderElement, TextElement } from "../elements";
 import { StreamCanvas } from "../visualizations/stream-canvas";
 import { seriesColor } from "../visualizations/canvas-renderer";
+import type { ClusteringInput } from "@/lib/nodes/clustering";
 
 function StreamView({ node, view }: { node: NodeDescriptor; view: ViewDefinition }) {
   const settings = useViewSettings(node.id, viewKey(view.kind, view.data));
   const setSettings = (changes: Partial<ViewSettings>) => backend.setViewSettings(node.id, viewKey(view.kind, view.data), changes);
   const title = settings.title ?? view.label ?? view.data!;
-  const range = settings.range ?? [0, 1];
+  const range: [number, number] = settings.range ?? [0, 1];
   const shape = node.ports.find((port) => port.name === view.data)!.shape;
+  const dimensions = view.kind === "scatter" ? shape.at(-1)! : 0;
   const rows = view.series?.length ?? (view.kind === "history" && shape.length > 1 ? Math.min(shape[0], 8) : 1);
   const legend = view.kind === "history" || rows > 1;
   const expanded = settings.expanded ?? true;
   return <div className="space-y-2">
     <details open={expanded} onToggle={(event) => { if (event.currentTarget.open !== expanded) setSettings({ expanded: event.currentTarget.open }); }} className="overflow-hidden rounded-lg border border-white/10 bg-black/20">
       <summary className="cursor-pointer px-3 py-2 text-[10px] text-zinc-400">{title}</summary>
-      {expanded && <StreamCanvas nodeId={node.id} view={view} settings={settings} title={title} />}
+      {expanded && <StreamCanvas nodeId={node.id} view={view} settings={settings} title={title} dimensions={dimensions}
+        inputs={view.kind === "clustering" ? node.elements.find((element) => element.name === "inputs")?.value as ClusteringInput[] : undefined} />}
       {view.kind === "bars" && <div className="flex justify-between px-3 pb-2 font-mono text-[9px] text-zinc-500">
         <span>{view.xMinField ? Number(node.elements.find((field) => field.name === view.xMinField)?.value) : 0} {view.unit}</span>
         <span>{view.xMaxField ? Number(node.elements.find((field) => field.name === view.xMaxField)?.value) : Math.max(1, shape.reduce((a, b) => a * b, 1) - 1)} {view.unit}</span>
@@ -35,11 +38,15 @@ function StreamView({ node, view }: { node: NodeDescriptor; view: ViewDefinition
     })}</div>}
     <details className="px-1 text-[10px] text-zinc-500"><summary className="cursor-pointer">Display settings</summary><div className="mt-2 space-y-2">
       <TextElement label="Title" value={title} onValueChange={(title) => setSettings({ title })} />
-      {view.kind === "meter" && <SliderElement label="History samples" value={settings.historyLength ?? 100} onValueChange={(historyLength) => setSettings({ historyLength })} min={10} max={1000} />}
+      {(view.kind === "meter" || view.kind === "scatter") && <SliderElement label={view.kind === "scatter" ? "Trail samples" : "History samples"} value={settings.historyLength ?? 100} onValueChange={(historyLength) => setSettings({ historyLength })} min={10} max={1000} />}
       {legend && Array.from({ length: rows }, (_, row) => <ColorElement key={row} label={view.series?.[row] ?? `Line ${row + 1}`} value={settings.lineColors?.[row] ?? [167, 139, 250]}
         onValueChange={(color) => setSettings({ lineColors: { ...settings.lineColors, [row]: color } })} />)}
-      {view.kind !== "color" && view.kind !== "trigger" && <><IntervalElement label="Y range" value={[range[0], range[1]]} min={-10000} max={10000} onValueChange={([low, high]) => { if (low < high) setSettings({ range: [low, high] }); }} />
-        <button type="button" className="px-1 text-violet-300" onClick={() => setSettings({ range: null })}>Auto range</button></>}
+      {dimensions > 3 && Array.from({ length: dimensions }, (_, index) => <IntervalElement key={index} label={`Dimension ${index + 1}`}
+        value={settings.axisRanges?.[String(index)] ?? range} min={-1000000} max={1000000} ordered={false}
+        onValueChange={(interval) => { if (interval[0] !== interval[1]) setSettings({ axisRanges: { ...settings.axisRanges, [index]: interval } }); }} />)}
+      {view.kind !== "color" && view.kind !== "trigger" && view.kind !== "clustering" && view.kind !== "angle" && <>
+        {dimensions <= 3 && <IntervalElement label={view.kind === "scatter" ? dimensions === 3 ? "X / Y / Z range" : "X / Y range" : "Y range"} value={[range[0], range[1]]} min={-10000} max={10000} onValueChange={([low, high]) => { if (low < high) setSettings({ range: [low, high] }); }} />}
+        <button type="button" className="px-1 text-violet-300" onClick={() => setSettings({ range: null, axisRanges: {} })}>Auto range</button></>}
     </div></details>
   </div>;
 }

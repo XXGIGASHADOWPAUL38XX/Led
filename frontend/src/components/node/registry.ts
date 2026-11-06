@@ -1,4 +1,6 @@
 import triggerDefinition from "./trigger/trigger-node.ts";
+import arrayReshaperDefinition from "./transforms/array-reshaper-node.ts";
+import blendDefinition from "./transforms/blend-node.ts";
 import outboundsFctDefinition from "./function/outbounds-fct-node.ts";
 import minWindowFctDefinition from "./windows/min-window-fct-node.ts";
 import slidingAmpGradientDefinition from "./visual/sliding-amp-gradient-node.ts";
@@ -31,8 +33,6 @@ import entropyDefinition from "./features/entropy-node.ts";
 import spectralFluxDefinition from "./features/spectral-flux-node.ts";
 import onsetStrengthDefinition from "./features/onset-strength-node.ts";
 import spectralCentroidDefinition from "./features/spectral-centroid-node.ts";
-import pitchClassChromaDefinition from "./features/pitch-class-chroma-node.ts";
-import chromaPrismDefinition from "./features/chroma-prism-node.ts";
 import windowDefinition from "./window/window-node.ts";
 import averagedWindowFctDefinition from "./windows/averaged-window-fct-node.ts";
 import ceilWindowFctDefinition from "./windows/ceil-window-fct-node.ts";
@@ -40,6 +40,7 @@ import decreasingAvgWindowFctDefinition from "./windows/decreasing-avg-window-fc
 import maxWindowFctDefinition from "./windows/max-window-fct-node.ts";
 import sumWindowFctDefinition from "./windows/sum-window-fct-node.ts";
 import barGraphChartDefinition from "./visual/bar-graph-chart-node.ts";
+import clusteringDefinition from "./visual/clustering-node.ts";
 import multiLineChartDefinition from "./visual/multi-line-chart-node.ts";
 import singleLineChartDefinition from "./visual/single-line-chart-node.ts";
 import rainbowDefinition from "./rainbow/rainbow-node.ts";
@@ -48,6 +49,9 @@ import broadcastAdditionDefinition from "./broadcast/broadcast-addition-node.ts"
 import rollingDefinition from "./visual/rolling-node.ts";
 import valueTransformerDefinition from "./transforms/value-transformer-node.ts";
 import operatorPipelineDefinition from "./transforms/operator-pipeline-node.ts";
+import correlateDefinition from "./transforms/correlate-node.ts";
+import dimensionalFlatteningDefinition from "./transforms/dimensional-flattening-node.ts";
+import cosineAngleDefinition from "./transforms/cosine-angle-node.ts";
 import clipDefinition from "./transforms/clip-node.ts";
 import peakFilterDefinition from "./transforms/peak-filter-node.ts";
 import thresholdFilterDefinition from "./transforms/threshold-filter-node.ts";
@@ -100,8 +104,6 @@ export const nodeDefinitions: Record<string, NodeDefinition> = {
   "SpectralFlux": spectralFluxDefinition,
   "OnsetStrength": onsetStrengthDefinition,
   "SpectralCentroid": spectralCentroidDefinition,
-  "PitchClassChroma": pitchClassChromaDefinition,
-  "ChromaPrism": chromaPrismDefinition,
   "Window": windowDefinition,
   "AveragedWindowFct": averagedWindowFctDefinition,
   "CeilWindowFct": ceilWindowFctDefinition,
@@ -109,6 +111,7 @@ export const nodeDefinitions: Record<string, NodeDefinition> = {
   "MaxWindowFct": maxWindowFctDefinition,
   "SumWindowFct": sumWindowFctDefinition,
   "BarGraphChart": barGraphChartDefinition,
+  "Clustering": clusteringDefinition,
   "MultiLineChart": multiLineChartDefinition,
   "SingleLineChart": singleLineChartDefinition,
   "Rainbow": rainbowDefinition,
@@ -117,6 +120,11 @@ export const nodeDefinitions: Record<string, NodeDefinition> = {
   "RollingNode": rollingDefinition,
   "ValueTransformer": valueTransformerDefinition,
   "OperatorPipeline": operatorPipelineDefinition,
+  "Correlate": correlateDefinition,
+  "DimensionalFlattening": dimensionalFlatteningDefinition,
+  "CosineAngle": cosineAngleDefinition,
+  "ArrayReshaper": arrayReshaperDefinition,
+  "Blend": blendDefinition,
   "Clip": clipDefinition,
   "PeakFilter": peakFilterDefinition,
   "ThresholdFilter": thresholdFilterDefinition,

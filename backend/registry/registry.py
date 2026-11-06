@@ -9,12 +9,10 @@ from backend.nodes.broadcast.broadcast_indexes import BroadcastIndexesNode
 from backend.nodes.broadcast.broadcast_rescaler import BroadcastRescalerNode
 from backend.nodes.controllers import ESP32Node
 from backend.nodes.features import (
-    ChromaPrismNode,
     CrestFactorNode,
     EntropyNode,
     MidSideEnergyNode,
     OnsetStrengthNode,
-    PitchClassChromaNode,
     SpectralCentroidNode,
     SpectralFluxNode,
     ZeroCrossingRateNode,
@@ -38,6 +36,11 @@ from backend.nodes.pipelines.auditory.filter.high_filter import HighFilterPipeli
 from backend.nodes.pipelines.auditory.filter.low_filter import LowFilterPipelineNode
 from backend.nodes.pipelines.auditory.rms import RMSPipelineNode
 from backend.nodes.pipelines.transforms.operator_node import OperatorPipelineNode
+from backend.nodes.pipelines.transforms.correlate_node import CorrelateNode
+from backend.nodes.pipelines.transforms.dimensional_flattening_node import DimensionalFlatteningNode
+from backend.nodes.pipelines.transforms.cosine_angle_node import CosineAngleNode
+from backend.nodes.pipelines.transforms.array_reshaper_node import ArrayReshaperNode
+from backend.nodes.pipelines.transforms.blend_node import BlendNode
 from backend.nodes.pipelines.transforms.clip_node import ClipNode
 from backend.nodes.pipelines.transforms.peakfilter_node import PeakFilterNode
 from backend.nodes.pipelines.transforms.threshold_filter_node import ThresholdFilterNode
@@ -54,6 +57,7 @@ from backend.nodes.broadcast.broadcast_addition import BroadcastAdditionNode
 from backend.nodes.routing_node import GatheringNode
 from backend.nodes.stream import StreamPlayerNode, StreamMicNode
 from backend.nodes.visual.bar_graph_chart import BarGraphChartNode
+from backend.nodes.visual.clustering_node import ClusteringNode
 from backend.nodes.visual.multi_line_chart import MultiLineChartNode
 from backend.nodes.visual.single_line_chart import SingleLineChartNode
 from backend.nodes.simple.constant_array import ConstantArrayNode
@@ -100,8 +104,6 @@ nodes = [
     SpectralFluxNode,
     OnsetStrengthNode,
     SpectralCentroidNode,
-    PitchClassChromaNode,
-    ChromaPrismNode,
     WindowNode,
     AveragedWindowFct,
     CeilWindowFct,
@@ -109,6 +111,7 @@ nodes = [
     MaxWindowFct,
     SumWindowFct,
     BarGraphChartNode,
+    ClusteringNode,
     MultiLineChartNode,
     SingleLineChartNode,
     RainbowNode,
@@ -117,6 +120,11 @@ nodes = [
     RollingNode,
     ValueTransformerPipelineNode,
     OperatorPipelineNode,
+    CorrelateNode,
+    DimensionalFlatteningNode,
+    CosineAngleNode,
+    ArrayReshaperNode,
+    BlendNode,
     ClipNode,
     PeakFilterNode,
     ThresholdFilterNode,

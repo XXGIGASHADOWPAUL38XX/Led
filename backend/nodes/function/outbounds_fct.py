@@ -42,6 +42,10 @@ class OutboundsFctNode(CNode, AudioUpdatable):
         self.length = Parameter(self, 'length', length, minimum=1, maximum=4096, integer=True)
         self.data = AnalysableElement(self, "data", ElementValue(np.zeros(self.length.value)))
 
+    def parameters_changed(self, name):
+        if name == 'length':
+            self.data.value = np.zeros(int(self.length.value))
+
     def c_update(self):
         half_length = (self.length.value + 1) // 2
         half_part = np.linspace(

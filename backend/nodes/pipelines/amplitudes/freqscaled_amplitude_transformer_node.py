@@ -1,30 +1,32 @@
-from backend.components.elements.parameters import Parameter, DataElement
+from backend.components.elements.parameters import Parameter
 import numpy as np
 
-from config import FREQ_BINS
 
 from backend.components.elements import AnalysableElement
 from backend.components.elements.element_value import ElementValue
 from backend.overrides.CNode import CNode
+from backend.overrides.point_count_node import PointCountNode
 from backend.nodes.pipelines.amplitudes.amplitude_transformer import AmplitudesTransformer
 
-class FreqScaledAmplitudesTransformerNode(CNode, AmplitudesTransformer):
+class FreqScaledAmplitudesTransformerNode(PointCountNode, AmplitudesTransformer):
     """Aggregate spectrum neighborhoods with index-dependent widths.
 
-    Input `input_data` and output `data` are FREQ_BINS vectors. Configure
+    Input `input_data` and output `data` are number_points vectors. Configure
     `correlation_weight_min` to widen neighborhoods toward higher indices;
     each audio update sums values divided by normalized ramp weights, then
     applies the constructor `log` exponent. `powering` is currently unused."""
 
+    # Point count follows newly connected spectra and remains editable.
     nodeName = "FreqScaledAmplitudesTransformer"
 
     def __init__(
         self,
-        input_data: np.ndarray = np.zeros(FREQ_BINS),
+        input_data: np.ndarray | None = None,
         powering: float = 1.,
         log: float = 1.,
         correlation_weight_min: int | float = 50,
         alias: str | None = None,
+            number_points: int | None = None,
     ) -> None:
         terminals = {
             "input_data": {"io": "in"},
@@ -33,12 +35,12 @@ class FreqScaledAmplitudesTransformerNode(CNode, AmplitudesTransformer):
 
         CNode.__init__(self, self.nodeName, terminals, alias=alias, powering=powering, log=log)
 
-        self.input_data = DataElement(self, 'input_data', ElementValue(input_data))
+        self.init_points(number_points, input_data=(input_data, ()))
         self.powering = Parameter(self, 'powering', powering, minimum=0, maximum=10)
         self.log = Parameter(self, 'log', log, minimum=0.01, maximum=10)
         self.log.valueChanged.connect(self._log_changed)
         self.correlation_weight_min = Parameter(self, 'correlation_weight_min', correlation_weight_min, minimum=0.001, maximum=300)
-        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(FREQ_BINS)))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(int(self.number_points.value))))
 
     def c_update(self):
         self.transform_amplitudes(self.input_data.value)

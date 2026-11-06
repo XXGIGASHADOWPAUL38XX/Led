@@ -1,4 +1,4 @@
-from backend.components.elements.parameters import Parameter, validate_shape
+from backend.components.elements.parameters import DataElement, Parameter, validate_shape
 import numpy as np
 
 from backend.updatable.updatable import AudioUpdatable
@@ -14,15 +14,20 @@ class BufferNode(ArrayInputNode, AudioUpdatable):
     editable and must match connected data. Output `data` has shape
     (*shape[:-1], length), oldest to newest. Mono and multichannel arrays
     are supported. Chunks longer than length retain their newest samples.
-    Legacy `chunk_size` sets the last input dimension when unconnected.
+    Optional `frame_id` appends each source block only once, even when graph
+    ticks run faster than the audio callback. Legacy `chunk_size` sets the
+    last input dimension when unconnected.
     """
 
     nodeName = 'Buffer'
+    input_shapes = {'frame_id': (1,)}
 
     def __init__(self, indata=None, chunk_size=CHUNK_SIZE, length=FFT_SIZE,
-                 alias: str | None = None, shape=None):
-        super().__init__(self.nodeName, {'indata': {'io': 'in'}, 'data': {'io': 'out'}}, alias=alias)
-        self.length = Parameter(self, 'length', length, minimum=1, maximum=4096, integer=True)
+                 alias: str | None = None, shape=None, frame_id=None):
+        super().__init__(self.nodeName, {'indata': {'io': 'in'}, 'frame_id': {'io': 'in'}, 'data': {'io': 'out'}}, alias=alias)
+        self.frame_id = DataElement(self, 'frame_id', frame_id)
+        self._last_frame = None
+        self.length = Parameter(self, 'length', length, minimum=1, maximum=65536, integer=True)
         self.init_array_input('indata', indata, shape, (2, chunk_size))
         self.chunk_size = Parameter(self, 'chunk_size', self.shape.value[-1], minimum=1, maximum=65536, integer=True)
         self.validate_parameters({})
@@ -52,6 +57,11 @@ class BufferNode(ArrayInputNode, AudioUpdatable):
             self.data.value = np.zeros(self.output_shape())
 
     def c_update(self):
+        if self.frame_id.value is not None:
+            current = int(np.asarray(self.frame_id.value).item())
+            if current == self._last_frame:
+                return
+            self._last_frame = current
         self.roll()
 
     def roll(self):

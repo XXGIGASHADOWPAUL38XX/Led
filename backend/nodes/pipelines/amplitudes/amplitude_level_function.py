@@ -1,5 +1,6 @@
 from backend.components.elements.parameters import Parameter, DataElement
 import numpy as np
+from config import FREQ_BINS
 
 from backend.components.elements import AnalysableElement
 from backend.components.elements.element_value import ElementValue
@@ -19,13 +20,13 @@ class AmplitudesLevelFunction(CNode):
 
     def __init__(
         self,
-        number_points: int,
+        number_points: int = FREQ_BINS,
         offset: float = 0.85,
         drop: float = 0.6,
-        drop_center: int = 75,
+        drop_center: int | None = None,
         drop_width: int = 10,
         rise: float = 0.15,
-        rise_center: int = 225,
+        rise_center: int | None = None,
         rise_width: int = 10,
 
     ) -> None:
@@ -41,11 +42,11 @@ class AmplitudesLevelFunction(CNode):
         self.offset = Parameter(self, 'offset', offset, minimum=0.0, maximum=1.5)
 
         self.drop = Parameter(self, 'drop', drop, minimum=0.0, maximum=1.0)
-        self.drop_center = Parameter(self, 'drop_center', drop_center, minimum=0, maximum=number_points // 2, integer=True)
+        self.drop_center = Parameter(self, 'drop_center', number_points // 4 if drop_center is None else drop_center, minimum=0, maximum=number_points // 2, integer=True)
         self.drop_width = Parameter(self, 'drop_width', drop_width, minimum=1, maximum=max(10, number_points // 5), integer=True)
 
         self.rise = Parameter(self, 'rise', rise, minimum=0.0, maximum=0.5)
-        self.rise_center = Parameter(self, 'rise_center', rise_center, minimum=number_points // 2, maximum=number_points, integer=True)
+        self.rise_center = Parameter(self, 'rise_center', number_points * 3 // 4 if rise_center is None else rise_center, minimum=number_points // 2, maximum=number_points, integer=True)
         self.rise_width = Parameter(self, 'rise_width', rise_width, minimum=1, maximum=max(10, number_points // 5), integer=True)
 
         for parameter in (self.number_points, self.offset, self.drop, self.drop_center,

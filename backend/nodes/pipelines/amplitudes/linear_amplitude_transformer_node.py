@@ -1,72 +1,84 @@
-from backend.components.elements.parameters import Parameter, DataElement
+from backend.components.elements.parameters import Parameter
 import numpy as np
 
-from config import FREQ_BINS
 from backend.components.elements import AnalysableElement
 from backend.components.elements.element_value import ElementValue
 from backend.overrides.CNode import CNode
+from backend.overrides.point_count_node import PointCountNode
 from backend.nodes.pipelines.amplitudes.amplitude_transformer import AmplitudesTransformer
 
-class LinearAmplitudesTransformerNode(CNode, AmplitudesTransformer):
-    """Apply optional triangular correlation and an exponent to a spectrum.
+class LinearAmplitudesTransformerNode(PointCountNode, AmplitudesTransformer):
+    """Exponentiate a spectrum without modifying its source.
 
-    Inputs `input_data`, `correlation_offset`, and `correlation_step` produce
-    output `data` shaped (FREQ_BINS,) each audio update. Correlation runs only
-    when both controls are supplied; step must be nonzero. The constructor
-    `log` is an exponent; without correlation, the input is modified in place.
-    `powering` is currently unused."""
+    `input_data` and output `data` have shape (number_points,). The editable
+    point count adopts newly connected spectra. `log` is the exponent;
+    `powering` is unused. Use Correlate before this node to spread values.
+    """
 
+    # Point count follows newly connected spectra and remains editable.
     nodeName = "LinearAmplitudesTransformer"
 
     def __init__(
             self,
-            input_data: np.ndarray = np.zeros(FREQ_BINS),
-            correlation_offset: int | float | None = None,
-            correlation_step: int | float | None = None,
+            input_data: np.ndarray | None = None,
             powering: float = 1.,
             log: float = 1.,
             alias: str | None = None,
+            number_points: int | None = None,
     ) -> None:
         terminals = {
             "input_data": {"io": "in"},
-            "correlation_offset": {"io": "in"},
-            "correlation_step": {"io": "in"},
             "data": {"io": "out"},
         }
 
         CNode.__init__(self, self.nodeName, terminals, alias=alias, powering=powering, log=log)
 
-        self.input_data = DataElement(self, 'input_data', ElementValue(input_data))
-        self.correlation_offset = Parameter(self, 'correlation_offset', correlation_offset, minimum=0, maximum=1, optional=True)
-        self.correlation_step = Parameter(self, 'correlation_step', correlation_step, minimum=0.001, maximum=1, optional=True)
+        self.init_points(number_points, input_data=(input_data, ()))
         self.powering = Parameter(self, 'powering', powering, minimum=0, maximum=10)
         self.log = Parameter(self, 'log', log, minimum=0.01, maximum=10)
         self.log.valueChanged.connect(self._log_changed)
-        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(FREQ_BINS)))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(int(self.number_points.value))))
 
     @staticmethod
-    def _scalar(value):
-        if value is None:
-            return None
-        return float(np.asarray(value).reshape(-1)[0])
+    def migrate_graph(node, graph):
+        parameters = node.setdefault('parameters', {})
+        controls = {'correlation_offset', 'correlation_step'}
+        incoming = [edge for edge in graph['connections'] if edge['target']['nodeId'] == node['id']]
+        if not controls.intersection(parameters) and not any(edge['target']['element'] in controls for edge in incoming):
+            return
+        values = {name: parameters.pop(name, default) for name, default in
+                  (('correlation_offset', 1.), ('correlation_step', 0.))}
+        if any(value is None for value in values.values()):
+            values = {'correlation_offset': 1., 'correlation_step': 0.}
+        ids = {item['id'] for item in graph['nodes']}
+        name = f"{node['id']} correlation"
+        while name in ids:
+            name += '_'
+        if parameters.get('input_data') is not None:
+            values['input_data'] = parameters['input_data']
+        else:
+            from config import FREQ_BINS
+            values['shape'] = [parameters.get('number_points') or FREQ_BINS]
+        for edge in incoming:
+            target = edge['target']
+            if target['element'] in controls | {'input_data'}:
+                target['nodeId'] = name
+                if target['element'] == 'input_data':
+                    values['input_data'] = edge['source']
+                    values.pop('shape', None)
+        x, y = node.get('position', [0, 0])
+        graph['nodes'].append({'id': name, 'type': 'Correlate',
+                               'position': [x - 430, y + 500], 'parameters': values})
+        parameters['input_data'] = {'nodeId': name, 'element': 'data'}
+        edge_ids = {edge['id'] for edge in graph['connections']}
+        edge_id = f'{name}:data'
+        while edge_id in edge_ids:
+            edge_id += '_'
+        graph['connections'].append({'id': edge_id, 'source': parameters['input_data'],
+                                     'target': {'nodeId': node['id'], 'element': 'input_data'}})
 
     def c_update(self):
         self.transform_amplitudes(self.input_data.value)
 
     def transform_amplitudes(self, data):
-        updated_amplitudes = data
-        correlation_offset = self._scalar(self.correlation_offset.value)
-        correlation_step = self._scalar(self.correlation_step.value)
-        if correlation_offset is not None and correlation_step is not None:
-            updated_amplitudes = np.correlate(
-                updated_amplitudes,
-                np.concatenate(
-                    (
-                        np.arange(1 - correlation_offset, 1, correlation_step),
-                        np.arange(1, 1 - correlation_offset - correlation_step, -correlation_step)
-                    )
-                ),
-                mode="same"
-            )
-
-        self.data.value[:] = super().transform_amplitudes(updated_amplitudes)
+        np.power(data, self.log.value, out=self.data.value)

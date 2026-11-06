@@ -3,9 +3,10 @@ import type { NodeDefinition } from "../definition.ts";
 export default {
   "type": "ValueTransformer",
   "title": "Value Transformer",
-  "description": "Map scalar or vector values between numeric intervals.",
+  "description": "Map numeric arrays between intervals, preserving an editable, adaptive shape.",
   "category": "transforms",
   "fields": [
+    { "name": "shape", "control": "shape", "label": "Input shape", "rebuild": true },
     {
       "name": "input_value",
       "control": "port"

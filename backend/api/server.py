@@ -74,10 +74,11 @@ class Server:
                         await self.router.dispatch(session, message)
                 except (ValueError, TypeError, KeyError) as error:
                     await session.send(event("error", {"message": str(error)}, self.runtime.revision))
-        except ConnectionClosed:
-            pass
+        except ConnectionClosed as error:
+            logger.warning("WebSocket disconnected: peer=%s %s", socket.remote_address, error)
         finally:
             self.sessions.discard(session)
+            logger.info("WebSocket closed: peer=%s code=%s reason=%s", socket.remote_address, socket.close_code, socket.close_reason)
             for job in session.jobs:
                 job.cancel()
             if session.jobs:

@@ -1,6 +1,7 @@
 # Core runtime dependencies inferred from project imports
 numpy
 scipy
+scikit-learn>=1.8
 sounddevice
 pyserial
 crcmod

@@ -10,8 +10,8 @@ export class BackendConnection {
   private pending = new Map<number, { resolve: (result: unknown) => void; reject: (error: Error) => void; timeout: ReturnType<typeof setTimeout> }>();
 
   private receive: (message: Message) => void;
-  private status: (status: ConnectionStatus) => void;
-  constructor(receive: (message: Message) => void, status: (status: ConnectionStatus) => void) {
+  private status: (status: ConnectionStatus, detail?: string) => void;
+  constructor(receive: (message: Message) => void, status: (status: ConnectionStatus, detail?: string) => void) {
     this.receive = receive;
     this.status = status;
   }
@@ -23,13 +23,16 @@ export class BackendConnection {
   }
 
   private open() {
+    if (this.stopped) return;
+    this.reconnect = null;
     this.status("connecting");
     const url = process.env.NEXT_PUBLIC_BACKEND_URL ?? `ws://${window.location.hostname}:8000/ws`;
     const socket = new WebSocket(url);
     this.socket = socket;
     socket.binaryType = "arraybuffer";
-    socket.onopen = () => this.status("connected");
+    socket.onopen = () => { if (this.socket === socket) this.status("connected"); };
     socket.onmessage = (event) => {
+      if (this.socket !== socket) return;
       try {
         const message = decodeMessage(event.data);
         this.receive(message);
@@ -46,13 +49,13 @@ export class BackendConnection {
         this.receive({ type: "error", payload: { message: error instanceof Error ? error.message : String(error) } });
       }
     };
-    socket.onclose = () => {
+    socket.onclose = (event) => {
       if (this.socket !== socket) return;
-      this.status("offline");
+      this.socket = null;
+      this.status("offline", `WebSocket closed (${event.code}): ${event.reason || "connection lost"}`);
       this.rejectPending();
       if (!this.stopped) this.reconnect = setTimeout(() => this.open(), 1500);
     };
-    socket.onerror = () => socket.close();
   }
 
   send(type: string, payload: Record<string, unknown>, requestId?: number) {
@@ -78,6 +81,7 @@ export class BackendConnection {
   stop() {
     this.stopped = true;
     if (this.reconnect) clearTimeout(this.reconnect);
+    this.reconnect = null;
     const socket = this.socket;
     this.socket = null;
     socket?.close();

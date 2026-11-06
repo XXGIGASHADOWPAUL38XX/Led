@@ -6,6 +6,7 @@ export default {
   "description": "Move an RGB gradient window according to spectral center frequency.",
   "category": "visual",
   "fields": [
+    { "name": "number_points", "control": "slider", "label": "Points", "rebuild": true },
     {
       "name": "input_frequencies",
       "control": "port"

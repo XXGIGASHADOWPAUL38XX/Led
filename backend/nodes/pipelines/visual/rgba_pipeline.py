@@ -2,24 +2,25 @@ from backend.components.elements.parameters import DataElement
 import numpy as np
 
 from backend.pipelines.pipeline import VisualPipeline
-from config import FREQ_BINS
 from backend.components.elements.element_value import ElementValue
 from backend.overrides.CNode import CNode
+from backend.overrides.point_count_node import PointCountNode
 
-class RGBAPipelineNode(VisualPipeline, CNode):
+class RGBAPipelineNode(VisualPipeline, PointCountNode):
     """Combine per-position RGB colors and normalized opacity.
 
-    Inputs `rgb` shaped (FREQ_BINS, 3) in [0, 255] and `alpha` shaped
-    (FREQ_BINS,) in [0, 1] produce `rgba` shaped (FREQ_BINS, 4) each visual
+    Inputs `rgb` shaped (number_points, 3) in [0, 255] and `alpha` shaped
+    (number_points,) in [0, 1] produce `rgba` shaped (number_points, 4) each visual
     update. Alpha is multiplied by 255; values are not clipped."""
 
     nodeName = "RGBAPipeline"
 
     def __init__(
         self,
-        rgb: np.ndarray = np.zeros((FREQ_BINS, 3)),
-        alpha: np.ndarray = np.zeros(FREQ_BINS),
+        rgb: np.ndarray | None = None,
+        alpha: np.ndarray | None = None,
         alias: str | None = None,
+        number_points: int | None = None,
     ) -> None:
         terminals = {
             "rgb": {"io": "in"},
@@ -29,12 +30,14 @@ class RGBAPipelineNode(VisualPipeline, CNode):
         VisualPipeline.__init__(self)
         CNode.__init__(self, node_name=self.nodeName, terminals=terminals, alias=alias)
 
-        self.rgb = DataElement(self, 'rgb', ElementValue(rgb))
-        self.alpha = DataElement(self, 'alpha', ElementValue(alpha))
-        self.rgba = DataElement(self, 'rgba', ElementValue(np.zeros((FREQ_BINS, 4))))
+        self.init_points(number_points, rgb=(rgb, (3,)), alpha=(alpha, ()))
+        self.rgba = DataElement(self, 'rgba', ElementValue(np.zeros((int(self.number_points.value), 4))))
+
+    def resize_points(self):
+        self.rgba.value = np.zeros((int(self.number_points.value), 4))
 
     def c_update(self):
-        rgb = self.rgb.value[:FREQ_BINS]
+        rgb = self.rgb.value
 
         self.rgba.value[:] = np.concatenate(
             (rgb, self.alpha.value[:, np.newaxis] * 255.), axis=1

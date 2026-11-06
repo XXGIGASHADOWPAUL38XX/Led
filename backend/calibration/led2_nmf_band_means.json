@@ -1,0 +1,364 @@
+{
+  "version": 1,
+  "created_at": "2026-11-02T20:40:39.900634+00:00",
+  "playlist_url": "https://soundcloud.com/trg-electro/sets/led2",
+  "template": "backend/templates/template_clustering.led",
+  "feature_graph": {
+    "nodes": [
+      {
+        "id": "SoundCloud",
+        "type": "SCPlaylistPlayer",
+        "position": [
+          0,
+          500
+        ],
+        "parameters": {
+          "playlist_url": "https://soundcloud.com/trg-electro/sets/led2"
+        }
+      },
+      {
+        "id": "Audio stream",
+        "type": "StreamPlayer",
+        "position": [
+          430,
+          500
+        ],
+        "parameters": {
+          "audio_in": {
+            "nodeId": "SoundCloud",
+            "element": "audio"
+          },
+          "sample_rate_in": {
+            "nodeId": "SoundCloud",
+            "element": "sample_rate"
+          },
+          "enqueue_token": {
+            "nodeId": "SoundCloud",
+            "element": "enqueue_token"
+          },
+          "sample_rate": 40960,
+          "chunk_size": 2048
+        }
+      },
+      {
+        "id": "Audio buffer",
+        "type": "Buffer",
+        "position": [
+          860,
+          500
+        ],
+        "parameters": {
+          "indata": {
+            "nodeId": "Audio stream",
+            "element": "chunk"
+          },
+          "shape": [
+            2,
+            2048
+          ],
+          "length": 2048
+        }
+      },
+      {
+        "id": "Frequency spectrum",
+        "type": "Amplitudes",
+        "position": [
+          1290,
+          500
+        ],
+        "parameters": {
+          "buffer": {
+            "nodeId": "Audio buffer",
+            "element": "data"
+          },
+          "shape": [
+            2,
+            2048
+          ],
+          "fft_size": 2048,
+          "freq_bins": 180,
+          "min_frequency": 20,
+          "max_frequency": 16000,
+          "powering": 0
+        }
+      },
+      {
+        "id": "Feature vector",
+        "type": "OperatorPipeline",
+        "position": [
+          1720,
+          500
+        ],
+        "parameters": {
+          "arguments": [
+            "mean(reshape(",
+            {
+              "nodeId": "Frequency spectrum",
+              "element": "data"
+            },
+            ", (9, 20)), axis=1)"
+          ],
+          "input_names": [
+            "amplitudes"
+          ],
+          "operations": [
+            {
+              "name": "band_01",
+              "arguments": [
+                "mean(",
+                {
+                  "nodeId": "Frequency spectrum",
+                  "element": "data"
+                },
+                "[0:20])"
+              ]
+            },
+            {
+              "name": "band_02",
+              "arguments": [
+                "mean(",
+                {
+                  "nodeId": "Frequency spectrum",
+                  "element": "data"
+                },
+                "[20:40])"
+              ]
+            },
+            {
+              "name": "band_03",
+              "arguments": [
+                "mean(",
+                {
+                  "nodeId": "Frequency spectrum",
+                  "element": "data"
+                },
+                "[40:60])"
+              ]
+            },
+            {
+              "name": "band_04",
+              "arguments": [
+                "mean(",
+                {
+                  "nodeId": "Frequency spectrum",
+                  "element": "data"
+                },
+                "[60:80])"
+              ]
+            },
+            {
+              "name": "band_05",
+              "arguments": [
+                "mean(",
+                {
+                  "nodeId": "Frequency spectrum",
+                  "element": "data"
+                },
+                "[80:100])"
+              ]
+            },
+            {
+              "name": "band_06",
+              "arguments": [
+                "mean(",
+                {
+                  "nodeId": "Frequency spectrum",
+                  "element": "data"
+                },
+                "[100:120])"
+              ]
+            },
+            {
+              "name": "band_07",
+              "arguments": [
+                "mean(",
+                {
+                  "nodeId": "Frequency spectrum",
+                  "element": "data"
+                },
+                "[120:140])"
+              ]
+            },
+            {
+              "name": "band_08",
+              "arguments": [
+                "mean(",
+                {
+                  "nodeId": "Frequency spectrum",
+                  "element": "data"
+                },
+                "[140:160])"
+              ]
+            },
+            {
+              "name": "band_09",
+              "arguments": [
+                "mean(",
+                {
+                  "nodeId": "Frequency spectrum",
+                  "element": "data"
+                },
+                "[160:180])"
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "connections": [
+      {
+        "id": "band-color:0",
+        "source": {
+          "nodeId": "SoundCloud",
+          "element": "audio"
+        },
+        "target": {
+          "nodeId": "Audio stream",
+          "element": "audio_in"
+        }
+      },
+      {
+        "id": "band-color:1",
+        "source": {
+          "nodeId": "SoundCloud",
+          "element": "sample_rate"
+        },
+        "target": {
+          "nodeId": "Audio stream",
+          "element": "sample_rate_in"
+        }
+      },
+      {
+        "id": "band-color:2",
+        "source": {
+          "nodeId": "SoundCloud",
+          "element": "enqueue_token"
+        },
+        "target": {
+          "nodeId": "Audio stream",
+          "element": "enqueue_token"
+        }
+      },
+      {
+        "id": "band-color:3",
+        "source": {
+          "nodeId": "Audio stream",
+          "element": "chunk"
+        },
+        "target": {
+          "nodeId": "Audio buffer",
+          "element": "indata"
+        }
+      },
+      {
+        "id": "band-color:4",
+        "source": {
+          "nodeId": "Audio buffer",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Frequency spectrum",
+          "element": "buffer"
+        }
+      },
+      {
+        "id": "band-color:14",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Feature vector",
+          "element": "frequency spectrum:data"
+        }
+      }
+    ]
+  },
+  "feature_graph_sha256": "11652021df9d62387688725700a13bdc2613c270c608298c70c106eb59ce4865",
+  "sample_rate": 40960,
+  "chunk_size": 2048,
+  "processing_tick_seconds": 0.005,
+  "training_vectors": 29154,
+  "feature_count": 9,
+  "tracks": [
+    {
+      "id": "1907160656",
+      "title": "KDrew - Say What You Wanna",
+      "url": "https://soundcloud.com/kdrewmusic/kdrew-say-what-you-wanna",
+      "duration_seconds": 183.3277099609375,
+      "processing_frames": 36670,
+      "training_vectors": 3667,
+      "audio_sha256": "f7565bd523b587e02abd878be966c0e5c68359fb0a6305fac048e41eb4f48b18"
+    },
+    {
+      "id": "2325674393",
+      "title": "Weightless (feat. Dia Frampton)",
+      "url": "https://soundcloud.com/mitis/weightless",
+      "duration_seconds": 220.4464599609375,
+      "processing_frames": 44090,
+      "training_vectors": 4409,
+      "audio_sha256": "ec2ef88be8f6187a779af47b6dff32a45a4c35d7127bec4781e8e6732ebd4a1d"
+    },
+    {
+      "id": "2263369355",
+      "title": "the WORLD must go DIGITAL!!!",
+      "url": "https://soundcloud.com/soonyoungmusic/the-world-must-go-digital-1",
+      "duration_seconds": 147.158740234375,
+      "processing_frames": 29440,
+      "training_vectors": 2944,
+      "audio_sha256": "f6cd652263a63045f7610b55ff26e4e705d4a588ec557d437c4022eb7587351f"
+    },
+    {
+      "id": "2152504656",
+      "title": "S&M - Rihanna X Migos [CEEZY REMIX]",
+      "url": "https://soundcloud.com/ceezmusic69/sm-rihanna-x-migos-ceezy-remix",
+      "duration_seconds": 90.9839599609375,
+      "processing_frames": 18200,
+      "training_vectors": 1820,
+      "audio_sha256": "b922ebd026e1ab30ca05947564789ed6a3e6989448cbd68e005b8595d94014b9"
+    },
+    {
+      "id": "1556413195",
+      "title": "KERO - Operator",
+      "url": "https://soundcloud.com/keromusic_official/kero-operator-2",
+      "duration_seconds": 195.2016357421875,
+      "processing_frames": 39050,
+      "training_vectors": 3905,
+      "audio_sha256": "b8829c1cb3a4ec68777fc85224be569799ac39ea163594a014a440728552b356"
+    },
+    {
+      "id": "1267452457",
+      "title": "Scintillate VIP",
+      "url": "https://soundcloud.com/enum-music/scintillate-vip",
+      "duration_seconds": 232.0464599609375,
+      "processing_frames": 46410,
+      "training_vectors": 4641,
+      "audio_sha256": "7aa99fc1a91a0b2ea17d5ca1f951549a161062ef9fd92c636022676b23c91a08"
+    },
+    {
+      "id": "1764459885",
+      "title": "Creep",
+      "url": "https://soundcloud.com/ymirymirymirymir/creep",
+      "duration_seconds": 230.8156982421875,
+      "processing_frames": 46170,
+      "training_vectors": 4617,
+      "audio_sha256": "03506f61a2339311f261bb287baae9eae379242b13da08207983c46b56589dd0"
+    },
+    {
+      "id": "2325279152",
+      "title": "Synthtonix - Sinister [SCC228]",
+      "url": "https://soundcloud.com/swerve_cc/synthtonix-sinister-scc228",
+      "duration_seconds": 157.5464599609375,
+      "processing_frames": 31510,
+      "training_vectors": 3151,
+      "audio_sha256": "234021787ac547760d2cb2bb257a9fc47a9f9ec3a8278d7f293b833bdec0cbfb"
+    }
+  ],
+  "nmf": {
+    "components": 2,
+    "init": "nndsvda",
+    "random_state": 0,
+    "max_iter": 10000
+  },
+  "model_sha256": "8484dca4c269e02f47c1455389963604a1f232140cc095bdc7bcbb388541bdee"
+}

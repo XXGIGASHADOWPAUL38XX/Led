@@ -6,6 +6,7 @@ export default {
   "description": "Combine per-position RGB colors and normalized opacity.",
   "category": "visual",
   "fields": [
+    { "name": "number_points", "control": "slider", "label": "Points", "rebuild": true },
     {
       "name": "rgb",
       "control": "port"

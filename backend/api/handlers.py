@@ -85,6 +85,10 @@ class Handlers:
             raise ValueError("This node has no manual stream lifecycle")
         node.start()
 
+    async def node_recalibrate(self, session, payload):
+        self.runtime.nodes[payload['nodeId']].recalibrate()
+        return {'nodeId': payload['nodeId']}
+
     async def node_stop(self, session, payload):
         node = self.runtime.nodes[payload["nodeId"]]
         if node.nodeName not in {"StreamMic", "StreamPlayer"}:

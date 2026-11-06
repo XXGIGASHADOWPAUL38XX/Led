@@ -6,6 +6,7 @@ export default {
   "description": "Keep a rolling mono or multichannel audio window; input shape adapts when linked.",
   "category": "buffer",
   "fields": [
+    { "name": "frame_id", "control": "port", "label": "Frame ID" },
     {
       "name": "indata",
       "control": "port"

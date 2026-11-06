@@ -34,8 +34,6 @@ class NodeCatalog:
                 kwargs = {}
                 if name == "Gathering":
                     kwargs.update(input_datas=[support.data], input_booleans=[support.length])
-                if name == "AmplitudeLevelFunction":
-                    kwargs["number_points"] = 300
                 node = cls(**kwargs)
                 self.prototypes.append(node)
                 if name == "ESP32":

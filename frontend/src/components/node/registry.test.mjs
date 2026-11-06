@@ -4,7 +4,7 @@ import { nodeDefinitions } from './registry.ts';
 import { completeConfiguration, compatiblePorts } from '../../lib/nodes/configuration.ts';
 
 test('each node definition covers unique controls and existing visual outputs', () => {
-  assert.equal(Object.keys(nodeDefinitions).length, 66);
+  assert.equal(Object.keys(nodeDefinitions).length, 70);
   for (const [type, node] of Object.entries(nodeDefinitions)) {
     assert.equal(node.type, type);
     assert.ok(node.description && node.category && node.title);
@@ -26,6 +26,8 @@ test('unfinished references cannot be applied; literals and completed references
 });
 
 test('connection choices exclude incompatible array ranks and fixed dimensions', () => {
+  assert.equal(compatiblePorts({ shape: [1] }, { shape: [], variadic: true, accepts: [1] }), true);
+  assert.equal(compatiblePorts({ shape: [180] }, { shape: [], variadic: true, accepts: [1] }), false);
   assert.equal(compatiblePorts({ shape: [2, 2048] }, { shape: [2, 2048] }), true);
   assert.equal(compatiblePorts({ shape: [180] }, { shape: [0] }), true);
   assert.equal(compatiblePorts({ shape: [2, 100] }, { shape: [2, 335] }), false);
@@ -34,4 +36,11 @@ test('connection choices exclude incompatible array ranks and fixed dimensions',
   assert.equal(compatiblePorts({ shape: [4, 335] }, { shape: [2, 2048], adaptiveShape: true }), true);
   assert.equal(compatiblePorts({ shape: [] }, { shape: [2, 2048], adaptiveShape: true }), false);
   assert.equal(compatiblePorts({ shape: [2, 0] }, { shape: [2, 2048], adaptiveShape: true }), false);
+});
+
+test('adaptive point counts preserve vector and RGB channel requirements', () => {
+  assert.equal(compatiblePorts({ shape: [178] }, { shape: [180], adaptiveShape: true, accepts: [0] }), true);
+  assert.equal(compatiblePorts({ shape: [178, 3] }, { shape: [180], adaptiveShape: true, accepts: [0] }), false);
+  assert.equal(compatiblePorts({ shape: [178, 3] }, { shape: [180, 3], adaptiveShape: true, accepts: [0, 3] }), true);
+  assert.equal(compatiblePorts({ shape: [178, 4] }, { shape: [180, 3], adaptiveShape: true, accepts: [0, 3] }), false);
 });

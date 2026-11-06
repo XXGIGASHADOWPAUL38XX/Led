@@ -24,14 +24,14 @@ class FunctionNode(CNode):
     `point_<id>_x`, `point_<id>_y`, and `point_<id>_slope` accept one-element
     arrays; linked coordinates are clamped to [0, 1] and remain ordered.
     `controls` persists those source references. Input `input_data` supplies
-    the output shape, not its values; otherwise `number_points` sets length.
+    the trailing output shape, not its values; `number_points` sets length.
     Output `data` regenerates when controls or linked values change."""
 
     nodeName = 'Function'
 
-    def __init__(self, input_data: np.ndarray | None = None, number_points: int = FREQ_BINS,
+    def __init__(self, input_data: np.ndarray | None = None, number_points: int | None = None,
                  points=None, slopes=None, point_ids=None, controls=None, alias: str | None = None):
-        super().__init__(self.nodeName, {'input_data': {'io': 'in'}, 'number_points': {'io': 'in'}, 'data': {'io': 'out'}}, alias=alias)
+        super().__init__(self.nodeName, {'input_data': {'io': 'in', 'adaptiveShape': True}, 'number_points': {'io': 'in'}, 'data': {'io': 'out'}}, alias=alias)
         points = normalized_points(points) if point_ids is None else np.asarray(points, dtype=float)
         if points.ndim != 2 or points.shape[1] != 2 or len(points) < 2 or not np.isfinite(points).all() or np.any((points < 0) | (points > 1)) or np.any(np.diff(points[:, 0]) <= 0):
             raise ValueError('Provide ordered points in [0, 1] with distinct x coordinates')
@@ -43,7 +43,9 @@ class FunctionNode(CNode):
         if slopes.shape != (count - 1,) or not np.isfinite(slopes).all() or np.any(np.abs(slopes) > 1):
             raise ValueError('Provide one slope in [-1, 1] per segment')
         self.input_data = DataElement(self, 'input_data', ElementValue(input_data))
-        self.number_points = Parameter(self, 'number_points', number_points, minimum=1, maximum=4096, integer=True)
+        input_shape = np.shape(self.input_data.value)
+        output_count = (input_shape[0] if input_shape else FREQ_BINS) if number_points is None else number_points
+        self.number_points = Parameter(self, 'number_points', output_count, minimum=1, maximum=4096, integer=True)
         self.points = ArrayElement(self, 'points', points, min_value=0, max_value=1)
         self.slopes = ArrayElement(self, 'slopes', slopes, min_value=-1, max_value=1)
         self.point_ids = SequenceElement(self, 'point_ids', ids)
@@ -109,4 +111,4 @@ class FunctionNode(CNode):
 
     def _data_shape(self):
         data = self.input_data.value
-        return data.shape if isinstance(data, np.ndarray) else (int(self.number_points.value),)
+        return (int(self.number_points.value), *data.shape[1:]) if isinstance(data, np.ndarray) else (int(self.number_points.value),)

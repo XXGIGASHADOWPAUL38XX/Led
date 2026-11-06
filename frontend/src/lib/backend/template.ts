@@ -5,6 +5,7 @@ export type ViewSettings = {
   open?: boolean; title?: string; range?: [number, number] | null;
   historyLength?: number; lineColors?: Record<string, DisplayColor>;
   hiddenSeries?: string[]; expanded?: boolean;
+  axisRanges?: Record<string, [number, number]>;
 };
 export type DisplayState = Record<string, Record<string, ViewSettings>>;
 export type Template = { version: 1; graph: Graph; ui: DisplayState };
@@ -20,7 +21,7 @@ function endpoint(value: unknown) {
 }
 function validSettings(value: unknown) {
   if (!object(value)) return false;
-  const allowed = new Set(["open", "title", "range", "historyLength", "lineColors", "hiddenSeries", "expanded"]);
+  const allowed = new Set(["open", "title", "range", "historyLength", "lineColors", "hiddenSeries", "expanded", "axisRanges"]);
   if (Object.keys(value).some((key) => !allowed.has(key))) return false;
   if (value.open !== undefined && typeof value.open !== "boolean" || value.expanded !== undefined && typeof value.expanded !== "boolean") return false;
   if (value.title !== undefined && typeof value.title !== "string") return false;
@@ -28,6 +29,7 @@ function validSettings(value: unknown) {
   if (value.historyLength !== undefined && !(finite(value.historyLength) && Number.isInteger(value.historyLength) && value.historyLength >= 10 && value.historyLength <= 1000)) return false;
   if (value.hiddenSeries !== undefined && !(Array.isArray(value.hiddenSeries) && value.hiddenSeries.every((id) => typeof id === "string"))) return false;
   if (value.lineColors !== undefined && !(object(value.lineColors) && Object.values(value.lineColors).every((color) => Array.isArray(color) && [3, 4].includes(color.length) && color.every((channel) => finite(channel) && channel >= 0 && channel <= 255)))) return false;
+  if (value.axisRanges !== undefined && !(object(value.axisRanges) && Object.entries(value.axisRanges).every(([index, range]) => /^\d+$/.test(index) && Array.isArray(range) && range.length === 2 && range.every(finite) && range[0] !== range[1]))) return false;
   return true;
 }
 

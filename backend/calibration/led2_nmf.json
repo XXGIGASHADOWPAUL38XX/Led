@@ -1,0 +1,801 @@
+{
+  "version": 1,
+  "created_at": "2026-11-02T19:37:11.523037+00:00",
+  "playlist_url": "https://soundcloud.com/trg-electro/sets/led2",
+  "template": "backend/templates/template_clustering.led",
+  "feature_graph": {
+    "nodes": [
+      {
+        "id": "SoundCloud",
+        "type": "SCPlaylistPlayer",
+        "position": [
+          0,
+          900
+        ],
+        "parameters": {
+          "playlist_url": "https://soundcloud.com/trg-electro/sets/led2"
+        }
+      },
+      {
+        "id": "Audio stream",
+        "type": "StreamPlayer",
+        "position": [
+          430,
+          900
+        ],
+        "parameters": {
+          "audio_in": {
+            "nodeId": "SoundCloud",
+            "element": "audio"
+          },
+          "sample_rate_in": {
+            "nodeId": "SoundCloud",
+            "element": "sample_rate"
+          },
+          "enqueue_token": {
+            "nodeId": "SoundCloud",
+            "element": "enqueue_token"
+          },
+          "sample_rate": 44100,
+          "chunk_size": 2048
+        }
+      },
+      {
+        "id": "Audio buffer",
+        "type": "Buffer",
+        "position": [
+          860,
+          900
+        ],
+        "parameters": {
+          "indata": {
+            "nodeId": "Audio stream",
+            "element": "chunk"
+          },
+          "shape": [
+            2,
+            2048
+          ],
+          "length": 2048
+        }
+      },
+      {
+        "id": "Frequency spectrum",
+        "type": "Amplitudes",
+        "position": [
+          1290,
+          1900
+        ],
+        "parameters": {
+          "buffer": {
+            "nodeId": "Audio buffer",
+            "element": "data"
+          },
+          "shape": [
+            2,
+            2048
+          ],
+          "fft_size": 2048,
+          "freq_bins": 256,
+          "min_frequency": 20,
+          "max_frequency": 16000,
+          "powering": 0
+        }
+      },
+      {
+        "id": "RMS",
+        "type": "RMS",
+        "position": [
+          1290,
+          0
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Audio buffer",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Crest factor",
+        "type": "CrestFactor",
+        "position": [
+          1290,
+          360
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Audio buffer",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Zero crossing rate",
+        "type": "ZeroCrossingRate",
+        "position": [
+          1290,
+          720
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Audio buffer",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Sine periodicity",
+        "type": "SinPeriodicity",
+        "position": [
+          1290,
+          1080
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Audio buffer",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Mid / side energy",
+        "type": "MidSideEnergy",
+        "position": [
+          1290,
+          1440
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Audio buffer",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Spectral entropy",
+        "type": "Entropy",
+        "position": [
+          1720,
+          0
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Frequency spectrum",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Spectral flux",
+        "type": "SpectralFlux",
+        "position": [
+          1720,
+          360
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Frequency spectrum",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Onset strength",
+        "type": "OnsetStrength",
+        "position": [
+          1720,
+          720
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Frequency spectrum",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Spectral centroid \u00b7 Hz",
+        "type": "SpectralCentroid",
+        "position": [
+          1720,
+          1080
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Frequency spectrum",
+            "element": "data"
+          },
+          "frequencies": {
+            "nodeId": "Frequency spectrum",
+            "element": "frequencies"
+          }
+        }
+      },
+      {
+        "id": "Average frequency \u00b7 Hz",
+        "type": "AvgFrequencies",
+        "position": [
+          1720,
+          1500
+        ],
+        "parameters": {
+          "input_amplitudes": {
+            "nodeId": "Frequency spectrum",
+            "element": "data"
+          },
+          "input_frequencies": {
+            "nodeId": "Frequency spectrum",
+            "element": "frequencies"
+          }
+        }
+      },
+      {
+        "id": "All audio features",
+        "type": "Clustering",
+        "position": [
+          2580,
+          500
+        ],
+        "parameters": {
+          "inputs": [
+            {
+              "source": {
+                "nodeId": "RMS",
+                "element": "data"
+              },
+              "interval": [
+                0.3,
+                0.7
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Average frequency \u00b7 Hz",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                1800
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Spectral centroid \u00b7 Hz",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                800
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Spectral entropy",
+                "element": "data"
+              },
+              "interval": [
+                0.8,
+                0.95
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Spectral flux",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.4
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Onset strength",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.3
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Crest factor",
+                "element": "data"
+              },
+              "interval": [
+                1,
+                5
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Zero crossing rate",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.25
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Sine periodicity",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                1024
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Mid / side energy",
+                "element": "mid_energy"
+              },
+              "interval": [
+                0,
+                0.5
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Mid / side energy",
+                "element": "side_energy"
+              },
+              "interval": [
+                0,
+                0.1
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Mid / side energy",
+                "element": "mid_ratio"
+              },
+              "interval": [
+                0.5,
+                1
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "Feature vector",
+        "type": "OperatorPipeline",
+        "position": [
+          3010,
+          500
+        ],
+        "parameters": {
+          "arguments": [
+            {
+              "nodeId": "All audio features",
+              "element": "data"
+            },
+            "[:, 0]"
+          ],
+          "operations": [],
+          "input_names": [
+            "features"
+          ]
+        }
+      }
+    ],
+    "connections": [
+      {
+        "id": "clustering:0",
+        "source": {
+          "nodeId": "SoundCloud",
+          "element": "audio"
+        },
+        "target": {
+          "nodeId": "Audio stream",
+          "element": "audio_in"
+        }
+      },
+      {
+        "id": "clustering:1",
+        "source": {
+          "nodeId": "SoundCloud",
+          "element": "sample_rate"
+        },
+        "target": {
+          "nodeId": "Audio stream",
+          "element": "sample_rate_in"
+        }
+      },
+      {
+        "id": "clustering:2",
+        "source": {
+          "nodeId": "SoundCloud",
+          "element": "enqueue_token"
+        },
+        "target": {
+          "nodeId": "Audio stream",
+          "element": "enqueue_token"
+        }
+      },
+      {
+        "id": "clustering:3",
+        "source": {
+          "nodeId": "Audio stream",
+          "element": "chunk"
+        },
+        "target": {
+          "nodeId": "Audio buffer",
+          "element": "indata"
+        }
+      },
+      {
+        "id": "clustering:4",
+        "source": {
+          "nodeId": "Audio buffer",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Frequency spectrum",
+          "element": "buffer"
+        }
+      },
+      {
+        "id": "clustering:5",
+        "source": {
+          "nodeId": "Audio buffer",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "RMS",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "clustering:6",
+        "source": {
+          "nodeId": "Audio buffer",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Crest factor",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "clustering:7",
+        "source": {
+          "nodeId": "Audio buffer",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Zero crossing rate",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "clustering:8",
+        "source": {
+          "nodeId": "Audio buffer",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Sine periodicity",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "clustering:9",
+        "source": {
+          "nodeId": "Audio buffer",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Mid / side energy",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "clustering:10",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Spectral entropy",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "clustering:11",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Spectral flux",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "clustering:12",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Onset strength",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "clustering:13",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Spectral centroid \u00b7 Hz",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "clustering:14",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Spectral centroid \u00b7 Hz",
+          "element": "frequencies"
+        }
+      },
+      {
+        "id": "clustering:15",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Average frequency \u00b7 Hz",
+          "element": "input_amplitudes"
+        }
+      },
+      {
+        "id": "clustering:16",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Average frequency \u00b7 Hz",
+          "element": "input_frequencies"
+        }
+      },
+      {
+        "id": "All audio features:input_0",
+        "source": {
+          "nodeId": "RMS",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_0"
+        }
+      },
+      {
+        "id": "All audio features:input_1",
+        "source": {
+          "nodeId": "Average frequency \u00b7 Hz",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_1"
+        }
+      },
+      {
+        "id": "All audio features:input_2",
+        "source": {
+          "nodeId": "Spectral centroid \u00b7 Hz",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_2"
+        }
+      },
+      {
+        "id": "All audio features:input_3",
+        "source": {
+          "nodeId": "Spectral entropy",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_3"
+        }
+      },
+      {
+        "id": "All audio features:input_4",
+        "source": {
+          "nodeId": "Spectral flux",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_4"
+        }
+      },
+      {
+        "id": "All audio features:input_5",
+        "source": {
+          "nodeId": "Onset strength",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_5"
+        }
+      },
+      {
+        "id": "All audio features:input_6",
+        "source": {
+          "nodeId": "Crest factor",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_6"
+        }
+      },
+      {
+        "id": "All audio features:input_7",
+        "source": {
+          "nodeId": "Zero crossing rate",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_7"
+        }
+      },
+      {
+        "id": "All audio features:input_8",
+        "source": {
+          "nodeId": "Sine periodicity",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_8"
+        }
+      },
+      {
+        "id": "All audio features:input_9",
+        "source": {
+          "nodeId": "Mid / side energy",
+          "element": "mid_energy"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_9"
+        }
+      },
+      {
+        "id": "All audio features:input_10",
+        "source": {
+          "nodeId": "Mid / side energy",
+          "element": "side_energy"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_10"
+        }
+      },
+      {
+        "id": "All audio features:input_11",
+        "source": {
+          "nodeId": "Mid / side energy",
+          "element": "mid_ratio"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_11"
+        }
+      },
+      {
+        "id": "template-clustering:vector",
+        "source": {
+          "nodeId": "All audio features",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Feature vector",
+          "element": "all audio features:data"
+        }
+      }
+    ]
+  },
+  "feature_graph_sha256": "be7b77ae35f77dfed635fa4df692f5ad03404203759ba9ee5ecb63ce13e4b185",
+  "sample_rate": 44100,
+  "chunk_size": 2048,
+  "processing_tick_seconds": 0.005,
+  "training_vectors": 62771,
+  "feature_count": 12,
+  "tracks": [
+    {
+      "id": "1907160656",
+      "title": "KDrew - Say What You Wanna",
+      "url": "https://soundcloud.com/kdrewmusic/kdrew-say-what-you-wanna",
+      "duration_seconds": 183.3277097505669,
+      "processing_frames": 36669,
+      "training_vectors": 7896,
+      "audio_sha256": "f7565bd523b587e02abd878be966c0e5c68359fb0a6305fac048e41eb4f48b18"
+    },
+    {
+      "id": "2325674393",
+      "title": "Weightless (feat. Dia Frampton)",
+      "url": "https://soundcloud.com/mitis/weightless",
+      "duration_seconds": 220.44643990929706,
+      "processing_frames": 44091,
+      "training_vectors": 9494,
+      "audio_sha256": "ec2ef88be8f6187a779af47b6dff32a45a4c35d7127bec4781e8e6732ebd4a1d"
+    },
+    {
+      "id": "2263369355",
+      "title": "the WORLD must go DIGITAL!!!",
+      "url": "https://soundcloud.com/soonyoungmusic/the-world-must-go-digital-1",
+      "duration_seconds": 147.15873015873015,
+      "processing_frames": 29434,
+      "training_vectors": 6338,
+      "audio_sha256": "f6cd652263a63045f7610b55ff26e4e705d4a588ec557d437c4022eb7587351f"
+    },
+    {
+      "id": "2152504656",
+      "title": "S&M - Rihanna X Migos [CEEZY REMIX]",
+      "url": "https://soundcloud.com/ceezmusic69/sm-rihanna-x-migos-ceezy-remix",
+      "duration_seconds": 90.9839455782313,
+      "processing_frames": 18205,
+      "training_vectors": 3920,
+      "audio_sha256": "b922ebd026e1ab30ca05947564789ed6a3e6989448cbd68e005b8595d94014b9"
+    },
+    {
+      "id": "1556413195",
+      "title": "KERO - Operator",
+      "url": "https://soundcloud.com/keromusic_official/kero-operator-2",
+      "duration_seconds": 195.2016326530612,
+      "processing_frames": 39047,
+      "training_vectors": 8405,
+      "audio_sha256": "b8829c1cb3a4ec68777fc85224be569799ac39ea163594a014a440728552b356"
+    },
+    {
+      "id": "1267452457",
+      "title": "Scintillate VIP",
+      "url": "https://soundcloud.com/enum-music/scintillate-vip",
+      "duration_seconds": 232.04643990929705,
+      "processing_frames": 46413,
+      "training_vectors": 9994,
+      "audio_sha256": "7aa99fc1a91a0b2ea17d5ca1f951549a161062ef9fd92c636022676b23c91a08"
+    },
+    {
+      "id": "1764459885",
+      "title": "Creep",
+      "url": "https://soundcloud.com/ymirymirymirymir/creep",
+      "duration_seconds": 230.81569160997734,
+      "processing_frames": 46171,
+      "training_vectors": 9941,
+      "audio_sha256": "03506f61a2339311f261bb287baae9eae379242b13da08207983c46b56589dd0"
+    },
+    {
+      "id": "2325279152",
+      "title": "Synthtonix - Sinister [SCC228]",
+      "url": "https://soundcloud.com/swerve_cc/synthtonix-sinister-scc228",
+      "duration_seconds": 157.54643990929705,
+      "processing_frames": 31515,
+      "training_vectors": 6783,
+      "audio_sha256": "234021787ac547760d2cb2bb257a9fc47a9f9ec3a8278d7f293b833bdec0cbfb"
+    }
+  ],
+  "model_sha256": "6cf188d5134da3a617217f535408f7a7f41ae604e8fc2897a598016cd28244fd"
+}

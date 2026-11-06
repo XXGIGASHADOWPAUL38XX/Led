@@ -6,6 +6,7 @@ export default {
   "description": "Shape a spectrum with a supplied amplitude-level function.",
   "category": "amplitudes",
   "fields": [
+    { "name": "number_points", "control": "slider", "label": "Points", "rebuild": true },
     {
       "name": "input_data",
       "control": "port"

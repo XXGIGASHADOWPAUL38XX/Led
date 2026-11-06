@@ -7,8 +7,9 @@ from backend.overrides.CNode import CNode
 
 
 class ArrayInputNode(CNode):
-    def init_array_input(self, name, value, shape, default_shape):
+    def init_array_input(self, name, value, shape, default_shape, output_name='data'):
         self.array_input = name
+        self.array_output = output_name
         element = DataElement(self, name, ElementValue(value))
         vars(self)[name] = element
         self._placeholder = element.value is None
@@ -45,4 +46,4 @@ class ArrayInputNode(CNode):
             element = vars(self)[self.array_input]
             if self._placeholder and element._value_source is None:
                 element.value = np.zeros(validate_shape(self.shape.value))
-            self.data.value = np.zeros(self.output_shape())
+            vars(self)[self.array_output].value = np.zeros(self.output_shape())

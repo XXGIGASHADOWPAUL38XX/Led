@@ -1,0 +1,9 @@
+- Declarative, typed UI definitions: new nodes reuse the existing registry and generic form/view infrastructure.
+- Separation of responsibilities: canvas drawing lives in dedicated renderer functions; React manages configuration and lifecycle.
+- Efficient streaming: subscriptions are coalesced in a microtask, sorted deterministically, and skipped when unchanged.
+- Race protection: stale sockets cannot publish data, change status, or acknowledge current requests.
+- Resource cleanup: new subscriptions and pointer listeners are removed on effect cleanup; reconnect timers and HMR connections are cleaned up.
+- Bounded visualization state: scatter trails have configurable limits, reset during calibration/dimension changes, and reject nonfinite points.
+- Shared rendering logic: clustering and higher-dimensional scatter reuse the same axis-grid renderer.
+- Validated persistence: imported axis ranges require numeric indices, finite endpoints, and nonzero spans.
+- Behavioral regression coverage: tests exercise reconnect races, rendering geometry, subscription restoration, and shape constraints.

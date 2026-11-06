@@ -7,6 +7,9 @@ import type { FieldDefinition } from "../node/definition";
 import { OperatorExpressionControl } from "./operator-expression-control";
 import { FunctionCurveControl } from "./function-curve-control";
 import { ColorControl } from "./color-control";
+import { ClusteringControl } from "./clustering-control";
+import { BlendControl, type BlendInput } from "./blend-control";
+import type { ClusteringInput } from "@/lib/nodes/clustering";
 import { Terminal } from "../workspace/terminal";
 import type { Endpoint } from "@/lib/backend/protocol";
 import { ArrayElement, AxisElement, ColorElement, CurveElement, DataElement, IntervalElement, OptionalSliderElement, OperatorElement,
@@ -65,21 +68,33 @@ export function FieldControl({ node, field, element, value, onChange, onCommit, 
   const commit = (value: unknown) => { onChange(value); onCommit?.(); };
   const label = field.label ?? element.label;
   const common = { label, disabled: element.disabled || disabled };
+  if (element.optional && (field.control === "interval" || field.control === "shape")) {
+    const inputShape = node.elements.find((item) => item.name === "input_data")?.shape ?? [1];
+    const axis = Number(parameters.slice_axis ?? node.elements.find((item) => item.name === "slice_axis")?.value ?? 0);
+    const defaultValue = field.control === "shape" ? node.elements.find((item) => item.name === "data")?.shape ?? inputShape
+      : [0, inputShape[(axis + inputShape.length) % inputShape.length]];
+    return <div className="space-y-2">
+      <SwitchElement {...common} checked={value !== null} onCheckedChange={(enabled) => commit(enabled ? defaultValue : null)} />
+      {value !== null && <FieldControl node={node} field={{ ...field, label: "Values" }} element={{ ...element, optional: false }} value={value}
+        onChange={onChange} onCommit={onCommit} parameters={parameters} disabled={disabled} />}
+    </div>;
+  }
   if (field.control === "port" || field.control !== "color" && element.disabled && isArrayValue(value)) return <DataElement label={label} direction="input" endpoint={{ nodeId: node.id, element: field.name }} shape={element.shape ?? (isArrayValue(value) ? value.shape : [])} unit={field.unit} />;
   switch (field.control) {
     case "slider": {
-      const props = { ...common, min: element.min ?? 0, max: element.max ?? 1, step: element.integer ? 1 : 0.01, onValueCommit: onCommit, scale: (element.min ?? 0) > 0 ? field.scale : "linear" as const, unit: field.unit };
+      const props = { ...common, min: element.min ?? 0, max: element.max ?? 1, step: field.step ?? (element.integer ? 1 : 0.01), integer: element.integer, onValueCommit: onCommit, scale: (element.min ?? 0) > 0 ? field.scale : "linear" as const, unit: field.unit };
       return element.optional ? <OptionalSliderElement {...props} value={value === null ? null : Number(value)} onValueChange={onChange} /> : <SliderElement {...props} value={Number(value)} onValueChange={onChange} />;
     }
     case "switch": return <SwitchElement {...common} checked={Boolean(value)} onCheckedChange={commit} />;
     case "select": return <SelectElement {...common} value={String(value)} onValueChange={commit} options={(element.options ?? []).map((option) => ({ ...option, value: String(option.value) }))} />;
-    case "axis": return <AxisElement {...common} value={value as number | number[] | null} onValueChange={commit} />;
+    case "axis": return <AxisElement {...common} value={value as number | number[] | null} onValueChange={commit} permutation={field.permutation}
+      axes={field.permutation ? Array.from({ length: node.elements.find((item) => item.name === "data")?.shape?.length ?? 1 }, (_, index) => index) : undefined} />;
     case "color": {
       const color = (isArrayValue(value) ? plainArray(value) : value) as Color;
       const props = { ...common, value: color, onValueChange: onChange, onValueCommit: onCommit };
       return field.channels ? <ColorControl {...props} nodeId={node.id} colorPort={field.name} channels={field.channels} /> : <ColorElement {...props} />;
     }
-    case "interval": return <IntervalElement {...common} ordered={field.ordered} value={value as [number, number]} onValueChange={onChange} onValueCommit={onCommit} min={field.min ?? -10000} max={field.max ?? 10000} />;
+    case "interval": return <IntervalElement {...common} ordered={field.ordered} value={value as [number, number]} onValueChange={onChange} onValueCommit={onCommit} min={field.min ?? element.min ?? -10000} max={field.max ?? element.max ?? 10000} step={field.step} />;
     case "array": return <ArrayElement {...common} value={isArrayValue(value) ? plainArray(value) : value as NumericArray} onValueChange={commit} min={element.min} max={element.max} integer={element.dtype ? /[iu]/.test(element.dtype) : false} />;
     case "shape": return <ArrayElement {...common} shape value={value as number[]} onValueChange={commit} />;
     case "curve": {
@@ -94,6 +109,8 @@ export function FieldControl({ node, field, element, value, onChange, onCommit, 
     case "node-reference": return <ReferenceControl nodeId={node.id} field={field} value={value as Reference} onChange={commit} disabled={common.disabled} nodeOnly />;
     case "expression": return <OperatorExpressionControl node={node} element={element} value={value as unknown[]} disabled={common.disabled ?? false}
       onChange={(values) => { onParametersChange!(values); onCommit?.(); }} />;
+    case "clustering": return <ClusteringControl nodeId={node.id} value={value as ClusteringInput[]} onChange={onChange} onCommit={onCommit} disabled={common.disabled ?? false} />;
+    case "blend": return <BlendControl nodeId={node.id} value={value as BlendInput[]} onChange={onChange} onCommit={onCommit} disabled={common.disabled ?? false} />;
     case "sequence": return <SequenceElement {...common} value={value as unknown[]} onValueChange={onChange} onValueCommit={onCommit}
       addEndpoint={field.addPort && node.ports.some((port) => port.name === field.addPort) ? { nodeId: node.id, element: field.addPort } : undefined}
       createItem={() => field.item === "token" ? "*" : null}

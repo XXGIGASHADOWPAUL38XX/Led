@@ -41,7 +41,7 @@ class GradiantNode(CNode):
         }
         super().__init__(self.nodeName, terminals=terminals, parent=parent, alias=alias)
 
-        self.n_points = Parameter(self, 'n_points', n_points, minimum=1, maximum=500, integer=True)
+        self.n_points = Parameter(self, 'n_points', n_points, minimum=1, maximum=4096, integer=True)
         self.color_in = RGBParameter(self, 'color_in', color_in, (color_in_red, color_in_green, color_in_blue))
         self.color_out = RGBParameter(self, 'color_out', color_out, (color_out_red, color_out_green, color_out_blue))
         self.cycle = Parameter(self, 'cycle', cycle, minimum=-10, maximum=10)

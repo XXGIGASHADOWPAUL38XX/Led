@@ -13,8 +13,8 @@ export function completeConfiguration(fields: FieldDefinition[], draft: Record<s
 }
 
 export function compatiblePorts(source: { shape: number[] }, target: { shape: number[]; accepts?: number[]; adaptiveShape?: boolean; variadic?: boolean }) {
-  if (target.variadic) return true;
-  if (target.adaptiveShape) return source.shape.length > 0 && source.shape.every((dimension) => dimension > 0);
+  if (target.variadic && !target.accepts) return true;
+  if (target.adaptiveShape && !target.accepts) return source.shape.length > 0 && source.shape.every((dimension) => dimension > 0);
   const shape = target.accepts ?? target.shape;
   return source.shape.length === shape.length && shape.every((dimension, index) => dimension === 0 || dimension === source.shape[index]);
 }

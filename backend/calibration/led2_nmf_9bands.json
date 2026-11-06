@@ -1,0 +1,5837 @@
+{
+  "version": 1,
+  "created_at": "2026-11-02T20:26:04.795187+00:00",
+  "playlist_url": "https://soundcloud.com/trg-electro/sets/led2",
+  "template": "/Users/tginet.external/Documents/Perso/Led/backend/templates/template_clustering.led",
+  "feature_graph": {
+    "nodes": [
+      {
+        "id": "SoundCloud",
+        "type": "SCPlaylistPlayer",
+        "position": [
+          0,
+          900
+        ],
+        "parameters": {
+          "playlist_url": "https://soundcloud.com/trg-electro/sets/led2"
+        }
+      },
+      {
+        "id": "Audio stream",
+        "type": "StreamPlayer",
+        "position": [
+          430,
+          900
+        ],
+        "parameters": {
+          "audio_in": {
+            "nodeId": "SoundCloud",
+            "element": "audio"
+          },
+          "sample_rate_in": {
+            "nodeId": "SoundCloud",
+            "element": "sample_rate"
+          },
+          "enqueue_token": {
+            "nodeId": "SoundCloud",
+            "element": "enqueue_token"
+          },
+          "sample_rate": 40960,
+          "chunk_size": 2048
+        }
+      },
+      {
+        "id": "Audio buffer",
+        "type": "Buffer",
+        "position": [
+          860,
+          900
+        ],
+        "parameters": {
+          "indata": {
+            "nodeId": "Audio stream",
+            "element": "chunk"
+          },
+          "shape": [
+            2,
+            2048
+          ],
+          "length": 2048
+        }
+      },
+      {
+        "id": "Frequency spectrum",
+        "type": "Amplitudes",
+        "position": [
+          860,
+          1500
+        ],
+        "parameters": {
+          "buffer": {
+            "nodeId": "Audio buffer",
+            "element": "data"
+          },
+          "shape": [
+            2,
+            2048
+          ],
+          "fft_size": 2048,
+          "freq_bins": 180,
+          "min_frequency": 20,
+          "max_frequency": 16000,
+          "powering": 0
+        }
+      },
+      {
+        "id": "All audio features",
+        "type": "Clustering",
+        "position": [
+          2580,
+          500
+        ],
+        "parameters": {
+          "inputs": [
+            {
+              "source": {
+                "nodeId": "Band 01 \u00b7 RMS",
+                "element": "data"
+              },
+              "interval": [
+                0.3,
+                0.7
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 01 \u00b7 Average frequency \u00b7 Hz",
+                "element": "data"
+              },
+              "interval": [
+                20,
+                41.42746910141125
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 01 \u00b7 Spectral centroid \u00b7 Hz",
+                "element": "data"
+              },
+              "interval": [
+                20,
+                41.42746910141125
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 01 \u00b7 Spectral entropy",
+                "element": "data"
+              },
+              "interval": [
+                0.8,
+                0.95
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 01 \u00b7 Spectral flux",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.4
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 01 \u00b7 Onset strength",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.3
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 01 \u00b7 Crest factor",
+                "element": "data"
+              },
+              "interval": [
+                1,
+                5
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 01 \u00b7 Zero crossing rate",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.25
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 01 \u00b7 Sine periodicity",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                1024
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 01 \u00b7 Mid / side energy",
+                "element": "mid_energy"
+              },
+              "interval": [
+                0,
+                0.5
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 01 \u00b7 Mid / side energy",
+                "element": "side_energy"
+              },
+              "interval": [
+                0,
+                0.1
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 01 \u00b7 Mid / side energy",
+                "element": "mid_ratio"
+              },
+              "interval": [
+                0.5,
+                1
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 02 \u00b7 RMS",
+                "element": "data"
+              },
+              "interval": [
+                0.3,
+                0.7
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 02 \u00b7 Average frequency \u00b7 Hz",
+                "element": "data"
+              },
+              "interval": [
+                41.42746910141125,
+                87.42909811171269
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 02 \u00b7 Spectral centroid \u00b7 Hz",
+                "element": "data"
+              },
+              "interval": [
+                41.42746910141125,
+                87.42909811171269
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 02 \u00b7 Spectral entropy",
+                "element": "data"
+              },
+              "interval": [
+                0.8,
+                0.95
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 02 \u00b7 Spectral flux",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.4
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 02 \u00b7 Onset strength",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.3
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 02 \u00b7 Crest factor",
+                "element": "data"
+              },
+              "interval": [
+                1,
+                5
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 02 \u00b7 Zero crossing rate",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.25
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 02 \u00b7 Sine periodicity",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                1024
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 02 \u00b7 Mid / side energy",
+                "element": "mid_energy"
+              },
+              "interval": [
+                0,
+                0.5
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 02 \u00b7 Mid / side energy",
+                "element": "side_energy"
+              },
+              "interval": [
+                0,
+                0.1
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 02 \u00b7 Mid / side energy",
+                "element": "mid_ratio"
+              },
+              "interval": [
+                0.5,
+                1
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 03 \u00b7 RMS",
+                "element": "data"
+              },
+              "interval": [
+                0.3,
+                0.7
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 03 \u00b7 Average frequency \u00b7 Hz",
+                "element": "data"
+              },
+              "interval": [
+                87.42909811171269,
+                184.5115659350549
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 03 \u00b7 Spectral centroid \u00b7 Hz",
+                "element": "data"
+              },
+              "interval": [
+                87.42909811171269,
+                184.5115659350549
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 03 \u00b7 Spectral entropy",
+                "element": "data"
+              },
+              "interval": [
+                0.8,
+                0.95
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 03 \u00b7 Spectral flux",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.4
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 03 \u00b7 Onset strength",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.3
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 03 \u00b7 Crest factor",
+                "element": "data"
+              },
+              "interval": [
+                1,
+                5
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 03 \u00b7 Zero crossing rate",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.25
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 03 \u00b7 Sine periodicity",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                1024
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 03 \u00b7 Mid / side energy",
+                "element": "mid_energy"
+              },
+              "interval": [
+                0,
+                0.5
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 03 \u00b7 Mid / side energy",
+                "element": "side_energy"
+              },
+              "interval": [
+                0,
+                0.1
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 03 \u00b7 Mid / side energy",
+                "element": "mid_ratio"
+              },
+              "interval": [
+                0.5,
+                1
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 04 \u00b7 RMS",
+                "element": "data"
+              },
+              "interval": [
+                0.3,
+                0.7
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 04 \u00b7 Average frequency \u00b7 Hz",
+                "element": "data"
+              },
+              "interval": [
+                184.5115659350549,
+                389.3957355056509
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 04 \u00b7 Spectral centroid \u00b7 Hz",
+                "element": "data"
+              },
+              "interval": [
+                184.5115659350549,
+                389.3957355056509
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 04 \u00b7 Spectral entropy",
+                "element": "data"
+              },
+              "interval": [
+                0.8,
+                0.95
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 04 \u00b7 Spectral flux",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.4
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 04 \u00b7 Onset strength",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.3
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 04 \u00b7 Crest factor",
+                "element": "data"
+              },
+              "interval": [
+                1,
+                5
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 04 \u00b7 Zero crossing rate",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.25
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 04 \u00b7 Sine periodicity",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                1024
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 04 \u00b7 Mid / side energy",
+                "element": "mid_energy"
+              },
+              "interval": [
+                0,
+                0.5
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 04 \u00b7 Mid / side energy",
+                "element": "side_energy"
+              },
+              "interval": [
+                0,
+                0.1
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 04 \u00b7 Mid / side energy",
+                "element": "mid_ratio"
+              },
+              "interval": [
+                0.5,
+                1
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 05 \u00b7 RMS",
+                "element": "data"
+              },
+              "interval": [
+                0.3,
+                0.7
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 05 \u00b7 Average frequency \u00b7 Hz",
+                "element": "data"
+              },
+              "interval": [
+                389.3957355056509,
+                821.7860927122468
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 05 \u00b7 Spectral centroid \u00b7 Hz",
+                "element": "data"
+              },
+              "interval": [
+                389.3957355056509,
+                821.7860927122468
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 05 \u00b7 Spectral entropy",
+                "element": "data"
+              },
+              "interval": [
+                0.8,
+                0.95
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 05 \u00b7 Spectral flux",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.4
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 05 \u00b7 Onset strength",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.3
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 05 \u00b7 Crest factor",
+                "element": "data"
+              },
+              "interval": [
+                1,
+                5
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 05 \u00b7 Zero crossing rate",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.25
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 05 \u00b7 Sine periodicity",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                1024
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 05 \u00b7 Mid / side energy",
+                "element": "mid_energy"
+              },
+              "interval": [
+                0,
+                0.5
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 05 \u00b7 Mid / side energy",
+                "element": "side_energy"
+              },
+              "interval": [
+                0,
+                0.1
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 05 \u00b7 Mid / side energy",
+                "element": "mid_ratio"
+              },
+              "interval": [
+                0.5,
+                1
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 06 \u00b7 RMS",
+                "element": "data"
+              },
+              "interval": [
+                0.3,
+                0.7
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 06 \u00b7 Average frequency \u00b7 Hz",
+                "element": "data"
+              },
+              "interval": [
+                821.7860927122468,
+                1734.3086238433166
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 06 \u00b7 Spectral centroid \u00b7 Hz",
+                "element": "data"
+              },
+              "interval": [
+                821.7860927122468,
+                1734.3086238433166
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 06 \u00b7 Spectral entropy",
+                "element": "data"
+              },
+              "interval": [
+                0.8,
+                0.95
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 06 \u00b7 Spectral flux",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.4
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 06 \u00b7 Onset strength",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.3
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 06 \u00b7 Crest factor",
+                "element": "data"
+              },
+              "interval": [
+                1,
+                5
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 06 \u00b7 Zero crossing rate",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.25
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 06 \u00b7 Sine periodicity",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                1024
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 06 \u00b7 Mid / side energy",
+                "element": "mid_energy"
+              },
+              "interval": [
+                0,
+                0.5
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 06 \u00b7 Mid / side energy",
+                "element": "side_energy"
+              },
+              "interval": [
+                0,
+                0.1
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 06 \u00b7 Mid / side energy",
+                "element": "mid_ratio"
+              },
+              "interval": [
+                0.5,
+                1
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 07 \u00b7 RMS",
+                "element": "data"
+              },
+              "interval": [
+                0.3,
+                0.7
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 07 \u00b7 Average frequency \u00b7 Hz",
+                "element": "data"
+              },
+              "interval": [
+                1734.3086238433166,
+                3660.108669897516
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 07 \u00b7 Spectral centroid \u00b7 Hz",
+                "element": "data"
+              },
+              "interval": [
+                1734.3086238433166,
+                3660.108669897516
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 07 \u00b7 Spectral entropy",
+                "element": "data"
+              },
+              "interval": [
+                0.8,
+                0.95
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 07 \u00b7 Spectral flux",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.4
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 07 \u00b7 Onset strength",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.3
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 07 \u00b7 Crest factor",
+                "element": "data"
+              },
+              "interval": [
+                1,
+                5
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 07 \u00b7 Zero crossing rate",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.25
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 07 \u00b7 Sine periodicity",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                1024
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 07 \u00b7 Mid / side energy",
+                "element": "mid_energy"
+              },
+              "interval": [
+                0,
+                0.5
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 07 \u00b7 Mid / side energy",
+                "element": "side_energy"
+              },
+              "interval": [
+                0,
+                0.1
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 07 \u00b7 Mid / side energy",
+                "element": "mid_ratio"
+              },
+              "interval": [
+                0.5,
+                1
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 08 \u00b7 RMS",
+                "element": "data"
+              },
+              "interval": [
+                0.3,
+                0.7
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 08 \u00b7 Average frequency \u00b7 Hz",
+                "element": "data"
+              },
+              "interval": [
+                3660.108669897516,
+                7724.343459569424
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 08 \u00b7 Spectral centroid \u00b7 Hz",
+                "element": "data"
+              },
+              "interval": [
+                3660.108669897516,
+                7724.343459569424
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 08 \u00b7 Spectral entropy",
+                "element": "data"
+              },
+              "interval": [
+                0.8,
+                0.95
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 08 \u00b7 Spectral flux",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.4
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 08 \u00b7 Onset strength",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.3
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 08 \u00b7 Crest factor",
+                "element": "data"
+              },
+              "interval": [
+                1,
+                5
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 08 \u00b7 Zero crossing rate",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.25
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 08 \u00b7 Sine periodicity",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                1024
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 08 \u00b7 Mid / side energy",
+                "element": "mid_energy"
+              },
+              "interval": [
+                0,
+                0.5
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 08 \u00b7 Mid / side energy",
+                "element": "side_energy"
+              },
+              "interval": [
+                0,
+                0.1
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 08 \u00b7 Mid / side energy",
+                "element": "mid_ratio"
+              },
+              "interval": [
+                0.5,
+                1
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 09 \u00b7 RMS",
+                "element": "data"
+              },
+              "interval": [
+                0.3,
+                0.7
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 09 \u00b7 Average frequency \u00b7 Hz",
+                "element": "data"
+              },
+              "interval": [
+                7724.343459569424,
+                16000
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 09 \u00b7 Spectral centroid \u00b7 Hz",
+                "element": "data"
+              },
+              "interval": [
+                7724.343459569424,
+                16000
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 09 \u00b7 Spectral entropy",
+                "element": "data"
+              },
+              "interval": [
+                0.8,
+                0.95
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 09 \u00b7 Spectral flux",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.4
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 09 \u00b7 Onset strength",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.3
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 09 \u00b7 Crest factor",
+                "element": "data"
+              },
+              "interval": [
+                1,
+                5
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 09 \u00b7 Zero crossing rate",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                0.25
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 09 \u00b7 Sine periodicity",
+                "element": "data"
+              },
+              "interval": [
+                0,
+                1024
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 09 \u00b7 Mid / side energy",
+                "element": "mid_energy"
+              },
+              "interval": [
+                0,
+                0.5
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 09 \u00b7 Mid / side energy",
+                "element": "side_energy"
+              },
+              "interval": [
+                0,
+                0.1
+              ]
+            },
+            {
+              "source": {
+                "nodeId": "Band 09 \u00b7 Mid / side energy",
+                "element": "mid_ratio"
+              },
+              "interval": [
+                0.5,
+                1
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "Feature vector",
+        "type": "OperatorPipeline",
+        "position": [
+          3010,
+          500
+        ],
+        "parameters": {
+          "arguments": [
+            {
+              "nodeId": "All audio features",
+              "element": "data"
+            },
+            "[:, 0]"
+          ],
+          "operations": [],
+          "input_names": [
+            "features"
+          ]
+        }
+      },
+      {
+        "id": "Band 01 \u00b7 audio",
+        "type": "BandFilter",
+        "position": [
+          1290,
+          0
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Audio buffer",
+            "element": "data"
+          },
+          "shape": [
+            2,
+            2048
+          ],
+          "lowcut": 20,
+          "highcut": 41.42746910141125
+        }
+      },
+      {
+        "id": "Band 01 \u00b7 bins 1\u201320",
+        "type": "OperatorPipeline",
+        "position": [
+          1290,
+          650
+        ],
+        "parameters": {
+          "arguments": [
+            {
+              "nodeId": "Frequency spectrum",
+              "element": "data"
+            },
+            "[0:20]"
+          ],
+          "input_names": [
+            "amplitudes",
+            "frequencies"
+          ],
+          "operations": [
+            {
+              "name": "frequencies",
+              "arguments": [
+                {
+                  "nodeId": "Frequency spectrum",
+                  "element": "frequencies"
+                },
+                "[0:20]"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "Band 01 \u00b7 RMS",
+        "type": "RMS",
+        "position": [
+          1720,
+          0
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 01 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 01 \u00b7 Crest factor",
+        "type": "CrestFactor",
+        "position": [
+          1720,
+          330
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 01 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 01 \u00b7 Zero crossing rate",
+        "type": "ZeroCrossingRate",
+        "position": [
+          1720,
+          660
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 01 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 01 \u00b7 Sine periodicity",
+        "type": "SinPeriodicity",
+        "position": [
+          1720,
+          990
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 01 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 01 \u00b7 Mid / side energy",
+        "type": "MidSideEnergy",
+        "position": [
+          1720,
+          1320
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 01 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 01 \u00b7 Spectral entropy",
+        "type": "Entropy",
+        "position": [
+          2150,
+          0
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 01 \u00b7 bins 1\u201320",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 01 \u00b7 Spectral flux",
+        "type": "SpectralFlux",
+        "position": [
+          2150,
+          330
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 01 \u00b7 bins 1\u201320",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 01 \u00b7 Onset strength",
+        "type": "OnsetStrength",
+        "position": [
+          2150,
+          660
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 01 \u00b7 bins 1\u201320",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 01 \u00b7 Spectral centroid \u00b7 Hz",
+        "type": "SpectralCentroid",
+        "position": [
+          2150,
+          990
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 01 \u00b7 bins 1\u201320",
+            "element": "data"
+          },
+          "frequencies": {
+            "nodeId": "Band 01 \u00b7 bins 1\u201320",
+            "element": "frequencies"
+          }
+        }
+      },
+      {
+        "id": "Band 01 \u00b7 Average frequency \u00b7 Hz",
+        "type": "AvgFrequencies",
+        "position": [
+          2150,
+          1320
+        ],
+        "parameters": {
+          "input_amplitudes": {
+            "nodeId": "Band 01 \u00b7 bins 1\u201320",
+            "element": "data"
+          },
+          "input_frequencies": {
+            "nodeId": "Band 01 \u00b7 bins 1\u201320",
+            "element": "frequencies"
+          }
+        }
+      },
+      {
+        "id": "Band 02 \u00b7 audio",
+        "type": "BandFilter",
+        "position": [
+          1290,
+          2000
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Audio buffer",
+            "element": "data"
+          },
+          "shape": [
+            2,
+            2048
+          ],
+          "lowcut": 41.42746910141125,
+          "highcut": 87.42909811171269
+        }
+      },
+      {
+        "id": "Band 02 \u00b7 bins 21\u201340",
+        "type": "OperatorPipeline",
+        "position": [
+          1290,
+          2650
+        ],
+        "parameters": {
+          "arguments": [
+            {
+              "nodeId": "Frequency spectrum",
+              "element": "data"
+            },
+            "[20:40]"
+          ],
+          "input_names": [
+            "amplitudes",
+            "frequencies"
+          ],
+          "operations": [
+            {
+              "name": "frequencies",
+              "arguments": [
+                {
+                  "nodeId": "Frequency spectrum",
+                  "element": "frequencies"
+                },
+                "[20:40]"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "Band 02 \u00b7 RMS",
+        "type": "RMS",
+        "position": [
+          1720,
+          2000
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 02 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 02 \u00b7 Crest factor",
+        "type": "CrestFactor",
+        "position": [
+          1720,
+          2330
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 02 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 02 \u00b7 Zero crossing rate",
+        "type": "ZeroCrossingRate",
+        "position": [
+          1720,
+          2660
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 02 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 02 \u00b7 Sine periodicity",
+        "type": "SinPeriodicity",
+        "position": [
+          1720,
+          2990
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 02 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 02 \u00b7 Mid / side energy",
+        "type": "MidSideEnergy",
+        "position": [
+          1720,
+          3320
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 02 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 02 \u00b7 Spectral entropy",
+        "type": "Entropy",
+        "position": [
+          2150,
+          2000
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 02 \u00b7 bins 21\u201340",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 02 \u00b7 Spectral flux",
+        "type": "SpectralFlux",
+        "position": [
+          2150,
+          2330
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 02 \u00b7 bins 21\u201340",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 02 \u00b7 Onset strength",
+        "type": "OnsetStrength",
+        "position": [
+          2150,
+          2660
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 02 \u00b7 bins 21\u201340",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 02 \u00b7 Spectral centroid \u00b7 Hz",
+        "type": "SpectralCentroid",
+        "position": [
+          2150,
+          2990
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 02 \u00b7 bins 21\u201340",
+            "element": "data"
+          },
+          "frequencies": {
+            "nodeId": "Band 02 \u00b7 bins 21\u201340",
+            "element": "frequencies"
+          }
+        }
+      },
+      {
+        "id": "Band 02 \u00b7 Average frequency \u00b7 Hz",
+        "type": "AvgFrequencies",
+        "position": [
+          2150,
+          3320
+        ],
+        "parameters": {
+          "input_amplitudes": {
+            "nodeId": "Band 02 \u00b7 bins 21\u201340",
+            "element": "data"
+          },
+          "input_frequencies": {
+            "nodeId": "Band 02 \u00b7 bins 21\u201340",
+            "element": "frequencies"
+          }
+        }
+      },
+      {
+        "id": "Band 03 \u00b7 audio",
+        "type": "BandFilter",
+        "position": [
+          1290,
+          4000
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Audio buffer",
+            "element": "data"
+          },
+          "shape": [
+            2,
+            2048
+          ],
+          "lowcut": 87.42909811171269,
+          "highcut": 184.5115659350549
+        }
+      },
+      {
+        "id": "Band 03 \u00b7 bins 41\u201360",
+        "type": "OperatorPipeline",
+        "position": [
+          1290,
+          4650
+        ],
+        "parameters": {
+          "arguments": [
+            {
+              "nodeId": "Frequency spectrum",
+              "element": "data"
+            },
+            "[40:60]"
+          ],
+          "input_names": [
+            "amplitudes",
+            "frequencies"
+          ],
+          "operations": [
+            {
+              "name": "frequencies",
+              "arguments": [
+                {
+                  "nodeId": "Frequency spectrum",
+                  "element": "frequencies"
+                },
+                "[40:60]"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "Band 03 \u00b7 RMS",
+        "type": "RMS",
+        "position": [
+          1720,
+          4000
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 03 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 03 \u00b7 Crest factor",
+        "type": "CrestFactor",
+        "position": [
+          1720,
+          4330
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 03 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 03 \u00b7 Zero crossing rate",
+        "type": "ZeroCrossingRate",
+        "position": [
+          1720,
+          4660
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 03 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 03 \u00b7 Sine periodicity",
+        "type": "SinPeriodicity",
+        "position": [
+          1720,
+          4990
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 03 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 03 \u00b7 Mid / side energy",
+        "type": "MidSideEnergy",
+        "position": [
+          1720,
+          5320
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 03 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 03 \u00b7 Spectral entropy",
+        "type": "Entropy",
+        "position": [
+          2150,
+          4000
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 03 \u00b7 bins 41\u201360",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 03 \u00b7 Spectral flux",
+        "type": "SpectralFlux",
+        "position": [
+          2150,
+          4330
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 03 \u00b7 bins 41\u201360",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 03 \u00b7 Onset strength",
+        "type": "OnsetStrength",
+        "position": [
+          2150,
+          4660
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 03 \u00b7 bins 41\u201360",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 03 \u00b7 Spectral centroid \u00b7 Hz",
+        "type": "SpectralCentroid",
+        "position": [
+          2150,
+          4990
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 03 \u00b7 bins 41\u201360",
+            "element": "data"
+          },
+          "frequencies": {
+            "nodeId": "Band 03 \u00b7 bins 41\u201360",
+            "element": "frequencies"
+          }
+        }
+      },
+      {
+        "id": "Band 03 \u00b7 Average frequency \u00b7 Hz",
+        "type": "AvgFrequencies",
+        "position": [
+          2150,
+          5320
+        ],
+        "parameters": {
+          "input_amplitudes": {
+            "nodeId": "Band 03 \u00b7 bins 41\u201360",
+            "element": "data"
+          },
+          "input_frequencies": {
+            "nodeId": "Band 03 \u00b7 bins 41\u201360",
+            "element": "frequencies"
+          }
+        }
+      },
+      {
+        "id": "Band 04 \u00b7 audio",
+        "type": "BandFilter",
+        "position": [
+          1290,
+          6000
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Audio buffer",
+            "element": "data"
+          },
+          "shape": [
+            2,
+            2048
+          ],
+          "lowcut": 184.5115659350549,
+          "highcut": 389.3957355056509
+        }
+      },
+      {
+        "id": "Band 04 \u00b7 bins 61\u201380",
+        "type": "OperatorPipeline",
+        "position": [
+          1290,
+          6650
+        ],
+        "parameters": {
+          "arguments": [
+            {
+              "nodeId": "Frequency spectrum",
+              "element": "data"
+            },
+            "[60:80]"
+          ],
+          "input_names": [
+            "amplitudes",
+            "frequencies"
+          ],
+          "operations": [
+            {
+              "name": "frequencies",
+              "arguments": [
+                {
+                  "nodeId": "Frequency spectrum",
+                  "element": "frequencies"
+                },
+                "[60:80]"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "Band 04 \u00b7 RMS",
+        "type": "RMS",
+        "position": [
+          1720,
+          6000
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 04 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 04 \u00b7 Crest factor",
+        "type": "CrestFactor",
+        "position": [
+          1720,
+          6330
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 04 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 04 \u00b7 Zero crossing rate",
+        "type": "ZeroCrossingRate",
+        "position": [
+          1720,
+          6660
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 04 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 04 \u00b7 Sine periodicity",
+        "type": "SinPeriodicity",
+        "position": [
+          1720,
+          6990
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 04 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 04 \u00b7 Mid / side energy",
+        "type": "MidSideEnergy",
+        "position": [
+          1720,
+          7320
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 04 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 04 \u00b7 Spectral entropy",
+        "type": "Entropy",
+        "position": [
+          2150,
+          6000
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 04 \u00b7 bins 61\u201380",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 04 \u00b7 Spectral flux",
+        "type": "SpectralFlux",
+        "position": [
+          2150,
+          6330
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 04 \u00b7 bins 61\u201380",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 04 \u00b7 Onset strength",
+        "type": "OnsetStrength",
+        "position": [
+          2150,
+          6660
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 04 \u00b7 bins 61\u201380",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 04 \u00b7 Spectral centroid \u00b7 Hz",
+        "type": "SpectralCentroid",
+        "position": [
+          2150,
+          6990
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 04 \u00b7 bins 61\u201380",
+            "element": "data"
+          },
+          "frequencies": {
+            "nodeId": "Band 04 \u00b7 bins 61\u201380",
+            "element": "frequencies"
+          }
+        }
+      },
+      {
+        "id": "Band 04 \u00b7 Average frequency \u00b7 Hz",
+        "type": "AvgFrequencies",
+        "position": [
+          2150,
+          7320
+        ],
+        "parameters": {
+          "input_amplitudes": {
+            "nodeId": "Band 04 \u00b7 bins 61\u201380",
+            "element": "data"
+          },
+          "input_frequencies": {
+            "nodeId": "Band 04 \u00b7 bins 61\u201380",
+            "element": "frequencies"
+          }
+        }
+      },
+      {
+        "id": "Band 05 \u00b7 audio",
+        "type": "BandFilter",
+        "position": [
+          1290,
+          8000
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Audio buffer",
+            "element": "data"
+          },
+          "shape": [
+            2,
+            2048
+          ],
+          "lowcut": 389.3957355056509,
+          "highcut": 821.7860927122468
+        }
+      },
+      {
+        "id": "Band 05 \u00b7 bins 81\u2013100",
+        "type": "OperatorPipeline",
+        "position": [
+          1290,
+          8650
+        ],
+        "parameters": {
+          "arguments": [
+            {
+              "nodeId": "Frequency spectrum",
+              "element": "data"
+            },
+            "[80:100]"
+          ],
+          "input_names": [
+            "amplitudes",
+            "frequencies"
+          ],
+          "operations": [
+            {
+              "name": "frequencies",
+              "arguments": [
+                {
+                  "nodeId": "Frequency spectrum",
+                  "element": "frequencies"
+                },
+                "[80:100]"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "Band 05 \u00b7 RMS",
+        "type": "RMS",
+        "position": [
+          1720,
+          8000
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 05 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 05 \u00b7 Crest factor",
+        "type": "CrestFactor",
+        "position": [
+          1720,
+          8330
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 05 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 05 \u00b7 Zero crossing rate",
+        "type": "ZeroCrossingRate",
+        "position": [
+          1720,
+          8660
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 05 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 05 \u00b7 Sine periodicity",
+        "type": "SinPeriodicity",
+        "position": [
+          1720,
+          8990
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 05 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 05 \u00b7 Mid / side energy",
+        "type": "MidSideEnergy",
+        "position": [
+          1720,
+          9320
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 05 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 05 \u00b7 Spectral entropy",
+        "type": "Entropy",
+        "position": [
+          2150,
+          8000
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 05 \u00b7 bins 81\u2013100",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 05 \u00b7 Spectral flux",
+        "type": "SpectralFlux",
+        "position": [
+          2150,
+          8330
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 05 \u00b7 bins 81\u2013100",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 05 \u00b7 Onset strength",
+        "type": "OnsetStrength",
+        "position": [
+          2150,
+          8660
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 05 \u00b7 bins 81\u2013100",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 05 \u00b7 Spectral centroid \u00b7 Hz",
+        "type": "SpectralCentroid",
+        "position": [
+          2150,
+          8990
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 05 \u00b7 bins 81\u2013100",
+            "element": "data"
+          },
+          "frequencies": {
+            "nodeId": "Band 05 \u00b7 bins 81\u2013100",
+            "element": "frequencies"
+          }
+        }
+      },
+      {
+        "id": "Band 05 \u00b7 Average frequency \u00b7 Hz",
+        "type": "AvgFrequencies",
+        "position": [
+          2150,
+          9320
+        ],
+        "parameters": {
+          "input_amplitudes": {
+            "nodeId": "Band 05 \u00b7 bins 81\u2013100",
+            "element": "data"
+          },
+          "input_frequencies": {
+            "nodeId": "Band 05 \u00b7 bins 81\u2013100",
+            "element": "frequencies"
+          }
+        }
+      },
+      {
+        "id": "Band 06 \u00b7 audio",
+        "type": "BandFilter",
+        "position": [
+          1290,
+          10000
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Audio buffer",
+            "element": "data"
+          },
+          "shape": [
+            2,
+            2048
+          ],
+          "lowcut": 821.7860927122468,
+          "highcut": 1734.3086238433166
+        }
+      },
+      {
+        "id": "Band 06 \u00b7 bins 101\u2013120",
+        "type": "OperatorPipeline",
+        "position": [
+          1290,
+          10650
+        ],
+        "parameters": {
+          "arguments": [
+            {
+              "nodeId": "Frequency spectrum",
+              "element": "data"
+            },
+            "[100:120]"
+          ],
+          "input_names": [
+            "amplitudes",
+            "frequencies"
+          ],
+          "operations": [
+            {
+              "name": "frequencies",
+              "arguments": [
+                {
+                  "nodeId": "Frequency spectrum",
+                  "element": "frequencies"
+                },
+                "[100:120]"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "Band 06 \u00b7 RMS",
+        "type": "RMS",
+        "position": [
+          1720,
+          10000
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 06 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 06 \u00b7 Crest factor",
+        "type": "CrestFactor",
+        "position": [
+          1720,
+          10330
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 06 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 06 \u00b7 Zero crossing rate",
+        "type": "ZeroCrossingRate",
+        "position": [
+          1720,
+          10660
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 06 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 06 \u00b7 Sine periodicity",
+        "type": "SinPeriodicity",
+        "position": [
+          1720,
+          10990
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 06 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 06 \u00b7 Mid / side energy",
+        "type": "MidSideEnergy",
+        "position": [
+          1720,
+          11320
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 06 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 06 \u00b7 Spectral entropy",
+        "type": "Entropy",
+        "position": [
+          2150,
+          10000
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 06 \u00b7 bins 101\u2013120",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 06 \u00b7 Spectral flux",
+        "type": "SpectralFlux",
+        "position": [
+          2150,
+          10330
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 06 \u00b7 bins 101\u2013120",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 06 \u00b7 Onset strength",
+        "type": "OnsetStrength",
+        "position": [
+          2150,
+          10660
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 06 \u00b7 bins 101\u2013120",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 06 \u00b7 Spectral centroid \u00b7 Hz",
+        "type": "SpectralCentroid",
+        "position": [
+          2150,
+          10990
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 06 \u00b7 bins 101\u2013120",
+            "element": "data"
+          },
+          "frequencies": {
+            "nodeId": "Band 06 \u00b7 bins 101\u2013120",
+            "element": "frequencies"
+          }
+        }
+      },
+      {
+        "id": "Band 06 \u00b7 Average frequency \u00b7 Hz",
+        "type": "AvgFrequencies",
+        "position": [
+          2150,
+          11320
+        ],
+        "parameters": {
+          "input_amplitudes": {
+            "nodeId": "Band 06 \u00b7 bins 101\u2013120",
+            "element": "data"
+          },
+          "input_frequencies": {
+            "nodeId": "Band 06 \u00b7 bins 101\u2013120",
+            "element": "frequencies"
+          }
+        }
+      },
+      {
+        "id": "Band 07 \u00b7 audio",
+        "type": "BandFilter",
+        "position": [
+          1290,
+          12000
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Audio buffer",
+            "element": "data"
+          },
+          "shape": [
+            2,
+            2048
+          ],
+          "lowcut": 1734.3086238433166,
+          "highcut": 3660.108669897516
+        }
+      },
+      {
+        "id": "Band 07 \u00b7 bins 121\u2013140",
+        "type": "OperatorPipeline",
+        "position": [
+          1290,
+          12650
+        ],
+        "parameters": {
+          "arguments": [
+            {
+              "nodeId": "Frequency spectrum",
+              "element": "data"
+            },
+            "[120:140]"
+          ],
+          "input_names": [
+            "amplitudes",
+            "frequencies"
+          ],
+          "operations": [
+            {
+              "name": "frequencies",
+              "arguments": [
+                {
+                  "nodeId": "Frequency spectrum",
+                  "element": "frequencies"
+                },
+                "[120:140]"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "Band 07 \u00b7 RMS",
+        "type": "RMS",
+        "position": [
+          1720,
+          12000
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 07 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 07 \u00b7 Crest factor",
+        "type": "CrestFactor",
+        "position": [
+          1720,
+          12330
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 07 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 07 \u00b7 Zero crossing rate",
+        "type": "ZeroCrossingRate",
+        "position": [
+          1720,
+          12660
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 07 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 07 \u00b7 Sine periodicity",
+        "type": "SinPeriodicity",
+        "position": [
+          1720,
+          12990
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 07 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 07 \u00b7 Mid / side energy",
+        "type": "MidSideEnergy",
+        "position": [
+          1720,
+          13320
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 07 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 07 \u00b7 Spectral entropy",
+        "type": "Entropy",
+        "position": [
+          2150,
+          12000
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 07 \u00b7 bins 121\u2013140",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 07 \u00b7 Spectral flux",
+        "type": "SpectralFlux",
+        "position": [
+          2150,
+          12330
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 07 \u00b7 bins 121\u2013140",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 07 \u00b7 Onset strength",
+        "type": "OnsetStrength",
+        "position": [
+          2150,
+          12660
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 07 \u00b7 bins 121\u2013140",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 07 \u00b7 Spectral centroid \u00b7 Hz",
+        "type": "SpectralCentroid",
+        "position": [
+          2150,
+          12990
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 07 \u00b7 bins 121\u2013140",
+            "element": "data"
+          },
+          "frequencies": {
+            "nodeId": "Band 07 \u00b7 bins 121\u2013140",
+            "element": "frequencies"
+          }
+        }
+      },
+      {
+        "id": "Band 07 \u00b7 Average frequency \u00b7 Hz",
+        "type": "AvgFrequencies",
+        "position": [
+          2150,
+          13320
+        ],
+        "parameters": {
+          "input_amplitudes": {
+            "nodeId": "Band 07 \u00b7 bins 121\u2013140",
+            "element": "data"
+          },
+          "input_frequencies": {
+            "nodeId": "Band 07 \u00b7 bins 121\u2013140",
+            "element": "frequencies"
+          }
+        }
+      },
+      {
+        "id": "Band 08 \u00b7 audio",
+        "type": "BandFilter",
+        "position": [
+          1290,
+          14000
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Audio buffer",
+            "element": "data"
+          },
+          "shape": [
+            2,
+            2048
+          ],
+          "lowcut": 3660.108669897516,
+          "highcut": 7724.343459569424
+        }
+      },
+      {
+        "id": "Band 08 \u00b7 bins 141\u2013160",
+        "type": "OperatorPipeline",
+        "position": [
+          1290,
+          14650
+        ],
+        "parameters": {
+          "arguments": [
+            {
+              "nodeId": "Frequency spectrum",
+              "element": "data"
+            },
+            "[140:160]"
+          ],
+          "input_names": [
+            "amplitudes",
+            "frequencies"
+          ],
+          "operations": [
+            {
+              "name": "frequencies",
+              "arguments": [
+                {
+                  "nodeId": "Frequency spectrum",
+                  "element": "frequencies"
+                },
+                "[140:160]"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "Band 08 \u00b7 RMS",
+        "type": "RMS",
+        "position": [
+          1720,
+          14000
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 08 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 08 \u00b7 Crest factor",
+        "type": "CrestFactor",
+        "position": [
+          1720,
+          14330
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 08 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 08 \u00b7 Zero crossing rate",
+        "type": "ZeroCrossingRate",
+        "position": [
+          1720,
+          14660
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 08 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 08 \u00b7 Sine periodicity",
+        "type": "SinPeriodicity",
+        "position": [
+          1720,
+          14990
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 08 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 08 \u00b7 Mid / side energy",
+        "type": "MidSideEnergy",
+        "position": [
+          1720,
+          15320
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 08 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 08 \u00b7 Spectral entropy",
+        "type": "Entropy",
+        "position": [
+          2150,
+          14000
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 08 \u00b7 bins 141\u2013160",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 08 \u00b7 Spectral flux",
+        "type": "SpectralFlux",
+        "position": [
+          2150,
+          14330
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 08 \u00b7 bins 141\u2013160",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 08 \u00b7 Onset strength",
+        "type": "OnsetStrength",
+        "position": [
+          2150,
+          14660
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 08 \u00b7 bins 141\u2013160",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 08 \u00b7 Spectral centroid \u00b7 Hz",
+        "type": "SpectralCentroid",
+        "position": [
+          2150,
+          14990
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 08 \u00b7 bins 141\u2013160",
+            "element": "data"
+          },
+          "frequencies": {
+            "nodeId": "Band 08 \u00b7 bins 141\u2013160",
+            "element": "frequencies"
+          }
+        }
+      },
+      {
+        "id": "Band 08 \u00b7 Average frequency \u00b7 Hz",
+        "type": "AvgFrequencies",
+        "position": [
+          2150,
+          15320
+        ],
+        "parameters": {
+          "input_amplitudes": {
+            "nodeId": "Band 08 \u00b7 bins 141\u2013160",
+            "element": "data"
+          },
+          "input_frequencies": {
+            "nodeId": "Band 08 \u00b7 bins 141\u2013160",
+            "element": "frequencies"
+          }
+        }
+      },
+      {
+        "id": "Band 09 \u00b7 audio",
+        "type": "BandFilter",
+        "position": [
+          1290,
+          16000
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Audio buffer",
+            "element": "data"
+          },
+          "shape": [
+            2,
+            2048
+          ],
+          "lowcut": 7724.343459569424,
+          "highcut": 16000
+        }
+      },
+      {
+        "id": "Band 09 \u00b7 bins 161\u2013180",
+        "type": "OperatorPipeline",
+        "position": [
+          1290,
+          16650
+        ],
+        "parameters": {
+          "arguments": [
+            {
+              "nodeId": "Frequency spectrum",
+              "element": "data"
+            },
+            "[160:180]"
+          ],
+          "input_names": [
+            "amplitudes",
+            "frequencies"
+          ],
+          "operations": [
+            {
+              "name": "frequencies",
+              "arguments": [
+                {
+                  "nodeId": "Frequency spectrum",
+                  "element": "frequencies"
+                },
+                "[160:180]"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "Band 09 \u00b7 RMS",
+        "type": "RMS",
+        "position": [
+          1720,
+          16000
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 09 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 09 \u00b7 Crest factor",
+        "type": "CrestFactor",
+        "position": [
+          1720,
+          16330
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 09 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 09 \u00b7 Zero crossing rate",
+        "type": "ZeroCrossingRate",
+        "position": [
+          1720,
+          16660
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 09 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 09 \u00b7 Sine periodicity",
+        "type": "SinPeriodicity",
+        "position": [
+          1720,
+          16990
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 09 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 09 \u00b7 Mid / side energy",
+        "type": "MidSideEnergy",
+        "position": [
+          1720,
+          17320
+        ],
+        "parameters": {
+          "buffer_data": {
+            "nodeId": "Band 09 \u00b7 audio",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 09 \u00b7 Spectral entropy",
+        "type": "Entropy",
+        "position": [
+          2150,
+          16000
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 09 \u00b7 bins 161\u2013180",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 09 \u00b7 Spectral flux",
+        "type": "SpectralFlux",
+        "position": [
+          2150,
+          16330
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 09 \u00b7 bins 161\u2013180",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 09 \u00b7 Onset strength",
+        "type": "OnsetStrength",
+        "position": [
+          2150,
+          16660
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 09 \u00b7 bins 161\u2013180",
+            "element": "data"
+          }
+        }
+      },
+      {
+        "id": "Band 09 \u00b7 Spectral centroid \u00b7 Hz",
+        "type": "SpectralCentroid",
+        "position": [
+          2150,
+          16990
+        ],
+        "parameters": {
+          "amplitudes": {
+            "nodeId": "Band 09 \u00b7 bins 161\u2013180",
+            "element": "data"
+          },
+          "frequencies": {
+            "nodeId": "Band 09 \u00b7 bins 161\u2013180",
+            "element": "frequencies"
+          }
+        }
+      },
+      {
+        "id": "Band 09 \u00b7 Average frequency \u00b7 Hz",
+        "type": "AvgFrequencies",
+        "position": [
+          2150,
+          17320
+        ],
+        "parameters": {
+          "input_amplitudes": {
+            "nodeId": "Band 09 \u00b7 bins 161\u2013180",
+            "element": "data"
+          },
+          "input_frequencies": {
+            "nodeId": "Band 09 \u00b7 bins 161\u2013180",
+            "element": "frequencies"
+          }
+        }
+      }
+    ],
+    "connections": [
+      {
+        "id": "cluster108:0",
+        "source": {
+          "nodeId": "SoundCloud",
+          "element": "audio"
+        },
+        "target": {
+          "nodeId": "Audio stream",
+          "element": "audio_in"
+        }
+      },
+      {
+        "id": "cluster108:1",
+        "source": {
+          "nodeId": "SoundCloud",
+          "element": "sample_rate"
+        },
+        "target": {
+          "nodeId": "Audio stream",
+          "element": "sample_rate_in"
+        }
+      },
+      {
+        "id": "cluster108:2",
+        "source": {
+          "nodeId": "SoundCloud",
+          "element": "enqueue_token"
+        },
+        "target": {
+          "nodeId": "Audio stream",
+          "element": "enqueue_token"
+        }
+      },
+      {
+        "id": "cluster108:3",
+        "source": {
+          "nodeId": "Audio stream",
+          "element": "chunk"
+        },
+        "target": {
+          "nodeId": "Audio buffer",
+          "element": "indata"
+        }
+      },
+      {
+        "id": "cluster108:4",
+        "source": {
+          "nodeId": "Audio buffer",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Frequency spectrum",
+          "element": "buffer"
+        }
+      },
+      {
+        "id": "cluster108:5",
+        "source": {
+          "nodeId": "Band 01 \u00b7 RMS",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_0"
+        }
+      },
+      {
+        "id": "cluster108:6",
+        "source": {
+          "nodeId": "Band 01 \u00b7 Average frequency \u00b7 Hz",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_1"
+        }
+      },
+      {
+        "id": "cluster108:7",
+        "source": {
+          "nodeId": "Band 01 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_2"
+        }
+      },
+      {
+        "id": "cluster108:8",
+        "source": {
+          "nodeId": "Band 01 \u00b7 Spectral entropy",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_3"
+        }
+      },
+      {
+        "id": "cluster108:9",
+        "source": {
+          "nodeId": "Band 01 \u00b7 Spectral flux",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_4"
+        }
+      },
+      {
+        "id": "cluster108:10",
+        "source": {
+          "nodeId": "Band 01 \u00b7 Onset strength",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_5"
+        }
+      },
+      {
+        "id": "cluster108:11",
+        "source": {
+          "nodeId": "Band 01 \u00b7 Crest factor",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_6"
+        }
+      },
+      {
+        "id": "cluster108:12",
+        "source": {
+          "nodeId": "Band 01 \u00b7 Zero crossing rate",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_7"
+        }
+      },
+      {
+        "id": "cluster108:13",
+        "source": {
+          "nodeId": "Band 01 \u00b7 Sine periodicity",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_8"
+        }
+      },
+      {
+        "id": "cluster108:14",
+        "source": {
+          "nodeId": "Band 01 \u00b7 Mid / side energy",
+          "element": "mid_energy"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_9"
+        }
+      },
+      {
+        "id": "cluster108:15",
+        "source": {
+          "nodeId": "Band 01 \u00b7 Mid / side energy",
+          "element": "side_energy"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_10"
+        }
+      },
+      {
+        "id": "cluster108:16",
+        "source": {
+          "nodeId": "Band 01 \u00b7 Mid / side energy",
+          "element": "mid_ratio"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_11"
+        }
+      },
+      {
+        "id": "cluster108:17",
+        "source": {
+          "nodeId": "Band 02 \u00b7 RMS",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_12"
+        }
+      },
+      {
+        "id": "cluster108:18",
+        "source": {
+          "nodeId": "Band 02 \u00b7 Average frequency \u00b7 Hz",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_13"
+        }
+      },
+      {
+        "id": "cluster108:19",
+        "source": {
+          "nodeId": "Band 02 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_14"
+        }
+      },
+      {
+        "id": "cluster108:20",
+        "source": {
+          "nodeId": "Band 02 \u00b7 Spectral entropy",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_15"
+        }
+      },
+      {
+        "id": "cluster108:21",
+        "source": {
+          "nodeId": "Band 02 \u00b7 Spectral flux",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_16"
+        }
+      },
+      {
+        "id": "cluster108:22",
+        "source": {
+          "nodeId": "Band 02 \u00b7 Onset strength",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_17"
+        }
+      },
+      {
+        "id": "cluster108:23",
+        "source": {
+          "nodeId": "Band 02 \u00b7 Crest factor",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_18"
+        }
+      },
+      {
+        "id": "cluster108:24",
+        "source": {
+          "nodeId": "Band 02 \u00b7 Zero crossing rate",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_19"
+        }
+      },
+      {
+        "id": "cluster108:25",
+        "source": {
+          "nodeId": "Band 02 \u00b7 Sine periodicity",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_20"
+        }
+      },
+      {
+        "id": "cluster108:26",
+        "source": {
+          "nodeId": "Band 02 \u00b7 Mid / side energy",
+          "element": "mid_energy"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_21"
+        }
+      },
+      {
+        "id": "cluster108:27",
+        "source": {
+          "nodeId": "Band 02 \u00b7 Mid / side energy",
+          "element": "side_energy"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_22"
+        }
+      },
+      {
+        "id": "cluster108:28",
+        "source": {
+          "nodeId": "Band 02 \u00b7 Mid / side energy",
+          "element": "mid_ratio"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_23"
+        }
+      },
+      {
+        "id": "cluster108:29",
+        "source": {
+          "nodeId": "Band 03 \u00b7 RMS",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_24"
+        }
+      },
+      {
+        "id": "cluster108:30",
+        "source": {
+          "nodeId": "Band 03 \u00b7 Average frequency \u00b7 Hz",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_25"
+        }
+      },
+      {
+        "id": "cluster108:31",
+        "source": {
+          "nodeId": "Band 03 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_26"
+        }
+      },
+      {
+        "id": "cluster108:32",
+        "source": {
+          "nodeId": "Band 03 \u00b7 Spectral entropy",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_27"
+        }
+      },
+      {
+        "id": "cluster108:33",
+        "source": {
+          "nodeId": "Band 03 \u00b7 Spectral flux",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_28"
+        }
+      },
+      {
+        "id": "cluster108:34",
+        "source": {
+          "nodeId": "Band 03 \u00b7 Onset strength",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_29"
+        }
+      },
+      {
+        "id": "cluster108:35",
+        "source": {
+          "nodeId": "Band 03 \u00b7 Crest factor",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_30"
+        }
+      },
+      {
+        "id": "cluster108:36",
+        "source": {
+          "nodeId": "Band 03 \u00b7 Zero crossing rate",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_31"
+        }
+      },
+      {
+        "id": "cluster108:37",
+        "source": {
+          "nodeId": "Band 03 \u00b7 Sine periodicity",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_32"
+        }
+      },
+      {
+        "id": "cluster108:38",
+        "source": {
+          "nodeId": "Band 03 \u00b7 Mid / side energy",
+          "element": "mid_energy"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_33"
+        }
+      },
+      {
+        "id": "cluster108:39",
+        "source": {
+          "nodeId": "Band 03 \u00b7 Mid / side energy",
+          "element": "side_energy"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_34"
+        }
+      },
+      {
+        "id": "cluster108:40",
+        "source": {
+          "nodeId": "Band 03 \u00b7 Mid / side energy",
+          "element": "mid_ratio"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_35"
+        }
+      },
+      {
+        "id": "cluster108:41",
+        "source": {
+          "nodeId": "Band 04 \u00b7 RMS",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_36"
+        }
+      },
+      {
+        "id": "cluster108:42",
+        "source": {
+          "nodeId": "Band 04 \u00b7 Average frequency \u00b7 Hz",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_37"
+        }
+      },
+      {
+        "id": "cluster108:43",
+        "source": {
+          "nodeId": "Band 04 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_38"
+        }
+      },
+      {
+        "id": "cluster108:44",
+        "source": {
+          "nodeId": "Band 04 \u00b7 Spectral entropy",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_39"
+        }
+      },
+      {
+        "id": "cluster108:45",
+        "source": {
+          "nodeId": "Band 04 \u00b7 Spectral flux",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_40"
+        }
+      },
+      {
+        "id": "cluster108:46",
+        "source": {
+          "nodeId": "Band 04 \u00b7 Onset strength",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_41"
+        }
+      },
+      {
+        "id": "cluster108:47",
+        "source": {
+          "nodeId": "Band 04 \u00b7 Crest factor",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_42"
+        }
+      },
+      {
+        "id": "cluster108:48",
+        "source": {
+          "nodeId": "Band 04 \u00b7 Zero crossing rate",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_43"
+        }
+      },
+      {
+        "id": "cluster108:49",
+        "source": {
+          "nodeId": "Band 04 \u00b7 Sine periodicity",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_44"
+        }
+      },
+      {
+        "id": "cluster108:50",
+        "source": {
+          "nodeId": "Band 04 \u00b7 Mid / side energy",
+          "element": "mid_energy"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_45"
+        }
+      },
+      {
+        "id": "cluster108:51",
+        "source": {
+          "nodeId": "Band 04 \u00b7 Mid / side energy",
+          "element": "side_energy"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_46"
+        }
+      },
+      {
+        "id": "cluster108:52",
+        "source": {
+          "nodeId": "Band 04 \u00b7 Mid / side energy",
+          "element": "mid_ratio"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_47"
+        }
+      },
+      {
+        "id": "cluster108:53",
+        "source": {
+          "nodeId": "Band 05 \u00b7 RMS",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_48"
+        }
+      },
+      {
+        "id": "cluster108:54",
+        "source": {
+          "nodeId": "Band 05 \u00b7 Average frequency \u00b7 Hz",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_49"
+        }
+      },
+      {
+        "id": "cluster108:55",
+        "source": {
+          "nodeId": "Band 05 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_50"
+        }
+      },
+      {
+        "id": "cluster108:56",
+        "source": {
+          "nodeId": "Band 05 \u00b7 Spectral entropy",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_51"
+        }
+      },
+      {
+        "id": "cluster108:57",
+        "source": {
+          "nodeId": "Band 05 \u00b7 Spectral flux",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_52"
+        }
+      },
+      {
+        "id": "cluster108:58",
+        "source": {
+          "nodeId": "Band 05 \u00b7 Onset strength",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_53"
+        }
+      },
+      {
+        "id": "cluster108:59",
+        "source": {
+          "nodeId": "Band 05 \u00b7 Crest factor",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_54"
+        }
+      },
+      {
+        "id": "cluster108:60",
+        "source": {
+          "nodeId": "Band 05 \u00b7 Zero crossing rate",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_55"
+        }
+      },
+      {
+        "id": "cluster108:61",
+        "source": {
+          "nodeId": "Band 05 \u00b7 Sine periodicity",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_56"
+        }
+      },
+      {
+        "id": "cluster108:62",
+        "source": {
+          "nodeId": "Band 05 \u00b7 Mid / side energy",
+          "element": "mid_energy"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_57"
+        }
+      },
+      {
+        "id": "cluster108:63",
+        "source": {
+          "nodeId": "Band 05 \u00b7 Mid / side energy",
+          "element": "side_energy"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_58"
+        }
+      },
+      {
+        "id": "cluster108:64",
+        "source": {
+          "nodeId": "Band 05 \u00b7 Mid / side energy",
+          "element": "mid_ratio"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_59"
+        }
+      },
+      {
+        "id": "cluster108:65",
+        "source": {
+          "nodeId": "Band 06 \u00b7 RMS",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_60"
+        }
+      },
+      {
+        "id": "cluster108:66",
+        "source": {
+          "nodeId": "Band 06 \u00b7 Average frequency \u00b7 Hz",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_61"
+        }
+      },
+      {
+        "id": "cluster108:67",
+        "source": {
+          "nodeId": "Band 06 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_62"
+        }
+      },
+      {
+        "id": "cluster108:68",
+        "source": {
+          "nodeId": "Band 06 \u00b7 Spectral entropy",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_63"
+        }
+      },
+      {
+        "id": "cluster108:69",
+        "source": {
+          "nodeId": "Band 06 \u00b7 Spectral flux",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_64"
+        }
+      },
+      {
+        "id": "cluster108:70",
+        "source": {
+          "nodeId": "Band 06 \u00b7 Onset strength",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_65"
+        }
+      },
+      {
+        "id": "cluster108:71",
+        "source": {
+          "nodeId": "Band 06 \u00b7 Crest factor",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_66"
+        }
+      },
+      {
+        "id": "cluster108:72",
+        "source": {
+          "nodeId": "Band 06 \u00b7 Zero crossing rate",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_67"
+        }
+      },
+      {
+        "id": "cluster108:73",
+        "source": {
+          "nodeId": "Band 06 \u00b7 Sine periodicity",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_68"
+        }
+      },
+      {
+        "id": "cluster108:74",
+        "source": {
+          "nodeId": "Band 06 \u00b7 Mid / side energy",
+          "element": "mid_energy"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_69"
+        }
+      },
+      {
+        "id": "cluster108:75",
+        "source": {
+          "nodeId": "Band 06 \u00b7 Mid / side energy",
+          "element": "side_energy"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_70"
+        }
+      },
+      {
+        "id": "cluster108:76",
+        "source": {
+          "nodeId": "Band 06 \u00b7 Mid / side energy",
+          "element": "mid_ratio"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_71"
+        }
+      },
+      {
+        "id": "cluster108:77",
+        "source": {
+          "nodeId": "Band 07 \u00b7 RMS",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_72"
+        }
+      },
+      {
+        "id": "cluster108:78",
+        "source": {
+          "nodeId": "Band 07 \u00b7 Average frequency \u00b7 Hz",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_73"
+        }
+      },
+      {
+        "id": "cluster108:79",
+        "source": {
+          "nodeId": "Band 07 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_74"
+        }
+      },
+      {
+        "id": "cluster108:80",
+        "source": {
+          "nodeId": "Band 07 \u00b7 Spectral entropy",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_75"
+        }
+      },
+      {
+        "id": "cluster108:81",
+        "source": {
+          "nodeId": "Band 07 \u00b7 Spectral flux",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_76"
+        }
+      },
+      {
+        "id": "cluster108:82",
+        "source": {
+          "nodeId": "Band 07 \u00b7 Onset strength",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_77"
+        }
+      },
+      {
+        "id": "cluster108:83",
+        "source": {
+          "nodeId": "Band 07 \u00b7 Crest factor",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_78"
+        }
+      },
+      {
+        "id": "cluster108:84",
+        "source": {
+          "nodeId": "Band 07 \u00b7 Zero crossing rate",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_79"
+        }
+      },
+      {
+        "id": "cluster108:85",
+        "source": {
+          "nodeId": "Band 07 \u00b7 Sine periodicity",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_80"
+        }
+      },
+      {
+        "id": "cluster108:86",
+        "source": {
+          "nodeId": "Band 07 \u00b7 Mid / side energy",
+          "element": "mid_energy"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_81"
+        }
+      },
+      {
+        "id": "cluster108:87",
+        "source": {
+          "nodeId": "Band 07 \u00b7 Mid / side energy",
+          "element": "side_energy"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_82"
+        }
+      },
+      {
+        "id": "cluster108:88",
+        "source": {
+          "nodeId": "Band 07 \u00b7 Mid / side energy",
+          "element": "mid_ratio"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_83"
+        }
+      },
+      {
+        "id": "cluster108:89",
+        "source": {
+          "nodeId": "Band 08 \u00b7 RMS",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_84"
+        }
+      },
+      {
+        "id": "cluster108:90",
+        "source": {
+          "nodeId": "Band 08 \u00b7 Average frequency \u00b7 Hz",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_85"
+        }
+      },
+      {
+        "id": "cluster108:91",
+        "source": {
+          "nodeId": "Band 08 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_86"
+        }
+      },
+      {
+        "id": "cluster108:92",
+        "source": {
+          "nodeId": "Band 08 \u00b7 Spectral entropy",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_87"
+        }
+      },
+      {
+        "id": "cluster108:93",
+        "source": {
+          "nodeId": "Band 08 \u00b7 Spectral flux",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_88"
+        }
+      },
+      {
+        "id": "cluster108:94",
+        "source": {
+          "nodeId": "Band 08 \u00b7 Onset strength",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_89"
+        }
+      },
+      {
+        "id": "cluster108:95",
+        "source": {
+          "nodeId": "Band 08 \u00b7 Crest factor",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_90"
+        }
+      },
+      {
+        "id": "cluster108:96",
+        "source": {
+          "nodeId": "Band 08 \u00b7 Zero crossing rate",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_91"
+        }
+      },
+      {
+        "id": "cluster108:97",
+        "source": {
+          "nodeId": "Band 08 \u00b7 Sine periodicity",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_92"
+        }
+      },
+      {
+        "id": "cluster108:98",
+        "source": {
+          "nodeId": "Band 08 \u00b7 Mid / side energy",
+          "element": "mid_energy"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_93"
+        }
+      },
+      {
+        "id": "cluster108:99",
+        "source": {
+          "nodeId": "Band 08 \u00b7 Mid / side energy",
+          "element": "side_energy"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_94"
+        }
+      },
+      {
+        "id": "cluster108:100",
+        "source": {
+          "nodeId": "Band 08 \u00b7 Mid / side energy",
+          "element": "mid_ratio"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_95"
+        }
+      },
+      {
+        "id": "cluster108:101",
+        "source": {
+          "nodeId": "Band 09 \u00b7 RMS",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_96"
+        }
+      },
+      {
+        "id": "cluster108:102",
+        "source": {
+          "nodeId": "Band 09 \u00b7 Average frequency \u00b7 Hz",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_97"
+        }
+      },
+      {
+        "id": "cluster108:103",
+        "source": {
+          "nodeId": "Band 09 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_98"
+        }
+      },
+      {
+        "id": "cluster108:104",
+        "source": {
+          "nodeId": "Band 09 \u00b7 Spectral entropy",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_99"
+        }
+      },
+      {
+        "id": "cluster108:105",
+        "source": {
+          "nodeId": "Band 09 \u00b7 Spectral flux",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_100"
+        }
+      },
+      {
+        "id": "cluster108:106",
+        "source": {
+          "nodeId": "Band 09 \u00b7 Onset strength",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_101"
+        }
+      },
+      {
+        "id": "cluster108:107",
+        "source": {
+          "nodeId": "Band 09 \u00b7 Crest factor",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_102"
+        }
+      },
+      {
+        "id": "cluster108:108",
+        "source": {
+          "nodeId": "Band 09 \u00b7 Zero crossing rate",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_103"
+        }
+      },
+      {
+        "id": "cluster108:109",
+        "source": {
+          "nodeId": "Band 09 \u00b7 Sine periodicity",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_104"
+        }
+      },
+      {
+        "id": "cluster108:110",
+        "source": {
+          "nodeId": "Band 09 \u00b7 Mid / side energy",
+          "element": "mid_energy"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_105"
+        }
+      },
+      {
+        "id": "cluster108:111",
+        "source": {
+          "nodeId": "Band 09 \u00b7 Mid / side energy",
+          "element": "side_energy"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_106"
+        }
+      },
+      {
+        "id": "cluster108:112",
+        "source": {
+          "nodeId": "Band 09 \u00b7 Mid / side energy",
+          "element": "mid_ratio"
+        },
+        "target": {
+          "nodeId": "All audio features",
+          "element": "input_107"
+        }
+      },
+      {
+        "id": "cluster108:113",
+        "source": {
+          "nodeId": "All audio features",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Feature vector",
+          "element": "all audio features:data"
+        }
+      },
+      {
+        "id": "cluster108:125",
+        "source": {
+          "nodeId": "Audio buffer",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 01 \u00b7 audio",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:126",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 01 \u00b7 bins 1\u201320",
+          "element": "frequency spectrum:data"
+        }
+      },
+      {
+        "id": "cluster108:127",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 01 \u00b7 bins 1\u201320",
+          "element": "frequency spectrum:frequencies"
+        }
+      },
+      {
+        "id": "cluster108:128",
+        "source": {
+          "nodeId": "Band 01 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 01 \u00b7 RMS",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:129",
+        "source": {
+          "nodeId": "Band 01 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 01 \u00b7 Crest factor",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:130",
+        "source": {
+          "nodeId": "Band 01 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 01 \u00b7 Zero crossing rate",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:131",
+        "source": {
+          "nodeId": "Band 01 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 01 \u00b7 Sine periodicity",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:132",
+        "source": {
+          "nodeId": "Band 01 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 01 \u00b7 Mid / side energy",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:133",
+        "source": {
+          "nodeId": "Band 01 \u00b7 bins 1\u201320",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 01 \u00b7 Spectral entropy",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:134",
+        "source": {
+          "nodeId": "Band 01 \u00b7 bins 1\u201320",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 01 \u00b7 Spectral flux",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:135",
+        "source": {
+          "nodeId": "Band 01 \u00b7 bins 1\u201320",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 01 \u00b7 Onset strength",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:136",
+        "source": {
+          "nodeId": "Band 01 \u00b7 bins 1\u201320",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 01 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:137",
+        "source": {
+          "nodeId": "Band 01 \u00b7 bins 1\u201320",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 01 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "frequencies"
+        }
+      },
+      {
+        "id": "cluster108:138",
+        "source": {
+          "nodeId": "Band 01 \u00b7 bins 1\u201320",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 01 \u00b7 Average frequency \u00b7 Hz",
+          "element": "input_amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:139",
+        "source": {
+          "nodeId": "Band 01 \u00b7 bins 1\u201320",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 01 \u00b7 Average frequency \u00b7 Hz",
+          "element": "input_frequencies"
+        }
+      },
+      {
+        "id": "cluster108:140",
+        "source": {
+          "nodeId": "Audio buffer",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 02 \u00b7 audio",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:141",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 02 \u00b7 bins 21\u201340",
+          "element": "frequency spectrum:data"
+        }
+      },
+      {
+        "id": "cluster108:142",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 02 \u00b7 bins 21\u201340",
+          "element": "frequency spectrum:frequencies"
+        }
+      },
+      {
+        "id": "cluster108:143",
+        "source": {
+          "nodeId": "Band 02 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 02 \u00b7 RMS",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:144",
+        "source": {
+          "nodeId": "Band 02 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 02 \u00b7 Crest factor",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:145",
+        "source": {
+          "nodeId": "Band 02 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 02 \u00b7 Zero crossing rate",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:146",
+        "source": {
+          "nodeId": "Band 02 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 02 \u00b7 Sine periodicity",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:147",
+        "source": {
+          "nodeId": "Band 02 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 02 \u00b7 Mid / side energy",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:148",
+        "source": {
+          "nodeId": "Band 02 \u00b7 bins 21\u201340",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 02 \u00b7 Spectral entropy",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:149",
+        "source": {
+          "nodeId": "Band 02 \u00b7 bins 21\u201340",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 02 \u00b7 Spectral flux",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:150",
+        "source": {
+          "nodeId": "Band 02 \u00b7 bins 21\u201340",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 02 \u00b7 Onset strength",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:151",
+        "source": {
+          "nodeId": "Band 02 \u00b7 bins 21\u201340",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 02 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:152",
+        "source": {
+          "nodeId": "Band 02 \u00b7 bins 21\u201340",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 02 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "frequencies"
+        }
+      },
+      {
+        "id": "cluster108:153",
+        "source": {
+          "nodeId": "Band 02 \u00b7 bins 21\u201340",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 02 \u00b7 Average frequency \u00b7 Hz",
+          "element": "input_amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:154",
+        "source": {
+          "nodeId": "Band 02 \u00b7 bins 21\u201340",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 02 \u00b7 Average frequency \u00b7 Hz",
+          "element": "input_frequencies"
+        }
+      },
+      {
+        "id": "cluster108:155",
+        "source": {
+          "nodeId": "Audio buffer",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 03 \u00b7 audio",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:156",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 03 \u00b7 bins 41\u201360",
+          "element": "frequency spectrum:data"
+        }
+      },
+      {
+        "id": "cluster108:157",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 03 \u00b7 bins 41\u201360",
+          "element": "frequency spectrum:frequencies"
+        }
+      },
+      {
+        "id": "cluster108:158",
+        "source": {
+          "nodeId": "Band 03 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 03 \u00b7 RMS",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:159",
+        "source": {
+          "nodeId": "Band 03 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 03 \u00b7 Crest factor",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:160",
+        "source": {
+          "nodeId": "Band 03 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 03 \u00b7 Zero crossing rate",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:161",
+        "source": {
+          "nodeId": "Band 03 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 03 \u00b7 Sine periodicity",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:162",
+        "source": {
+          "nodeId": "Band 03 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 03 \u00b7 Mid / side energy",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:163",
+        "source": {
+          "nodeId": "Band 03 \u00b7 bins 41\u201360",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 03 \u00b7 Spectral entropy",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:164",
+        "source": {
+          "nodeId": "Band 03 \u00b7 bins 41\u201360",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 03 \u00b7 Spectral flux",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:165",
+        "source": {
+          "nodeId": "Band 03 \u00b7 bins 41\u201360",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 03 \u00b7 Onset strength",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:166",
+        "source": {
+          "nodeId": "Band 03 \u00b7 bins 41\u201360",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 03 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:167",
+        "source": {
+          "nodeId": "Band 03 \u00b7 bins 41\u201360",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 03 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "frequencies"
+        }
+      },
+      {
+        "id": "cluster108:168",
+        "source": {
+          "nodeId": "Band 03 \u00b7 bins 41\u201360",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 03 \u00b7 Average frequency \u00b7 Hz",
+          "element": "input_amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:169",
+        "source": {
+          "nodeId": "Band 03 \u00b7 bins 41\u201360",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 03 \u00b7 Average frequency \u00b7 Hz",
+          "element": "input_frequencies"
+        }
+      },
+      {
+        "id": "cluster108:170",
+        "source": {
+          "nodeId": "Audio buffer",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 04 \u00b7 audio",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:171",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 04 \u00b7 bins 61\u201380",
+          "element": "frequency spectrum:data"
+        }
+      },
+      {
+        "id": "cluster108:172",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 04 \u00b7 bins 61\u201380",
+          "element": "frequency spectrum:frequencies"
+        }
+      },
+      {
+        "id": "cluster108:173",
+        "source": {
+          "nodeId": "Band 04 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 04 \u00b7 RMS",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:174",
+        "source": {
+          "nodeId": "Band 04 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 04 \u00b7 Crest factor",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:175",
+        "source": {
+          "nodeId": "Band 04 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 04 \u00b7 Zero crossing rate",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:176",
+        "source": {
+          "nodeId": "Band 04 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 04 \u00b7 Sine periodicity",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:177",
+        "source": {
+          "nodeId": "Band 04 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 04 \u00b7 Mid / side energy",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:178",
+        "source": {
+          "nodeId": "Band 04 \u00b7 bins 61\u201380",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 04 \u00b7 Spectral entropy",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:179",
+        "source": {
+          "nodeId": "Band 04 \u00b7 bins 61\u201380",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 04 \u00b7 Spectral flux",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:180",
+        "source": {
+          "nodeId": "Band 04 \u00b7 bins 61\u201380",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 04 \u00b7 Onset strength",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:181",
+        "source": {
+          "nodeId": "Band 04 \u00b7 bins 61\u201380",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 04 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:182",
+        "source": {
+          "nodeId": "Band 04 \u00b7 bins 61\u201380",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 04 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "frequencies"
+        }
+      },
+      {
+        "id": "cluster108:183",
+        "source": {
+          "nodeId": "Band 04 \u00b7 bins 61\u201380",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 04 \u00b7 Average frequency \u00b7 Hz",
+          "element": "input_amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:184",
+        "source": {
+          "nodeId": "Band 04 \u00b7 bins 61\u201380",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 04 \u00b7 Average frequency \u00b7 Hz",
+          "element": "input_frequencies"
+        }
+      },
+      {
+        "id": "cluster108:185",
+        "source": {
+          "nodeId": "Audio buffer",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 05 \u00b7 audio",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:186",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 05 \u00b7 bins 81\u2013100",
+          "element": "frequency spectrum:data"
+        }
+      },
+      {
+        "id": "cluster108:187",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 05 \u00b7 bins 81\u2013100",
+          "element": "frequency spectrum:frequencies"
+        }
+      },
+      {
+        "id": "cluster108:188",
+        "source": {
+          "nodeId": "Band 05 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 05 \u00b7 RMS",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:189",
+        "source": {
+          "nodeId": "Band 05 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 05 \u00b7 Crest factor",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:190",
+        "source": {
+          "nodeId": "Band 05 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 05 \u00b7 Zero crossing rate",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:191",
+        "source": {
+          "nodeId": "Band 05 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 05 \u00b7 Sine periodicity",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:192",
+        "source": {
+          "nodeId": "Band 05 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 05 \u00b7 Mid / side energy",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:193",
+        "source": {
+          "nodeId": "Band 05 \u00b7 bins 81\u2013100",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 05 \u00b7 Spectral entropy",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:194",
+        "source": {
+          "nodeId": "Band 05 \u00b7 bins 81\u2013100",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 05 \u00b7 Spectral flux",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:195",
+        "source": {
+          "nodeId": "Band 05 \u00b7 bins 81\u2013100",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 05 \u00b7 Onset strength",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:196",
+        "source": {
+          "nodeId": "Band 05 \u00b7 bins 81\u2013100",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 05 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:197",
+        "source": {
+          "nodeId": "Band 05 \u00b7 bins 81\u2013100",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 05 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "frequencies"
+        }
+      },
+      {
+        "id": "cluster108:198",
+        "source": {
+          "nodeId": "Band 05 \u00b7 bins 81\u2013100",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 05 \u00b7 Average frequency \u00b7 Hz",
+          "element": "input_amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:199",
+        "source": {
+          "nodeId": "Band 05 \u00b7 bins 81\u2013100",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 05 \u00b7 Average frequency \u00b7 Hz",
+          "element": "input_frequencies"
+        }
+      },
+      {
+        "id": "cluster108:200",
+        "source": {
+          "nodeId": "Audio buffer",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 06 \u00b7 audio",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:201",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 06 \u00b7 bins 101\u2013120",
+          "element": "frequency spectrum:data"
+        }
+      },
+      {
+        "id": "cluster108:202",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 06 \u00b7 bins 101\u2013120",
+          "element": "frequency spectrum:frequencies"
+        }
+      },
+      {
+        "id": "cluster108:203",
+        "source": {
+          "nodeId": "Band 06 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 06 \u00b7 RMS",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:204",
+        "source": {
+          "nodeId": "Band 06 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 06 \u00b7 Crest factor",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:205",
+        "source": {
+          "nodeId": "Band 06 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 06 \u00b7 Zero crossing rate",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:206",
+        "source": {
+          "nodeId": "Band 06 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 06 \u00b7 Sine periodicity",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:207",
+        "source": {
+          "nodeId": "Band 06 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 06 \u00b7 Mid / side energy",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:208",
+        "source": {
+          "nodeId": "Band 06 \u00b7 bins 101\u2013120",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 06 \u00b7 Spectral entropy",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:209",
+        "source": {
+          "nodeId": "Band 06 \u00b7 bins 101\u2013120",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 06 \u00b7 Spectral flux",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:210",
+        "source": {
+          "nodeId": "Band 06 \u00b7 bins 101\u2013120",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 06 \u00b7 Onset strength",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:211",
+        "source": {
+          "nodeId": "Band 06 \u00b7 bins 101\u2013120",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 06 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:212",
+        "source": {
+          "nodeId": "Band 06 \u00b7 bins 101\u2013120",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 06 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "frequencies"
+        }
+      },
+      {
+        "id": "cluster108:213",
+        "source": {
+          "nodeId": "Band 06 \u00b7 bins 101\u2013120",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 06 \u00b7 Average frequency \u00b7 Hz",
+          "element": "input_amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:214",
+        "source": {
+          "nodeId": "Band 06 \u00b7 bins 101\u2013120",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 06 \u00b7 Average frequency \u00b7 Hz",
+          "element": "input_frequencies"
+        }
+      },
+      {
+        "id": "cluster108:215",
+        "source": {
+          "nodeId": "Audio buffer",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 07 \u00b7 audio",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:216",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 07 \u00b7 bins 121\u2013140",
+          "element": "frequency spectrum:data"
+        }
+      },
+      {
+        "id": "cluster108:217",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 07 \u00b7 bins 121\u2013140",
+          "element": "frequency spectrum:frequencies"
+        }
+      },
+      {
+        "id": "cluster108:218",
+        "source": {
+          "nodeId": "Band 07 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 07 \u00b7 RMS",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:219",
+        "source": {
+          "nodeId": "Band 07 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 07 \u00b7 Crest factor",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:220",
+        "source": {
+          "nodeId": "Band 07 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 07 \u00b7 Zero crossing rate",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:221",
+        "source": {
+          "nodeId": "Band 07 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 07 \u00b7 Sine periodicity",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:222",
+        "source": {
+          "nodeId": "Band 07 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 07 \u00b7 Mid / side energy",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:223",
+        "source": {
+          "nodeId": "Band 07 \u00b7 bins 121\u2013140",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 07 \u00b7 Spectral entropy",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:224",
+        "source": {
+          "nodeId": "Band 07 \u00b7 bins 121\u2013140",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 07 \u00b7 Spectral flux",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:225",
+        "source": {
+          "nodeId": "Band 07 \u00b7 bins 121\u2013140",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 07 \u00b7 Onset strength",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:226",
+        "source": {
+          "nodeId": "Band 07 \u00b7 bins 121\u2013140",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 07 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:227",
+        "source": {
+          "nodeId": "Band 07 \u00b7 bins 121\u2013140",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 07 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "frequencies"
+        }
+      },
+      {
+        "id": "cluster108:228",
+        "source": {
+          "nodeId": "Band 07 \u00b7 bins 121\u2013140",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 07 \u00b7 Average frequency \u00b7 Hz",
+          "element": "input_amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:229",
+        "source": {
+          "nodeId": "Band 07 \u00b7 bins 121\u2013140",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 07 \u00b7 Average frequency \u00b7 Hz",
+          "element": "input_frequencies"
+        }
+      },
+      {
+        "id": "cluster108:230",
+        "source": {
+          "nodeId": "Audio buffer",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 08 \u00b7 audio",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:231",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 08 \u00b7 bins 141\u2013160",
+          "element": "frequency spectrum:data"
+        }
+      },
+      {
+        "id": "cluster108:232",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 08 \u00b7 bins 141\u2013160",
+          "element": "frequency spectrum:frequencies"
+        }
+      },
+      {
+        "id": "cluster108:233",
+        "source": {
+          "nodeId": "Band 08 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 08 \u00b7 RMS",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:234",
+        "source": {
+          "nodeId": "Band 08 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 08 \u00b7 Crest factor",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:235",
+        "source": {
+          "nodeId": "Band 08 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 08 \u00b7 Zero crossing rate",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:236",
+        "source": {
+          "nodeId": "Band 08 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 08 \u00b7 Sine periodicity",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:237",
+        "source": {
+          "nodeId": "Band 08 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 08 \u00b7 Mid / side energy",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:238",
+        "source": {
+          "nodeId": "Band 08 \u00b7 bins 141\u2013160",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 08 \u00b7 Spectral entropy",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:239",
+        "source": {
+          "nodeId": "Band 08 \u00b7 bins 141\u2013160",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 08 \u00b7 Spectral flux",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:240",
+        "source": {
+          "nodeId": "Band 08 \u00b7 bins 141\u2013160",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 08 \u00b7 Onset strength",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:241",
+        "source": {
+          "nodeId": "Band 08 \u00b7 bins 141\u2013160",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 08 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:242",
+        "source": {
+          "nodeId": "Band 08 \u00b7 bins 141\u2013160",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 08 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "frequencies"
+        }
+      },
+      {
+        "id": "cluster108:243",
+        "source": {
+          "nodeId": "Band 08 \u00b7 bins 141\u2013160",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 08 \u00b7 Average frequency \u00b7 Hz",
+          "element": "input_amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:244",
+        "source": {
+          "nodeId": "Band 08 \u00b7 bins 141\u2013160",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 08 \u00b7 Average frequency \u00b7 Hz",
+          "element": "input_frequencies"
+        }
+      },
+      {
+        "id": "cluster108:245",
+        "source": {
+          "nodeId": "Audio buffer",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 09 \u00b7 audio",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:246",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 09 \u00b7 bins 161\u2013180",
+          "element": "frequency spectrum:data"
+        }
+      },
+      {
+        "id": "cluster108:247",
+        "source": {
+          "nodeId": "Frequency spectrum",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 09 \u00b7 bins 161\u2013180",
+          "element": "frequency spectrum:frequencies"
+        }
+      },
+      {
+        "id": "cluster108:248",
+        "source": {
+          "nodeId": "Band 09 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 09 \u00b7 RMS",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:249",
+        "source": {
+          "nodeId": "Band 09 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 09 \u00b7 Crest factor",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:250",
+        "source": {
+          "nodeId": "Band 09 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 09 \u00b7 Zero crossing rate",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:251",
+        "source": {
+          "nodeId": "Band 09 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 09 \u00b7 Sine periodicity",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:252",
+        "source": {
+          "nodeId": "Band 09 \u00b7 audio",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 09 \u00b7 Mid / side energy",
+          "element": "buffer_data"
+        }
+      },
+      {
+        "id": "cluster108:253",
+        "source": {
+          "nodeId": "Band 09 \u00b7 bins 161\u2013180",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 09 \u00b7 Spectral entropy",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:254",
+        "source": {
+          "nodeId": "Band 09 \u00b7 bins 161\u2013180",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 09 \u00b7 Spectral flux",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:255",
+        "source": {
+          "nodeId": "Band 09 \u00b7 bins 161\u2013180",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 09 \u00b7 Onset strength",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:256",
+        "source": {
+          "nodeId": "Band 09 \u00b7 bins 161\u2013180",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 09 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:257",
+        "source": {
+          "nodeId": "Band 09 \u00b7 bins 161\u2013180",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 09 \u00b7 Spectral centroid \u00b7 Hz",
+          "element": "frequencies"
+        }
+      },
+      {
+        "id": "cluster108:258",
+        "source": {
+          "nodeId": "Band 09 \u00b7 bins 161\u2013180",
+          "element": "data"
+        },
+        "target": {
+          "nodeId": "Band 09 \u00b7 Average frequency \u00b7 Hz",
+          "element": "input_amplitudes"
+        }
+      },
+      {
+        "id": "cluster108:259",
+        "source": {
+          "nodeId": "Band 09 \u00b7 bins 161\u2013180",
+          "element": "frequencies"
+        },
+        "target": {
+          "nodeId": "Band 09 \u00b7 Average frequency \u00b7 Hz",
+          "element": "input_frequencies"
+        }
+      }
+    ]
+  },
+  "feature_graph_sha256": "56ad9c512f753eb286f1810f72a1e55d055734f7dc856ed6270c798b4bd1885d",
+  "sample_rate": 40960,
+  "chunk_size": 2048,
+  "processing_tick_seconds": 0.005,
+  "training_vectors": 58298,
+  "feature_count": 108,
+  "tracks": [
+    {
+      "id": "1907160656",
+      "title": "KDrew - Say What You Wanna",
+      "url": "https://soundcloud.com/kdrewmusic/kdrew-say-what-you-wanna",
+      "duration_seconds": 183.3277099609375,
+      "processing_frames": 36670,
+      "training_vectors": 7332,
+      "audio_sha256": "f7565bd523b587e02abd878be966c0e5c68359fb0a6305fac048e41eb4f48b18"
+    },
+    {
+      "id": "2325674393",
+      "title": "Weightless (feat. Dia Frampton)",
+      "url": "https://soundcloud.com/mitis/weightless",
+      "duration_seconds": 220.4464599609375,
+      "processing_frames": 44090,
+      "training_vectors": 8818,
+      "audio_sha256": "ec2ef88be8f6187a779af47b6dff32a45a4c35d7127bec4781e8e6732ebd4a1d"
+    },
+    {
+      "id": "2263369355",
+      "title": "the WORLD must go DIGITAL!!!",
+      "url": "https://soundcloud.com/soonyoungmusic/the-world-must-go-digital-1",
+      "duration_seconds": 147.158740234375,
+      "processing_frames": 29440,
+      "training_vectors": 5888,
+      "audio_sha256": "f6cd652263a63045f7610b55ff26e4e705d4a588ec557d437c4022eb7587351f"
+    },
+    {
+      "id": "2152504656",
+      "title": "S&M - Rihanna X Migos [CEEZY REMIX]",
+      "url": "https://soundcloud.com/ceezmusic69/sm-rihanna-x-migos-ceezy-remix",
+      "duration_seconds": 90.9839599609375,
+      "processing_frames": 18200,
+      "training_vectors": 3640,
+      "audio_sha256": "b922ebd026e1ab30ca05947564789ed6a3e6989448cbd68e005b8595d94014b9"
+    },
+    {
+      "id": "1556413195",
+      "title": "KERO - Operator",
+      "url": "https://soundcloud.com/keromusic_official/kero-operator-2",
+      "duration_seconds": 195.2016357421875,
+      "processing_frames": 39050,
+      "training_vectors": 7805,
+      "audio_sha256": "b8829c1cb3a4ec68777fc85224be569799ac39ea163594a014a440728552b356"
+    },
+    {
+      "id": "1267452457",
+      "title": "Scintillate VIP",
+      "url": "https://soundcloud.com/enum-music/scintillate-vip",
+      "duration_seconds": 232.0464599609375,
+      "processing_frames": 46410,
+      "training_vectors": 9282,
+      "audio_sha256": "7aa99fc1a91a0b2ea17d5ca1f951549a161062ef9fd92c636022676b23c91a08"
+    },
+    {
+      "id": "1764459885",
+      "title": "Creep",
+      "url": "https://soundcloud.com/ymirymirymirymir/creep",
+      "duration_seconds": 230.8156982421875,
+      "processing_frames": 46170,
+      "training_vectors": 9234,
+      "audio_sha256": "03506f61a2339311f261bb287baae9eae379242b13da08207983c46b56589dd0"
+    },
+    {
+      "id": "2325279152",
+      "title": "Synthtonix - Sinister [SCC228]",
+      "url": "https://soundcloud.com/swerve_cc/synthtonix-sinister-scc228",
+      "duration_seconds": 157.5464599609375,
+      "processing_frames": 31510,
+      "training_vectors": 6299,
+      "audio_sha256": "234021787ac547760d2cb2bb257a9fc47a9f9ec3a8278d7f293b833bdec0cbfb"
+    }
+  ],
+  "nmf": {
+    "components": 2,
+    "init": "nndsvda",
+    "random_state": 0,
+    "max_iter": 10000
+  },
+  "model_sha256": "0981ed429bb10352c3e4b1df07aaf8cb94516ae6ae69ead67421f681b0de5edb"
+}

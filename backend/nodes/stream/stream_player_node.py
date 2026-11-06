@@ -1,9 +1,11 @@
 from backend.components.elements.parameters import Parameter, DataElement, ReferenceElement
 import threading
+from math import gcd
 from typing import Callable
 
 import numpy as np
 import sounddevice as sd
+from scipy.signal import resample_poly
 
 from config import CHUNK_SIZE, SAMPLE_RATE
 from backend.updatable.updatable import AudioUpdatable
@@ -16,7 +18,8 @@ class StreamPlayerNode(CNode, AudioUpdatable):
     Inputs `audio_in` shaped (samples, 2), `sample_rate_in` (Hz), and
     `enqueue_token` replace playback when the token changes. Output `chunk`
     has shape (2, chunk_size). Empty audio stops playback. Configure
-    `chunk_size`; direct `enqueue()` appends tracks with matching sample rates."""
+    `chunk_size` and output `sample_rate`; enqueue resamples source tracks to
+    that rate. `chunk_id` increments once per captured block, including silence."""
 
     nodeName = "StreamPlayer"
 
@@ -35,6 +38,7 @@ class StreamPlayerNode(CNode, AudioUpdatable):
             "sample_rate_in": {"io": "in"},
             "enqueue_token": {"io": "in"},
             "chunk": {"io": "out"},
+            "chunk_id": {"io": "out"},
         }
         super().__init__(self.nodeName, terminals=terminals, alias=alias)
         self.audio_in = DataElement(self, 'audio_in', ElementValue(audio_in))
@@ -43,6 +47,7 @@ class StreamPlayerNode(CNode, AudioUpdatable):
         self.sample_rate = Parameter(self, 'sample_rate', sample_rate, minimum=8000, maximum=192000, integer=True)
         self.chunk_size = Parameter(self, 'chunk_size', chunk_size, minimum=16, maximum=65536, integer=True)
         self.chunk = DataElement(self, 'chunk', ElementValue(np.zeros((2, chunk_size), dtype=np.float32)))
+        self.chunk_id = DataElement(self, 'chunk_id', np.zeros(1, dtype=np.int64))
         self.user_callback = ReferenceElement(self, "user_callback", user_callback)
         self._last_enqueue_token = int(self.enqueue_token.value)
 
@@ -55,11 +60,11 @@ class StreamPlayerNode(CNode, AudioUpdatable):
 
     def enqueue(self, audio, sr):
         arr = np.asarray(audio, dtype=np.float32)
+        rate = int(self.sample_rate.value)
+        if int(sr) != rate:
+            factor = gcd(int(sr), rate)
+            arr = resample_poly(arr, rate // factor, int(sr) // factor, axis=0).astype(np.float32)
         with self._lock:
-            if self._audio.shape[0] == 0:
-                self.sample_rate.value = int(sr)
-            elif int(sr) != int(self.sample_rate.value):
-                raise ValueError("sample rate mismatch")
             self._audio = np.vstack((self._audio, arr))
             self._song_ends.append(self._audio.shape[0])
 
@@ -77,13 +82,10 @@ class StreamPlayerNode(CNode, AudioUpdatable):
             outdata[:] = 0
             if take > 0:
                 outdata[:take] = self._audio[self._cursor:end]
-                block = outdata[:take].T
-                chunk_len = self.chunk.value.shape[1]
-                if block.shape[1] < chunk_len:
-                    block = np.pad(block, ((0, 0), (0, chunk_len - block.shape[1])))
-                elif block.shape[1] > chunk_len:
-                    block = block[:, :chunk_len]
-                self.chunk.value[:] = block
+            block = outdata.T
+            chunk_len = self.chunk.value.shape[1]
+            self.chunk.value[:] = np.pad(block[:, :chunk_len], ((0, 0), (0, max(0, chunk_len - frames))))
+            self.chunk_id.value[0] += 1
             self._cursor = end
 
         if self.user_callback.value:
@@ -123,5 +125,6 @@ class StreamPlayerNode(CNode, AudioUpdatable):
                 self.start()
             else:
                 self.chunk.value[:] = 0
+                self.chunk_id.value[0] += 1
             self._last_enqueue_token = token
         return self.chunk

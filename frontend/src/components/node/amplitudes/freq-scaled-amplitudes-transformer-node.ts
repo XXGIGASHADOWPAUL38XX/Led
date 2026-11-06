@@ -6,6 +6,7 @@ export default {
   "description": "Aggregate spectrum neighborhoods with index-dependent widths.",
   "category": "amplitudes",
   "fields": [
+    { "name": "number_points", "control": "slider", "label": "Points", "rebuild": true },
     {
       "name": "input_data",
       "control": "port"

@@ -145,6 +145,9 @@ class Runtime:
                     self._check_connection(output.value, input_element.value)
                     if input_element._value_source is not output:
                         input_element.value = output
+            if not self.preview:
+                for node in created:
+                    node.initialize()
         except Exception:
             for node in reversed(created):
                 self._stop_node(node)
@@ -180,6 +183,9 @@ class Runtime:
 
     def load(self, graph, *, replace=False):
         graph = deepcopy(graph)
+        for spec in list(graph['nodes']):
+            if spec['type'] in self.catalog.classes:
+                self.catalog.classes[spec['type']].migrate_graph(spec, graph)
         live, updates_by_node = self._build(graph, reuse=not replace)
         previous = self.nodes
         for node_id, node in previous.items():

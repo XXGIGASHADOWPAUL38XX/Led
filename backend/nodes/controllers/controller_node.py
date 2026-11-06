@@ -9,10 +9,12 @@ from backend.overrides.CNode import CNode
 class ControllerNode(CNode, VisualUpdatable):
     """Base RGBA-to-LED controller with brightness shaping.
 
-    Input `rgba` has shape (FREQ_BINS, 4), channels in [0, 255]; there is no
+    Input `rgba` has shape (number_points, 4), channels in [0, 255]; there is no
     output terminal. `process_rgba()` modifies alpha in place using
     `power_log`, `min_alpha`, and `remove_alpha`, then fills internal `rgb`
     with black prefix LEDs. Use ESP32Node for transmission."""
+
+    input_shapes = {'rgba': (0, 4)}
 
     def __init__(
         self,
@@ -30,8 +32,9 @@ class ControllerNode(CNode, VisualUpdatable):
         self.power_log = Parameter(self, 'power_log', power_log, minimum=0, maximum=10)
         self.min_alpha = Parameter(self, 'min_alpha', min_alpha, minimum=0, maximum=1)
         self.remove_alpha = Parameter(self, 'remove_alpha', remove_alpha, minimum=0, maximum=1)
+        self.pending_terminals['rgba']['adaptiveShape'] = True
         self.rgba = DataElement(self, 'rgba', ElementValue(rgba))
-        self.rgb = DataElement(self, 'rgb', ElementValue(np.zeros((FREQ_BINS + SKIP_LED_NUMBERS, 3))))
+        self.rgb = DataElement(self, 'rgb', ElementValue(np.zeros((self.rgba.value.shape[0] + SKIP_LED_NUMBERS, 3))))
 
     def process_rgba(self):
         self.humanize_alpha()
@@ -59,8 +62,11 @@ class ControllerNode(CNode, VisualUpdatable):
         )
 
     def rgba_to_rbg(self):
+        size = self.rgba.value.shape[0] + SKIP_LED_NUMBERS
+        if self.rgb.value.shape != (size, 3):
+            self.rgb.value = np.zeros((size, 3))
         self.rgb.value.fill(0)
-        self.rgb.value[SKIP_LED_NUMBERS:SKIP_LED_NUMBERS + FREQ_BINS] = (
+        self.rgb.value[SKIP_LED_NUMBERS:] = (
             self.rgba.value[:, :3]
             * (self.rgba.value[:, 3, None] / 255.0)
         )

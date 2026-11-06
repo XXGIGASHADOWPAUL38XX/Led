@@ -26,8 +26,12 @@ export class BackendStore {
   beginAction() { this.historyGroup++; }
   private listeners = new Map<string, Set<Listener>>();
   private streams = new Map<string, Endpoint>();
-  readonly connection = new BackendConnection((message) => this.receive(message), (connection) => {
-    this.status = { ...this.status, connection };
+  private subscription: { key: string } | null = null;
+  private subscriptionsScheduled = false;
+  private streamReady = false;
+  readonly connection = new BackendConnection((message) => this.receive(message), (connection, detail) => {
+    this.status = { ...this.status, connection, ...(detail ? { error: detail } : {}) };
+    if (connection !== "connected") { this.subscription = null; this.streamReady = false; }
     if (connection === "offline") {
       this.edits.clear();
       this.generationPreview = null;
@@ -41,7 +45,10 @@ export class BackendStore {
     const set = this.listeners.get(key) ?? new Set();
     set.add(listener);
     this.listeners.set(key, set);
-    return () => { set.delete(listener); };
+    return () => {
+      set.delete(listener);
+      if (!set.size && this.listeners.get(key) === set) this.listeners.delete(key);
+    };
   }
   private emit(key: string) { this.listeners.get(key)?.forEach((listener) => listener()); }
   node(id: string) { return this.nodes.get(id) ?? null; }
@@ -83,9 +90,24 @@ export class BackendStore {
     };
   }
   private syncSubscriptions() {
-    if (this.status.connection !== "connected" || !this.snapshot) return;
-    const elements = [...this.streams.values()].filter((item) => this.nodes.get(item.nodeId)?.ports.some((port) => port.name === item.element));
-    void this.command("subscribe", { elements });
+    if (this.subscriptionsScheduled) return;
+    this.subscriptionsScheduled = true;
+    queueMicrotask(() => {
+      this.subscriptionsScheduled = false;
+      if (this.status.connection !== "connected" || !this.streamReady || !this.snapshot) return;
+      const elements = [...this.streams.values()].filter((item) => this.nodes.get(item.nodeId)?.ports.some((port) => port.name === item.element))
+        .sort((a, b) => a.nodeId.localeCompare(b.nodeId) || a.element.localeCompare(b.element));
+      const key = JSON.stringify(elements);
+      if (key === this.subscription?.key) return;
+      const subscription = { key };
+      this.subscription = subscription;
+      void this.connection.request("subscribe", { elements, historyGroup: this.historyGroup }).catch((error: Error) => {
+        if (this.subscription !== subscription) return;
+        this.subscription = null;
+        this.status = { ...this.status, error: error.message };
+        this.emit("status");
+      });
+    });
   }
 
   private updateNode(node: NodeDescriptor) {
@@ -125,6 +147,7 @@ export class BackendStore {
     }
     if (message.type === "graph.snapshot") {
       this.snapshot = message.payload as unknown as Snapshot;
+      this.streamReady = true;
       const ids = new Set(this.snapshot.graph.nodes.map((node) => node.id));
       if (Object.keys(this.display).some((id) => !ids.has(id))) this.replaceDisplay(Object.fromEntries(Object.entries(this.display).filter(([id]) => ids.has(id))));
       this.arrays.clear();
@@ -142,16 +165,18 @@ export class BackendStore {
     if (message.type === "frame") {
       try {
         if (message.revision !== this.status.revision) return;
+        const changed = new Set<string>();
         for (const item of message.payload.values as { nodeId: string; element: string; value: ArrayValue }[]) {
           const key = keyOf(item.nodeId, item.element);
           this.arrays.set(key, item.value);
-          this.emit(`array:${key}`);
+          changed.add(`array:${key}`);
         }
-        for (const player of message.payload.players as PlayerState[]) { this.players.set(player.nodeId, player); this.emit(`player:${player.nodeId}`); }
+        for (const player of message.payload.players as PlayerState[]) { this.players.set(player.nodeId, player); changed.add(`player:${player.nodeId}`); }
+        for (const key of changed) this.emit(key);
       } finally { this.connection.send("frame.ack", { sequence: message.payload.sequence }); }
       return;
     }
-    if (message.revision !== undefined && message.revision >= this.status.revision) {
+    if (message.revision !== undefined && message.revision > this.status.revision) {
       this.status = { ...this.status, revision: message.revision };
       this.emit("status");
     }
@@ -191,3 +216,5 @@ export class BackendStore {
   }
 }
 export const backend = new BackendStore();
+
+if (import.meta.hot) import.meta.hot.dispose(() => backend.connection.stop());

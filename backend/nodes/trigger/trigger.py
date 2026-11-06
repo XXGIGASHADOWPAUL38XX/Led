@@ -51,7 +51,8 @@ class TriggerNode(CNode, AudioUpdatable):
     def c_update(self) -> None:
         input_value = np.asarray(self.input_data.value)
         value = float(np.ravel(input_value)[-1]) if input_value.size else 0.0
-        condition_value = self.condition_check(self.trigger_mode.value, self.threshold.value, value)
+        threshold = float(np.asarray(self.threshold.value).reshape(-1)[0])
+        condition_value = self.condition_check(self.trigger_mode.value, threshold, value)
         if condition_value != self.block_signal.value:
             self.data.value[:] = np.ones(self.data.value.shape) * int(condition_value)
             self.block_signal.value = condition_value

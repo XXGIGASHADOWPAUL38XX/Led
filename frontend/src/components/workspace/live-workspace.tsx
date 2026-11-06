@@ -23,7 +23,7 @@ export function LiveWorkspace() {
   const [adding, setAdding] = useState<[number, number] | null>(null);
   const [source, setSource] = useState("");
   const [target, setTarget] = useState("");
-  useEffect(() => { backend.connection.start(); return () => backend.connection.stop(); }, []);
+  useEffect(() => { const connection = backend.connection; connection.start(); return () => connection.stop(); }, []);
   useEffect(() => {
     const begin = () => backend.beginAction();
     const key = (event: KeyboardEvent) => {

@@ -1,28 +1,30 @@
-from backend.components.elements.parameters import Parameter, DataElement, NodeReferenceElement
+from backend.components.elements.parameters import Parameter, NodeReferenceElement
 import numpy as np
 
-from config import FREQ_BINS
 from backend.components.elements import AnalysableElement
 from backend.components.elements.element_value import ElementValue
 from backend.overrides.CNode import CNode
+from backend.overrides.point_count_node import PointCountNode
 from backend.nodes.pipelines.amplitudes.amplitude_transformer import AmplitudesTransformer
 
-class FctAmplitudesTransformerNode(CNode, AmplitudesTransformer):
+class FctAmplitudesTransformerNode(PointCountNode, AmplitudesTransformer):
     """Shape a spectrum with a supplied amplitude-level function.
 
-    Input `input_data` is a FREQ_BINS vector; configure `amplitudes_level_fct`
+    Input `input_data` is a number_points vector; configure `amplitudes_level_fct`
     with an object exposing `fct(data)`. Output `data` applies that function
     then the constructor `log` exponent each audio update. The inherited
     transform mutates the function result; `powering` is currently unused."""
 
+    # Point count follows newly connected spectra and remains editable.
     nodeName = "FctAmplitudesTransformer"
 
     def __init__(
         self,
-        input_data: np.ndarray = np.zeros(FREQ_BINS),
+        input_data: np.ndarray | None = None,
         powering: float = 1.,
         log: float = 1.,
         amplitudes_level_fct: object = None,
+        number_points: int | None = None,
 
     ) -> None:
         terminals = {
@@ -31,12 +33,12 @@ class FctAmplitudesTransformerNode(CNode, AmplitudesTransformer):
         }
         CNode.__init__(self, self.nodeName, terminals, powering=powering, log=log)
 
-        self.input_data = DataElement(self, 'input_data', ElementValue(input_data))
+        self.init_points(number_points, input_data=(input_data, ()))
         self.powering = Parameter(self, 'powering', powering, minimum=0, maximum=10)
         self.log = Parameter(self, 'log', log, minimum=0.01, maximum=10)
         self.log.valueChanged.connect(self._log_changed)
         self.amplitudes_level_fct = NodeReferenceElement(self, 'amplitudes_level_fct', amplitudes_level_fct)
-        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(FREQ_BINS)))
+        self.data = AnalysableElement(self, "data", ElementValue(np.zeros(int(self.number_points.value))))
 
     def c_update(self):
         if self.amplitudes_level_fct.value is None:
@@ -44,6 +46,7 @@ class FctAmplitudesTransformerNode(CNode, AmplitudesTransformer):
         self.transform_amplitudes(self.input_data.value)
 
     def validate_parameters(self, changes):
+        super().validate_parameters(changes)
         function = self.amplitudes_level_fct.value
         if function is not None and function.data.value.shape != self.input_data.value.shape:
             raise ValueError("The amplitude function and input must have matching lengths")

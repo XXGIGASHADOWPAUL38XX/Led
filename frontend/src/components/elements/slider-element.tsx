@@ -12,12 +12,13 @@ export type SliderElementProps = {
   min: number;
   max: number;
   step?: number;
+  integer?: boolean;
   unit?: string;
   scale?: "linear" | "logarithmic";
   disabled?: boolean;
 };
 
-export function SliderElement({ label, value, onValueChange, onValueCommit, min, max, step = 1, unit = "", scale = "linear", disabled = false }: SliderElementProps) {
+export function SliderElement({ label, value, onValueChange, onValueCommit, min, max, step = 1, integer = Number.isInteger(step), unit = "", scale = "linear", disabled = false }: SliderElementProps) {
   const id = useId();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
@@ -46,8 +47,7 @@ export function SliderElement({ label, value, onValueChange, onValueCommit, min,
       return;
     }
     const clamped = Math.min(max, Math.max(min, number));
-    const snapped = Number((min + Math.round((clamped - min) / step) * step).toPrecision(12));
-    onValueChange(Math.min(max, Math.max(min, snapped)));
+    onValueChange(integer ? Math.round(clamped) : clamped);
     onValueCommit?.();
     setEditing(false);
     setError("");

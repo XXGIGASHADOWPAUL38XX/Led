@@ -35,6 +35,10 @@ class BroadcastRescalerNode(CNode, AudioUpdatable):
         data_shape = (length, *self.input_data.value.shape[1:])
         self.data = AnalysableElement(self, "data", ElementValue(np.zeros(data_shape)))
 
+    def parameters_changed(self, name):
+        if name == 'length':
+            self.data.value = np.zeros((int(self.length.value), *self.input_data.value.shape[1:]))
+
     def c_update(self):
         ratio = self.input_data.value.shape[0] / self.length.value
         broadcast_indexes = np.floor(np.cumsum(np.repeat(ratio, self.length.value)) - ratio).astype(np.int16)
