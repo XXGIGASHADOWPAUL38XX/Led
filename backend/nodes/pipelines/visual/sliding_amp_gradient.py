@@ -19,6 +19,16 @@ class SlidingAmpGradientNode(VisualPipeline, CNode):
     `number_points` controls the output length independently of spectrum size."""
 
     nodeName = "SlidingAmpGradientNode"
+    ui = {'title': 'Sliding Amp Gradient',
+     'description': 'Move an RGB gradient window according to spectral center frequency.',
+     'category': 'visual',
+     'fields': [{'name': 'number_points', 'control': 'slider', 'label': 'Points', 'rebuild': True},
+                {'name': 'input_frequencies', 'control': 'port'},
+                {'name': 'input_amplitudes', 'control': 'port'},
+                {'name': 'slide_window_fraction', 'control': 'slider', 'rebuild': True},
+                {'name': 'slide_min_avg_amp', 'control': 'slider'},
+                {'name': 'slide_max_avg_amp', 'control': 'slider'}],
+     'views': [{'kind': 'color', 'data': 'data', 'label': 'Data', 'open': True}]}
     input_shapes = {"input_frequencies": (0,), "input_amplitudes": (0,)}
 
     def __init__(

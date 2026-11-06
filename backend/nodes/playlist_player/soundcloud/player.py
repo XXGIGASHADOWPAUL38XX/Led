@@ -31,6 +31,30 @@ class SCPlaylistPlayer(CNode, AudioUpdatable):
     results are applied by `c_update()` on the processing thread."""
 
     nodeName = "SCPlaylistPlayer"
+    ui = {
+        "title": "SCPlaylist Player",
+        "description": "Download, cache, and control playback of a SoundCloud playlist.",
+        "category": "player",
+        "fields": [
+            {"name": "playlist_url", "control": "text"},
+            {"name": "browser", "control": "text"},
+            {"name": "profile", "control": "text"},
+            {"name": "prefetch_seconds", "control": "slider", "unit": "s"},
+            {"name": "cache", "control": "switch"},
+            {
+                "name": "offline_pipelines",
+                "control": "sequence",
+                "item": "node",
+                "nodeTypes": ["StemsRecognition"],
+            },
+        ],
+        "views": [
+            {"kind": "playlist"},
+            {"kind": "history", "data": "audio", "label": "Audio", "open": False},
+            {"kind": "meter", "data": "sample_rate", "label": "Sample rate", "open": False},
+            {"kind": "meter", "data": "enqueue_token", "label": "Enqueue token", "open": False},
+        ],
+    }
     entries_cache_path = os.path.expanduser("~/.cache/led/sc_playlist_entries.pkl")
     tracks_cache_path = os.path.expanduser("~/.cache/led/sc_playlist_tracks.pkl")
 

@@ -17,6 +17,18 @@ class FctAmplitudesTransformerNode(PointCountNode, AmplitudesTransformer):
 
     # Point count follows newly connected spectra and remains editable.
     nodeName = "FctAmplitudesTransformer"
+    ui = {'title': 'Fct Amplitudes Transformer',
+     'description': 'Shape a spectrum with a supplied amplitude-level function.',
+     'category': 'amplitudes',
+     'fields': [{'name': 'number_points', 'control': 'slider', 'label': 'Points', 'rebuild': True},
+                {'name': 'input_data', 'control': 'port'},
+                {'name': 'powering', 'control': 'slider', 'label': 'Weighting'},
+                {'name': 'log', 'control': 'slider'},
+                {'name': 'amplitudes_level_fct',
+                 'control': 'node-reference',
+                 'matchInput': 'input_data',
+                 'nodeTypes': ['AmplitudeLevelFunction']}],
+     'views': [{'kind': 'bars', 'data': 'data', 'label': 'Data', 'open': True}]}
 
     def __init__(
         self,

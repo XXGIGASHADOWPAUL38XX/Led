@@ -20,6 +20,39 @@ class AmplitudesNode(ArrayInputNode, AudioUpdatable):
     Configure `fft_size`, `freq_bins`, and frequency bounds; uses SAMPLE_RATE."""
 
     nodeName = "Amplitudes"
+    ui = {
+        "title": "Amplitudes",
+        "description": "Convert an audio window to a logarithmically spaced spectrum.",
+        "category": "amplitudes",
+        "fields": [
+            {"name": "shape", "control": "shape", "label": "Input shape", "rebuild": True},
+            {"name": "buffer", "control": "port"},
+            {
+                "name": "min_frequency",
+                "control": "slider",
+                "label": "Min frequency",
+                "unit": "Hz",
+                "scale": "logarithmic",
+            },
+            {"name": "max_frequency", "control": "slider", "label": "Max frequency", "unit": "Hz"},
+            {"name": "fft_size", "hidden": True, "control": "slider", "label": "FFT size", "rebuild": True},
+            {"name": "freq_bins", "control": "slider", "label": "Bins", "rebuild": True},
+            {"name": "powering", "control": "slider", "label": "Weighting"},
+        ],
+        "views": [
+            {"kind": "bars", "data": "frequencies", "label": "Frequencies", "open": False},
+            {
+                "kind": "bars",
+                "data": "data",
+                "label": "Data",
+                "open": True,
+                "xScale": "logarithmic",
+                "xMinField": "min_frequency",
+                "xMaxField": "max_frequency",
+                "unit": "Hz",
+            },
+        ],
+    }
 
     def __init__(
             self,

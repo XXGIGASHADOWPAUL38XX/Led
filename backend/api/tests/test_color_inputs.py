@@ -2,6 +2,7 @@
 import unittest
 import numpy as np
 from backend.api.handlers import Handlers
+from backend.api.schemas import parse_command
 from backend.api.protocol import encode, decode
 from backend.api.runtime import Runtime
 
@@ -23,9 +24,9 @@ class ColorInputTests(unittest.IsolatedAsyncioTestCase):
         self.runtime.close()
 
     async def link(self, node, input, source='source'):
-        await self.handlers.connection_add(None, {'connectionId': input,
+        await self.handlers.connection_add(None, parse_command('connection.add', {'connectionId': input,
             'source': {'nodeId': source, 'element': 'data'},
-            'target': {'nodeId': node, 'element': input}})
+            'target': {'nodeId': node, 'element': input}}))
 
     async def test_independent_channels_update_without_metadata_churn(self):
         await self.link('color', 'color_red')
@@ -35,7 +36,7 @@ class ColorInputTests(unittest.IsolatedAsyncioTestCase):
         np.testing.assert_array_equal(self.runtime.nodes['color'].data.value[0], [80, 40, 60])
         self.runtime.set_element('color', 'color', [10, 80, 90])
         np.testing.assert_array_equal(self.runtime.nodes['color'].data.value[0], [80, 80, 90])
-        await self.handlers.connection_remove(None, {'connectionId': 'color_red'})
+        await self.handlers.connection_remove(None, parse_command('connection.remove', {'connectionId': 'color_red'}))
         np.testing.assert_array_equal(self.runtime.nodes['color'].data.value[0], [10, 80, 90])
 
     async def test_both_gradient_endpoints_have_live_channel_inputs(self):

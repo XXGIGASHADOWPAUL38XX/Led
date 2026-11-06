@@ -16,6 +16,17 @@ class BroadcastAdditionNode(VisualPipeline, CNode):
     Shapes must broadcast; a per-position level expands over color channels."""
 
     nodeName = "BroadcastAddition"
+    ui = {
+        "title": "Broadcast Addition",
+        "description": "Blend two arrays for mixing colors or visual signals.",
+        "category": "broadcast",
+        "fields": [
+            {"name": "input_data", "control": "port"},
+            {"name": "secondary_data", "control": "port"},
+            {"name": "level", "control": "slider"},
+        ],
+        "views": [{"kind": "meter", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(
         self,

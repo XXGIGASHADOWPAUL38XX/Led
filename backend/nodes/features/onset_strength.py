@@ -15,6 +15,13 @@ class OnsetStrengthNode(CNode, AudioPipeline):
     previous spectrum minus an exponential noise estimate. Keeps frame history."""
 
     nodeName = "OnsetStrength"
+    ui = {
+        "title": "Onset Strength",
+        "description": "Detect spectral attacks above a moving noise floor.",
+        "category": "features",
+        "fields": [{"name": "amplitudes", "control": "port"}],
+        "views": [{"kind": "meter", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(self, amplitudes=np.zeros(FREQ_BINS), alias: str | None = None) -> None:
         terminals = {

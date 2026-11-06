@@ -1,4 +1,5 @@
 import unittest
+from backend.api.schemas import parse_command
 
 import numpy as np
 
@@ -46,8 +47,8 @@ class BlendTests(unittest.IsolatedAsyncioTestCase):
             pass
         handlers = Handlers(self.runtime, broadcast)
         for source in ('a', 'b'):
-            await handlers.connection_add(None, {'source': {'nodeId': source, 'element': 'data'},
-                                                  'target': {'nodeId': 'blend', 'element': 'add_element'}})
+            await handlers.connection_add(None, parse_command('connection.add', {'source': {'nodeId': source, 'element': 'data'},
+                                                  'target': {'nodeId': 'blend', 'element': 'add_element'}}))
         self.runtime.configure('blend', {'inputs': [
             {'source': {'nodeId': 'a', 'element': 'data'}, 'weight': 1},
             {'source': {'nodeId': 'b', 'element': 'data'}, 'weight': 3},

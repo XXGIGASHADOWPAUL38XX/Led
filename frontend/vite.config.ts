@@ -1,16 +1,25 @@
 import { fileURLToPath } from "node:url";
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), "NEXT_PUBLIC_");
-  return {
-    plugins: [react(), tailwindcss()],
-    resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
-    // Preserve the existing WebSocket client and its environment variable.
-    define: { "process.env.NEXT_PUBLIC_BACKEND_URL": JSON.stringify(env.NEXT_PUBLIC_BACKEND_URL) ?? "undefined" },
-    server: { host: "127.0.0.1", port: 3000, strictPort: true },
-    preview: { host: "127.0.0.1", port: 3000, strictPort: true },
-  };
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+  resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
+  build: {
+    rolldownOptions: {
+      output: {
+        // Dependencies change less often than the app: separate chunks stay cached across deployments.
+        codeSplitting: {
+          groups: [
+            { name: "react", test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/ },
+            { name: "react-flow", test: /node_modules[\\/](@xyflow|d3-[a-z]+|zustand|classcat)[\\/]/ },
+            { name: "vendor", test: /node_modules[\\/]/ },
+          ],
+        },
+      },
+    },
+  },
+  server: { host: "127.0.0.1", port: 3000, strictPort: true },
+  preview: { host: "127.0.0.1", port: 3000, strictPort: true },
 });

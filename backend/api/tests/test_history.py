@@ -94,7 +94,7 @@ class HistoryTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_removal_undo_restores_connections_and_noop_moves_are_not_recorded(self):
         original = self.runtime.nodes["buffer"]
-        await self.command("node.move", nodeId="amp", position=[350, 0])
+        await self.command("graph.move", positions={"amp": [350, 0]})
         self.assertFalse(self.router.history.entries)
         await self.command("node.remove", nodeId="amp")
         await self.command("graph.undo")

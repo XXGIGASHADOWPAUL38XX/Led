@@ -1,4 +1,5 @@
 import unittest
+from backend.api.schemas import parse_command
 import numpy as np
 
 from backend.api.handlers import Handlers
@@ -33,9 +34,9 @@ class ValueTransformerTests(unittest.IsolatedAsyncioTestCase):
         ], 'connections': []})
         self.runtime.configure('map', {'shape': [180]})
         self.assertEqual(self.runtime.nodes['map'].output_value.value.shape, (180,))
-        await Handlers(self.runtime, broadcast).connection_add(None, {
+        await Handlers(self.runtime, broadcast).connection_add(None, parse_command('connection.add', {
             'source': {'nodeId': 'rgb', 'element': 'data'}, 'target': {'nodeId': 'map', 'element': 'input_value'},
-        })
+        }))
         self.assertEqual(self.runtime.nodes['map'].output_value.value.shape, (178, 3))
         with self.assertRaisesRegex(ValueError, 'incompatible'):
             self.runtime.configure('map', {'shape': [180, 3]})

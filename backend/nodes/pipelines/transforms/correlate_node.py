@@ -22,6 +22,15 @@ class CorrelateNode(ArrayInputNode, AudioUpdatable):
     """
 
     nodeName = 'Correlate'
+    ui = {'title': 'Correlate',
+     'description': 'Spread peaks or blend neighboring colors with triangular weights, preserving RGB channels.',
+     'category': 'transforms',
+     'fields': [{'name': 'shape', 'control': 'shape', 'label': 'Input shape', 'rebuild': True},
+                {'name': 'input_data', 'control': 'port'},
+                {'name': 'mode', 'control': 'select', 'label': 'Mode'},
+                {'name': 'correlation_offset', 'label': 'Spread strength', 'control': 'slider', 'step': 0.001},
+                {'name': 'correlation_step', 'label': 'Span fraction', 'control': 'slider', 'step': 0.001}],
+     'views': [{'kind': 'bars', 'data': 'data', 'label': 'Data', 'open': False}]}
 
     def __init__(self, input_data=None, correlation_offset=1., correlation_step=0., shape=None, alias=None, mode='maximum'):
         super().__init__(self.nodeName, {'input_data': {'io': 'in'}, 'data': {'io': 'out'},

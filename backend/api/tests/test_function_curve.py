@@ -4,6 +4,7 @@ import unittest
 import numpy as np
 
 from backend.api.handlers import Handlers
+from backend.api.schemas import parse_command
 from backend.api.protocol import decode, encode
 from backend.api.runtime import Runtime
 
@@ -23,9 +24,9 @@ class FunctionCurveTests(unittest.IsolatedAsyncioTestCase):
         self.runtime.close()
 
     async def link(self, input):
-        await self.handlers.connection_add(None, {'connectionId': input,
+        await self.handlers.connection_add(None, parse_command('connection.add', {'connectionId': input,
             'source': {'nodeId': 'source', 'element': 'data'},
-            'target': {'nodeId': 'curve', 'element': input}})
+            'target': {'nodeId': 'curve', 'element': input}}))
 
     def test_linear_legacy_and_nonlinear_endpoints(self):
         curve = self.runtime.nodes['curve']
@@ -56,7 +57,7 @@ class FunctionCurveTests(unittest.IsolatedAsyncioTestCase):
         graph = decode(encode({'type': 'graph', 'payload': {'graph': self.runtime.graph}}))['payload']['graph']
         self.runtime.load(graph, replace=True)
         self.assertAlmostEqual(self.runtime.nodes['curve'].data.value[-1], 0.7)
-        await self.handlers.connection_remove(None, {'connectionId': 'point_p1_y'})
+        await self.handlers.connection_remove(None, parse_command('connection.remove', {'connectionId': 'point_p1_y'}))
         self.assertEqual(self.runtime.nodes['curve'].data.value[-1], 1)
         self.runtime.set_element('source', 'input_value', 0.3)
         self.assertEqual(self.runtime.nodes['curve'].data.value[-1], 1)

@@ -1,5 +1,6 @@
 """Editable point counts, non-default signal chains, and source validation."""
 import unittest
+from backend.api.schemas import parse_command
 import numpy as np
 
 from backend.api.runtime import Runtime
@@ -51,7 +52,7 @@ class PointCountTests(unittest.IsolatedAsyncioTestCase):
             *[{'id': kind, 'type': kind, 'parameters': {}} for kind in ('LinearAmplitudesTransformer', 'FctAmplitudesTransformer', 'FreqScaledAmplitudesTransformer')],
         ], 'connections': []})
         for kind in ('LinearAmplitudesTransformer', 'FctAmplitudesTransformer', 'FreqScaledAmplitudesTransformer'):
-            await self.handlers.connection_add(None, {'source': {'nodeId': 'source', 'element': 'data'}, 'target': {'nodeId': kind, 'element': 'input_data'}})
+            await self.handlers.connection_add(None, parse_command('connection.add', {'source': {'nodeId': 'source', 'element': 'data'}, 'target': {'nodeId': kind, 'element': 'input_data'}}))
             node = self.runtime.nodes[kind]
             self.assertEqual(node.number_points.value, 178)
             self.assertEqual(node.data.value.shape, (178,))
@@ -69,7 +70,7 @@ class PointCountTests(unittest.IsolatedAsyncioTestCase):
             {'id': 'lights', 'type': 'BarGraphChart', 'parameters': {}},
         ], 'connections': []})
         for source, output, target, field in [('color', 'data', 'rgba', 'rgb'), ('alpha', 'data', 'rgba', 'alpha'), ('rgba', 'rgba', 'lights', 'brushes')]:
-            await self.handlers.connection_add(None, {'source': {'nodeId': source, 'element': output}, 'target': {'nodeId': target, 'element': field}})
+            await self.handlers.connection_add(None, parse_command('connection.add', {'source': {'nodeId': source, 'element': output}, 'target': {'nodeId': target, 'element': field}}))
         self.assertEqual(self.runtime.tick(), [])
         np.testing.assert_allclose(self.runtime.nodes['lights'].brushes.value, np.tile([10, 80, 250, 127.5], (178, 1)))
         self.assertEqual(self.runtime.nodes['lights'].data.value.shape, (178,))

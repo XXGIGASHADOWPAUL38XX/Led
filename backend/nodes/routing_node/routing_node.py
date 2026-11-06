@@ -15,6 +15,16 @@ class RoutingNode(CNode, AudioUpdatable):
     """
 
     nodeName = 'Routing'
+    ui = {
+        "title": "Routing",
+        "description": "Enable the strongest scalar source; silence disables all routes.",
+        "category": "routing",
+        "fields": [{"name": "operator_nodes", "control": "sequence", "label": "Sources", "item": "node"}],
+        "views": [
+            {"kind": "bars", "data": "data", "label": "Active route", "open": True},
+            {"kind": "meter", "data": "level", "label": "Band level", "open": False},
+        ],
+    }
 
     def __init__(self, operator_nodes=None, alias: str | None = None):
         super().__init__(self.nodeName, {'data': {'io': 'out'}, 'level': {'io': 'out'}}, alias=alias)

@@ -16,6 +16,13 @@ class RollingNode(VisualPipeline, CNode):
     this accumulates motion and writes into the shared source array."""
 
     nodeName = "RollingNode"
+    ui = {
+        "title": "Rolling",
+        "description": "Rotate a color or data array cyclically along its first axis.",
+        "category": "visual",
+        "fields": [{"name": "input_data", "control": "port"}, {"name": "roll_speed", "control": "slider"}],
+        "views": [{"kind": "color", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(
         self,

@@ -17,6 +17,16 @@ class BlendNode(CNode, AudioUpdatable):
     """
 
     nodeName = 'Blend'
+    ui = {'title': 'Blend',
+     'description': 'Blend values or broadcast-compatible arrays: sum(value × weight) / sum(weights). Drop wires '
+                    'to add inputs. Zero total weight outputs zero.',
+     'category': 'transforms',
+     'fields': [{'name': 'inputs',
+                 'control': 'blend',
+                 'label': 'Inputs',
+                 'rebuild': True,
+                 'addPort': 'add_element'}],
+     'views': [{'kind': 'bars', 'data': 'data', 'label': 'Blend', 'open': True}]}
 
     def __init__(self, inputs=None, alias=None):
         super().__init__(self.nodeName, {'add_element': {'io': 'in', 'variadic': True}, 'data': {'io': 'out'}}, alias=alias)

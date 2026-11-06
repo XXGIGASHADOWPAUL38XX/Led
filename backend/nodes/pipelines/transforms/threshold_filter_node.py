@@ -14,6 +14,13 @@ class ThresholdFilterNode(CNode, AudioUpdatable):
     or above threshold are retained."""
 
     nodeName = "ThresholdFilter"
+    ui = {
+        "title": "Threshold Filter",
+        "description": "Suppress array values below a threshold.",
+        "category": "transforms",
+        "fields": [{"name": "input_value", "control": "port"}, {"name": "threshold", "control": "slider"}],
+        "views": [{"kind": "bars", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(
         self,

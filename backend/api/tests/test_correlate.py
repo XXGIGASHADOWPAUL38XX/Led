@@ -1,4 +1,5 @@
 import unittest
+from backend.api.schemas import parse_command
 import numpy as np
 
 from backend.api.handlers import Handlers
@@ -61,8 +62,8 @@ class CorrelateTests(unittest.IsolatedAsyncioTestCase):
         ], 'connections': []})
         self.runtime.configure('spread', {'shape': [20, 4]})
         self.assertEqual(self.runtime.nodes['spread'].data.value.shape, (20, 4))
-        await handlers.connection_add(None, {'source': {'nodeId': 'rgb', 'element': 'data'},
-                                              'target': {'nodeId': 'spread', 'element': 'input_data'}})
+        await handlers.connection_add(None, parse_command('connection.add', {'source': {'nodeId': 'rgb', 'element': 'data'},
+                                              'target': {'nodeId': 'spread', 'element': 'input_data'}}))
         self.assertEqual(tuple(self.runtime.nodes['spread'].shape.value), (178, 3))
         self.assertEqual(self.runtime.nodes['spread'].data.value.shape, (178, 3))
         with self.assertRaisesRegex(ValueError, 'incompatible'):

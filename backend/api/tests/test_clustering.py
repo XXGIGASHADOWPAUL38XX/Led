@@ -1,4 +1,5 @@
 import unittest
+from backend.api.schemas import parse_command
 import numpy as np
 
 from backend.api.handlers import Handlers
@@ -23,8 +24,8 @@ class ClusteringTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_drop_edit_remove_and_roundtrip_preserve_scalar_references(self):
         for source in ('a', 'b'):
-            await self.handlers.connection_add(None, {'source': {'nodeId': source, 'element': 'data'},
-                                                       'target': {'nodeId': 'cluster', 'element': 'add_element'}})
+            await self.handlers.connection_add(None, parse_command('connection.add', {'source': {'nodeId': source, 'element': 'data'},
+                                                       'target': {'nodeId': 'cluster', 'element': 'add_element'}}))
         self.runtime.configure('cluster', {'inputs': [
             {'source': {'nodeId': 'a', 'element': 'data'}, 'interval': [0, 1]},
             {'source': {'nodeId': 'b', 'element': 'data'}, 'interval': [10, 0]},

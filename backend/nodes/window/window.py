@@ -19,6 +19,19 @@ class WindowNode(CNode, AudioUpdatable):
     """
 
     nodeName = 'Window'
+    ui = {
+        "title": "Window",
+        "description": "Keep recent array frames with an editable input shape for temporal aggregation.",
+        "category": "window",
+        "fields": [
+            {"name": "input_data", "control": "port"},
+            {"name": "shape", "control": "shape", "label": "Input shape", "rebuild": True},
+            {"name": "length", "control": "slider", "scale": "logarithmic", "rebuild": True},
+            {"name": "init_value", "control": "slider"},
+            {"name": "offset", "control": "slider"},
+        ],
+        "views": [{"kind": "bars", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(self, input_data=None, length=1, init_value=0.0, offset=0,
                  alias: str | None = None, parent: CNode | None = None, shape=None):

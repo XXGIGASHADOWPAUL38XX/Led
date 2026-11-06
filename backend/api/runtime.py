@@ -74,6 +74,7 @@ class Runtime:
             if item["type"] not in self.catalog.classes:
                 raise ValueError(f"Unknown node type: {item['type']}")
             item["parameters"] = self.catalog.classes[item["type"]].migrate_parameters(item.get("parameters", {}))
+            item.setdefault("position", [0, 0])
             for source in self._references(item.get("parameters", {})):
                 if source not in specs:
                     raise ValueError(f"Unknown source node: {source}")
@@ -413,12 +414,11 @@ class Runtime:
         return self.load(graph)
 
     def snapshot(self):
-        return {"graph": self.graph, "nodes": [self.describe(node) for node in self.nodes.values()],
-                "catalog": [{"type": key, "description": value} for key, value in self.catalog.descriptions.items()]}
+        return {"graph": self.graph, "nodes": [self.describe(node) for node in self.nodes.values()]}
 
     def frame(self, subscriptions):
         return [{"nodeId": node_id, "element": name, "value": self.element(node_id, name).value}
-                for node_id, name in subscriptions if node_id in self.nodes and name in self.nodes[node_id].pending_terminals]
+                for node_id, name in sorted(subscriptions) if node_id in self.nodes and name in self.nodes[node_id].pending_terminals]
 
     def tick(self):
         drain_signals()

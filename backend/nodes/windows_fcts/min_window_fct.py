@@ -13,6 +13,16 @@ class MinWindowFct(WindowFct, CNode):
     Connect Window.data to input `window`, or select it with the NodeSelector."""
 
     nodeName = "MinWindowFct"
+    ui = {
+        "title": "Min Window Fct",
+        "description": "Compute the minimum of a WindowNode history.",
+        "category": "windows",
+        "fields": [
+            {"name": "window", "control": "reference", "nodeTypes": ["Window"]},
+            {"name": "avg_axis", "control": "axis", "label": "Reduction axes"},
+        ],
+        "views": [{"kind": "meter", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(self, window: CNode | None = None, avg_axis=None, alias: str | None = None, parent: CNode | None = None):
         CNode.__init__(self, self.nodeName, terminals={"data": {"io": "out"}}, alias=alias, parent=parent)

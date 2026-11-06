@@ -14,6 +14,18 @@ class SinArrayNode(CNode):
     (number_points,) and refreshes on changes; the endpoint is excluded."""
 
     nodeName = "SinArray"
+    ui = {
+        "title": "Sin Array",
+        "description": "Generate a sampled sine wave for spatial modulation.",
+        "category": "simple",
+        "fields": [
+            {"name": "number_cycle", "control": "slider"},
+            {"name": "number_points", "control": "slider", "label": "Points", "rebuild": True},
+            {"name": "center", "control": "slider"},
+            {"name": "offset", "control": "slider"},
+        ],
+        "views": [{"kind": "bars", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(
         self,

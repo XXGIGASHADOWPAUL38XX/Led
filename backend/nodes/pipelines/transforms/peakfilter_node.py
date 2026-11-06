@@ -14,6 +14,13 @@ class PeakFilterNode(CNode, AudioUpdatable):
     and all but the largest remaining peaks become zero."""
 
     nodeName = "PeakFilter"
+    ui = {
+        "title": "Peak Filter",
+        "description": "Keep only the strongest local peaks in a vector.",
+        "category": "transforms",
+        "fields": [{"name": "input_value", "control": "port"}, {"name": "peaks_to_keep", "control": "slider"}],
+        "views": [{"kind": "bars", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(
         self,

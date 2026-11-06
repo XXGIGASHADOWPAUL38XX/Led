@@ -20,6 +20,15 @@ class BufferNode(ArrayInputNode, AudioUpdatable):
     """
 
     nodeName = 'Buffer'
+    ui = {'title': 'Buffer',
+     'description': 'Keep a rolling mono or multichannel audio window; input shape adapts when linked.',
+     'category': 'buffer',
+     'fields': [{'name': 'frame_id', 'control': 'port', 'label': 'Frame ID'},
+                {'name': 'indata', 'control': 'port'},
+                {'name': 'shape', 'control': 'shape', 'label': 'Input shape', 'rebuild': True},
+                {'name': 'chunk_size', 'control': 'slider', 'rebuild': True, 'hidden': True},
+                {'name': 'length', 'control': 'slider', 'rebuild': True}],
+     'views': [{'kind': 'bars', 'data': 'data', 'label': 'Data', 'open': True}]}
     input_shapes = {'frame_id': (1,)}
 
     def __init__(self, indata=None, chunk_size=CHUNK_SIZE, length=FFT_SIZE,

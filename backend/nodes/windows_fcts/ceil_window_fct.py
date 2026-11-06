@@ -13,6 +13,16 @@ class CeilWindowFct(WindowFct, CNode):
     Connect Window.data to input `window`, or select it with the NodeSelector."""
 
     nodeName = "CeilWindowFct"
+    ui = {
+        "title": "Ceil Window Fct",
+        "description": "Compute the ceiling of the maximum of a WindowNode history.",
+        "category": "windows",
+        "fields": [
+            {"name": "window", "control": "reference", "nodeTypes": ["Window"]},
+            {"name": "avg_axis", "control": "axis", "label": "Reduction axes"},
+        ],
+        "views": [{"kind": "meter", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(
         self,

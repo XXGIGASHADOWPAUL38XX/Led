@@ -5,7 +5,13 @@ __pycache__/
 *.py[cod]
 
 /frontend/node_modules/
-/frontend/.next/
-/frontend/out/
 /frontend/dist/
+/frontend/.next/
+/frontend/test-results/
+/frontend/playwright-report/
 /frontend/*.tsbuildinfo
+
+# Quality tool outputs (crapper, dryer, mutator)
+.metrics/
+target/
+.coverage

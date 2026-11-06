@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 from backend.api.handlers import Handlers
+from backend.api.schemas import parse_command
 
 
 class PositionTests(unittest.IsolatedAsyncioTestCase):
@@ -14,7 +15,7 @@ class PositionTests(unittest.IsolatedAsyncioTestCase):
     async def test_batch_broadcasts_once_without_rebuilding_nodes(self):
         nodes = list(self.runtime.graph["nodes"])
         payload = {"positions": {"a": [24, 24], "b": [400, 24]}}
-        await self.handlers.graph_move(None, payload)
+        await self.handlers.graph_move(None, parse_command('graph.move', payload))
         self.assertEqual([node["position"] for node in nodes], [[24, 24], [400, 24]])
         self.assertEqual(self.runtime.revision, 2)
         self.broadcast.assert_awaited_once()
@@ -23,7 +24,7 @@ class PositionTests(unittest.IsolatedAsyncioTestCase):
     async def test_invalid_batch_never_partially_moves_nodes(self):
         for positions in ({"a": [1, 2], "b": [float("nan"), 0]}, {"a": [1, 2], "missing": [0, 0]}):
             with self.assertRaises(ValueError):
-                await self.handlers.graph_move(None, {"positions": positions})
+                await self.handlers.graph_move(None, parse_command('graph.move', {"positions": positions}))
             self.assertEqual([node["position"] for node in self.runtime.graph["nodes"]], [[0, 0], [0, 0]])
         self.assertEqual(self.runtime.revision, 1)
         self.broadcast.assert_not_awaited()

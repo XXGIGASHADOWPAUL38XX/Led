@@ -15,6 +15,13 @@ class SpectralCentroidNode(CNode, AudioPipeline):
     amplitudes are ignored and silent or empty input gives zero."""
 
     nodeName = "SpectralCentroid"
+    ui = {
+        "title": "Spectral Centroid",
+        "description": "Measure spectral brightness as an amplitude-weighted frequency.",
+        "category": "features",
+        "fields": [{"name": "amplitudes", "control": "port"}, {"name": "frequencies", "control": "port"}],
+        "views": [{"kind": "meter", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(
         self,

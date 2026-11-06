@@ -36,12 +36,9 @@ class Generation:
         from ai.template_generator.agent import Generator
         if self.task is not None and not self.task.done():
             raise ValueError("Jev is already generating a graph")
-        prompt = payload["prompt"]
-        if type(prompt) is not str or not prompt.strip() or len(prompt) > 16000:
+        prompt, mode = payload["prompt"], payload["mode"]
+        if not prompt.strip():
             raise ValueError("Provide a prompt between 1 and 16000 characters")
-        mode = payload.get("mode", "generate")
-        if mode not in ("generate", "edit"):
-            raise ValueError("Jev mode must be generate or edit")
         if not os.environ.get("OPENCODE_API_KEY"):
             raise ValueError("Set OPENCODE_API_KEY in the backend .env file")
         source = deepcopy(self.router.handlers.runtime.graph)

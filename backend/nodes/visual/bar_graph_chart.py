@@ -6,6 +6,17 @@ class BarGraphChartNode(PointCountNode):
     Inputs `data` and `brushes` provide arrays; `number_points` records the
     light count. The node performs no rendering or signal transformation."""
     nodeName = 'BarGraphChart'
+    ui = {
+        "title": "Bar Graph Chart",
+        "description": "Expose bar heights and per-bar RGBA colors to frontend subscribers.",
+        "category": "visual",
+        "fields": [
+            {"name": "data", "control": "port"},
+            {"name": "number_points", "control": "slider", "label": "Points", "rebuild": True},
+            {"name": "brushes", "control": "port"},
+        ],
+        "views": [{"kind": "lights", "data": "data", "colors": "brushes", "label": "Lights", "open": True}],
+    }
 
     def __init__(self, data=None, number_points=None, brushes=None, alias: str | None = None) -> None:
         super().__init__(node_name=self.nodeName, terminals={'brushes': {'io': 'in'}, 'data': {'io': 'in'}}, alias=alias)

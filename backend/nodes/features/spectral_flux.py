@@ -15,6 +15,13 @@ class SpectralFluxNode(CNode, AudioPipeline):
     update. Keeps the previous spectrum, initially zero."""
 
     nodeName = "SpectralFlux"
+    ui = {
+        "title": "Spectral Flux",
+        "description": "Measure positive spectrum change for transient detection.",
+        "category": "features",
+        "fields": [{"name": "amplitudes", "control": "port"}],
+        "views": [{"kind": "meter", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(self, amplitudes=np.zeros(FREQ_BINS), alias: str | None = None) -> None:
         terminals = {

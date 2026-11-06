@@ -1,25 +1,29 @@
 """Route handlers translate API commands into main-thread runtime operations."""
 import asyncio
 from copy import deepcopy
-import math
 from uuid import uuid4
 
 from .protocol import event
 from .clipboard import copy_nodes, paste_nodes
+from .patch import diff
 
 
 class Handlers:
     def __init__(self, runtime, broadcast):
         self.runtime, self.broadcast = runtime, broadcast
+        # Each client may only queue tracks its own last search returned: (origin, player id) -> entries.
+        self.search_results = {}
 
-    async def _load(self, graph, replace=False):
-        snapshot = self.runtime.load(graph, replace=replace)
-        await self.broadcast(event("graph.snapshot", snapshot, self.runtime.revision))
+    async def _apply(self, rebuild, replace=False):
+        """Rebuild the graph and tell every client: a snapshot for a fresh graph, a patch for an edit."""
+        before, base = (None, None) if replace else (self.runtime.snapshot(), self.runtime.revision)
+        after = rebuild()
+        message = ("graph.snapshot", after) if replace else ("graph.patch", diff(before, after, base))
+        await self.broadcast(event(*message, self.runtime.revision))
         return {"revision": self.runtime.revision}
 
-    async def graph_get(self, session, payload):
-        await session.send(event("graph.snapshot", self.runtime.snapshot(), self.runtime.revision))
-        return {"graph": self.runtime.graph}
+    async def _load(self, graph, replace=False):
+        return await self._apply(lambda: self.runtime.load(graph, replace=replace), replace)
 
     async def graph_copy(self, session, payload):
         return {"graph": copy_nodes(self.runtime, payload['nodeIds'])}
@@ -32,21 +36,19 @@ class Handlers:
 
     async def graph_load(self, session, payload):
         if "connects" in payload["graph"]:
-            snapshot = self.runtime.load_template(payload["graph"], replace=True)
-            await self.broadcast(event("graph.snapshot", snapshot, self.runtime.revision))
-            return {"revision": self.runtime.revision}
+            return await self._apply(lambda: self.runtime.load_template(payload["graph"], replace=True), replace=True)
         return await self._load(payload["graph"], replace=True)
 
     async def node_add(self, session, payload):
         graph = deepcopy(self.runtime.graph)
-        node_id = payload.get("nodeId", payload["nodeType"])
-        if "nodeId" not in payload:
+        node_id = payload["nodeId"] or payload["nodeType"]
+        if payload["nodeId"] is None:
             suffix = 2
             while node_id in self.runtime.nodes:
                 node_id = f"{payload['nodeType']} {suffix}"
                 suffix += 1
-        graph["nodes"].append({"id": node_id, "type": payload["nodeType"], "position": payload.get("position", [0, 0]), "parameters": payload.get("parameters", {})})
-        graph["connections"].extend(payload.get("connections", []))
+        graph["nodes"].append({"id": node_id, "type": payload["nodeType"], "position": payload["position"], "parameters": payload["parameters"]})
+        graph["connections"].extend(payload["connections"])
         await self._load(graph)
         return {"nodeId": node_id}
 
@@ -75,9 +77,7 @@ class Handlers:
         return await self._load(graph)
 
     async def node_configure(self, session, payload):
-        snapshot = self.runtime.configure(payload["nodeId"], payload["parameters"])
-        await self.broadcast(event("graph.snapshot", snapshot, self.runtime.revision))
-        return {"revision": self.runtime.revision}
+        return await self._apply(lambda: self.runtime.configure(payload["nodeId"], payload["parameters"]))
 
     async def node_start(self, session, payload):
         node = self.runtime.nodes[payload["nodeId"]]
@@ -95,18 +95,11 @@ class Handlers:
             raise ValueError("This node has no manual stream lifecycle")
         node.stop()
 
-    async def node_move(self, session, payload):
-        await self.graph_move(session, {"positions": {payload["nodeId"]: payload["position"]}})
-        return payload
-
     async def graph_move(self, session, payload):
         positions = payload["positions"]
         nodes = {node["id"]: node for node in self.runtime.graph["nodes"]}
         if not positions.keys() <= nodes.keys():
             raise ValueError("Unknown node")
-        for position in positions.values():
-            if len(position) != 2 or any(type(value) not in (int, float) or not math.isfinite(value) for value in position):
-                raise ValueError("Position must contain two finite coordinates")
         for node_id, position in positions.items():
             nodes[node_id]["position"] = position
         self.runtime.revision += 1
@@ -115,7 +108,7 @@ class Handlers:
 
     async def connection_add(self, session, payload):
         graph = deepcopy(self.runtime.graph)
-        edge = {"id": payload.get("connectionId", str(uuid4())), "source": payload["source"], "target": payload["target"]}
+        edge = {"id": payload["connectionId"] or str(uuid4()), "source": payload["source"], "target": payload["target"]}
         self._disconnect(graph, {existing["id"] for existing in graph["connections"] if existing["id"] == edge["id"] or existing["target"] == edge["target"]}, edge["target"])
         target = edge["target"]
         node = self.runtime.nodes[target["nodeId"]]
@@ -156,16 +149,14 @@ class Handlers:
         await self.broadcast(event("state.update", {**result, "node": self.runtime.describe(self.runtime.nodes[payload["nodeId"]])}, self.runtime.revision))
         return result
 
-    async def subscribe(self, session, payload):
-        subscriptions = set()
-        for item in payload["elements"]:
-            node_id, name = item["nodeId"], item["element"]
+    async def streams_update(self, session, payload):
+        added = {(item["nodeId"], item["element"]) for item in payload["add"]}
+        for node_id, name in added:
             self.runtime.element(node_id, name)
             if name not in self.runtime.nodes[node_id].pending_terminals:
                 raise ValueError("Only graph ports may be streamed")
-            subscriptions.add((node_id, name))
-        session.subscriptions = tuple(sorted(subscriptions))
-        return {"elements": payload["elements"]}
+        session.subscriptions = (session.subscriptions | added) - {(item["nodeId"], item["element"]) for item in payload["remove"]}
+        return {"streams": len(session.subscriptions)}
 
     async def frame_ack(self, session, payload):
         if payload["sequence"] == session.in_flight:
@@ -201,8 +192,8 @@ class Handlers:
             node.start()
             return {"loading": True}
         first_ready = next((index for index, track in enumerate(node._tracks) if track is not None), 0)
-        index = next((index for index, entry in enumerate(node._entries) if self._track_id(entry) == payload.get("trackId")), first_ready)
-        if "trackId" in payload and self._track_id(node._entries[index]) != payload["trackId"]:
+        index = next((index for index, entry in enumerate(node._entries) if self._track_id(entry) == payload["trackId"]), first_ready)
+        if payload["trackId"] is not None and self._track_id(node._entries[index]) != payload["trackId"]:
             raise ValueError("Unknown track")
         if node._tracks[index] is None:
             raise ValueError("Track is still loading")
@@ -219,7 +210,7 @@ class Handlers:
         node = self._player(payload)
         index = node._current_track_index
         seconds = payload["position"]
-        if index < 0 or node._tracks[index] is None or type(seconds) not in (int, float) or not math.isfinite(seconds):
+        if index < 0 or node._tracks[index] is None:
             raise ValueError("Select a loaded track and a finite seek position")
         audio, rate = node._tracks[index]
         duration = len(audio) / rate
@@ -233,18 +224,17 @@ class Handlers:
         if self.runtime.players.get(payload["nodeId"]) is not node:
             raise ValueError("Playlist changed during search")
         results = results or []
-        session.search_results[node.name()] = results
+        self.search_results[session, node.name()] = results
         tracks = [{"id": self._track_id(entry), "title": entry.get("title", ""), "artist": entry.get("uploader", ""), "duration": entry.get("duration") or 0}
                   for entry in results]
-        await session.send(event("player.results", {"nodeId": node.name(), "query": payload["query"], "tracks": tracks}, self.runtime.revision))
-        return {"count": len(tracks)}
+        return {"nodeId": node.name(), "query": payload["query"], "tracks": tracks}
 
     async def playlist_add(self, session, payload):
         node = self._player(payload)
         track_id = payload["trackId"]
         if any(self._track_id(entry) == track_id for entry in node._entries):
             raise ValueError("Track already queued")
-        track = next((entry for entry in session.search_results.get(node.name(), []) if self._track_id(entry) == track_id), None)
+        track = next((entry for entry in self.search_results.get((session, node.name()), []) if self._track_id(entry) == track_id), None)
         if track is None:
             raise ValueError("Choose a track returned by search")
         node.add_music(track)

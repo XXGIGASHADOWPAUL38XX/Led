@@ -15,6 +15,24 @@ class ValueTransformerPipelineNode(ArrayInputNode, AudioPipeline):
     RGB arrays, and higher dimensions retain their full shape."""
 
     nodeName = "ValueTransformer"
+    ui = {'title': 'Value Transformer',
+     'description': 'Map numeric arrays between intervals, preserving an editable, adaptive shape.',
+     'category': 'transforms',
+     'fields': [{'name': 'shape', 'control': 'shape', 'label': 'Input shape', 'rebuild': True},
+                {'name': 'input_value', 'control': 'port'},
+                {'name': 'input_value_interval',
+                 'control': 'interval',
+                 'ordered': False,
+                 'label': 'Input range',
+                 'min': -10000,
+                 'max': 10000},
+                {'name': 'output_value_interval',
+                 'control': 'interval',
+                 'ordered': False,
+                 'label': 'Output range',
+                 'min': -10000,
+                 'max': 10000}],
+     'views': [{'kind': 'meter', 'data': 'output_value', 'label': 'Output value', 'open': False}]}
 
     def __init__(
             self,

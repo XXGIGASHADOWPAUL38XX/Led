@@ -12,6 +12,16 @@ class MultiLineChartNode(LineChartNode):
     Element, or zero if absent. Output `data` is shaped (lines, number_points)
     and contains numerical histories for frontend subscribers."""
     nodeName = 'MultiLineChart'
+    ui = {
+        "title": "Multi Line Chart",
+        "description": "Plot several selected Elements as separate scalar histories.",
+        "category": "visual",
+        "fields": [
+            {"name": "node_selectors", "control": "sequence", "item": "reference"},
+            {"name": "number_points", "control": "slider", "label": "Points", "rebuild": True},
+        ],
+        "views": [{"kind": "history", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(self, node_selectors=None, number_points=100, alias=None):
         super().__init__(self.nodeName, terminals={'data': {'io': 'out'}}, alias=alias)

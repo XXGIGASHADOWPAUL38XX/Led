@@ -28,6 +28,20 @@ class FunctionNode(CNode):
     Output `data` regenerates when controls or linked values change."""
 
     nodeName = 'Function'
+    ui = {
+        "title": "Function",
+        "description": "Generate a curve with editable points, segment slopes, and live control inputs.",
+        "category": "function",
+        "fields": [
+            {"name": "input_data", "control": "port"},
+            {"name": "number_points", "control": "slider", "label": "Points", "rebuild": True},
+            {"name": "points", "control": "curve", "portsPrefix": "point_"},
+            {"name": "slopes", "control": "array", "hidden": True},
+            {"name": "point_ids", "control": "managed", "hidden": True},
+            {"name": "controls", "control": "managed", "hidden": True},
+        ],
+        "views": [{"kind": "bars", "data": "data", "label": "Data", "open": True}],
+    }
 
     def __init__(self, input_data: np.ndarray | None = None, number_points: int | None = None,
                  points=None, slopes=None, point_ids=None, controls=None, alias: str | None = None):

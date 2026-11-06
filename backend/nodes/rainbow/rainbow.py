@@ -19,6 +19,18 @@ class RainbowNode(CNode):
     Refreshes on visual updates; `inv_fraction` currently has no effect."""
 
     nodeName = "Rainbow"
+    ui = {
+        "title": "Rainbow",
+        "description": "Pass through or mirror an RGB gradient for a color strip.",
+        "category": "rainbow",
+        "fields": [
+            {"name": "n_points", "control": "slider", "label": "Points", "rebuild": True},
+            {"name": "inv_fraction", "control": "slider"},
+            {"name": "gradiant", "control": "port"},
+            {"name": "mode", "control": "select"},
+        ],
+        "views": [{"kind": "color", "data": "data", "label": "Data", "open": True}],
+    }
     input_shapes = {"gradiant": (0, 3)}
 
     def __init__(

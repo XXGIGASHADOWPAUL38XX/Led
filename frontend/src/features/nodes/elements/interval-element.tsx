@@ -1,0 +1,78 @@
+import { Slider } from "@/components/ui/slider";
+import { useId } from "react";
+import { CoreElement } from "./core-element";
+
+export type IntervalElementProps = {
+  label: string;
+  value: readonly [number, number];
+  onValueChange: (value: [number, number]) => void;
+  onValueCommit?: () => void;
+  min: number;
+  max: number;
+  step?: number;
+  disabled?: boolean;
+  ordered?: boolean;
+};
+
+export function IntervalElement({
+  label,
+  value,
+  onValueChange,
+  onValueCommit,
+  min,
+  max,
+  step = 0.01,
+  disabled = false,
+  ordered = true,
+}: IntervalElementProps) {
+  const id = useId();
+  const reversed = !ordered && value[0] > value[1];
+  return (
+    <fieldset disabled={disabled} aria-label={label} className="space-y-1.5">
+      <CoreElement id={id} label={label} disabled={disabled}>
+        <div className="absolute inset-y-0 right-2 flex items-center gap-1 font-mono text-2xs">
+          {value.map((number, index) => (
+            <input
+              key={index}
+              type="number"
+              aria-label={`${label} ${index === 0 ? "minimum" : "maximum"}`}
+              min={ordered && index === 1 ? value[0] : min}
+              max={ordered && index === 0 ? value[1] : max}
+              step={step}
+              value={number}
+              onChange={(event) => {
+                if (!event.target.value || !Number.isFinite(event.target.valueAsNumber)) return;
+                const next = Math.min(
+                  ordered && index === 0 ? value[1] : max,
+                  Math.max(ordered && index === 1 ? value[0] : min, event.target.valueAsNumber),
+                );
+                onValueChange(index === 0 ? [next, value[1]] : [value[0], next]);
+              }}
+              onBlur={onValueCommit}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  onValueCommit?.();
+                }
+              }}
+              className="w-16 rounded bg-white/5 px-1.5 py-1 text-right text-zinc-200 outline-violet-400"
+            />
+          ))}
+        </div>
+      </CoreElement>
+      <Slider
+        value={reversed ? [value[1], value[0]] : [...value]}
+        min={min}
+        max={max}
+        step={step}
+        disabled={disabled}
+        onValueChange={([low, high]) => onValueChange(reversed ? [high, low] : [low, high])}
+        onValueCommit={onValueCommit}
+        className="mx-2 w-auto"
+        thumbs={(reversed ? ["maximum", "minimum"] : ["minimum", "maximum"]).map((end) => ({
+          "aria-label": `${label} ${end} handle`,
+        }))}
+      />
+    </fieldset>
+  );
+}

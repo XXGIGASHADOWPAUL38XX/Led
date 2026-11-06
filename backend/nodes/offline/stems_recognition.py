@@ -149,6 +149,19 @@ class StemsRecognitionNode(OfflineCNode):
     producing separated audio tracks."""
 
     nodeName = "StemsRecognition"
+    ui = {
+        "title": "Stems Recognition",
+        "description": "Analyze complete tracks for recurring spectral groups and presence.",
+        "category": "offline",
+        "fields": [
+            {"name": "analysis_nb_frames", "control": "slider"},
+            {"name": "similarity_threshold", "control": "slider"},
+            {"name": "level_threshold", "control": "slider"},
+            {"name": "min_presence_count", "control": "slider"},
+            {"name": "hop_ms", "control": "slider", "unit": "ms"},
+        ],
+        "views": [{"kind": "trigger", "data": "stem_0", "label": "Stem 0", "open": True}],
+    }
 
     def __init__(self, analysis_nb_frames=5, similarity_threshold=0.5, level_threshold=0.25, min_presence_count=11, hop_ms=10, alias=None):
         super().__init__(self.nodeName, {}, alias=alias)

@@ -17,6 +17,14 @@ class LinearAmplitudesTransformerNode(PointCountNode, AmplitudesTransformer):
 
     # Point count follows newly connected spectra and remains editable.
     nodeName = "LinearAmplitudesTransformer"
+    ui = {'title': 'Linear Amplitudes Transformer',
+     'description': 'Apply an exponent to a spectrum without changing its source.',
+     'category': 'amplitudes',
+     'fields': [{'name': 'number_points', 'control': 'slider', 'label': 'Points', 'rebuild': True},
+                {'name': 'input_data', 'control': 'port'},
+                {'name': 'powering', 'control': 'slider', 'label': 'Weighting'},
+                {'name': 'log', 'control': 'slider'}],
+     'views': [{'kind': 'bars', 'data': 'data', 'label': 'Data', 'open': True}]}
 
     def __init__(
             self,

@@ -19,6 +19,16 @@ class ClusteringNode(CNode, AudioUpdatable):
     """
 
     nodeName = 'Clustering'
+    ui = {'title': 'Clustering',
+     'description': 'Track scalar parameters on crossing horizontal and vertical grid lines, each with its own '
+                    'interval.',
+     'category': 'visual',
+     'fields': [{'name': 'inputs',
+                 'control': 'clustering',
+                 'label': 'Parameters',
+                 'rebuild': True,
+                 'addPort': 'add_element'}],
+     'views': [{'kind': 'clustering', 'data': 'data', 'label': 'Clustering', 'open': True}]}
     input_shapes = {'add_element': (1,)}
 
     def __init__(self, inputs=None, alias=None):

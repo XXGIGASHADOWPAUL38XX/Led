@@ -34,6 +34,30 @@ class DimensionalFlatteningNode(ArrayInputNode, AudioUpdatable):
     """
 
     nodeName = 'DimensionalFlattening'
+    ui = {'title': 'Dimensional Flattening',
+     'description': 'NMF coordinates with configurable dimensions: XY plot, rotatable XYZ plot, or the shared '
+                    'axis grid for 4+. Changing dimensions starts fresh calibration.',
+     'category': 'transforms',
+     'fields': [{'name': 'shape', 'control': 'shape', 'label': 'Input shape', 'rebuild': True},
+                {'name': 'input_data', 'control': 'port'},
+                {'name': 'dimensions', 'control': 'slider', 'label': 'Dimensions', 'rebuild': True, 'step': 1},
+                {'name': 'calibration_samples', 'control': 'slider', 'label': 'Calibration samples'},
+                {'name': 'model_path', 'control': 'text', 'label': 'Saved model path', 'rebuild': True}],
+     'actions': ['recalibrate'],
+     'views': [{'kind': 'bars', 'data': 'xy', 'label': 'XY coordinates', 'open': False},
+               {'kind': 'meter',
+                'data': 'calibration',
+                'label': 'Calibration',
+                'series': ['Progress', 'Ready'],
+                'open': False},
+               {'kind': 'scatter',
+                'data': 'data',
+                'status': 'calibration',
+                'label': 'Feature space · NMF',
+                'open': True},
+               {'kind': 'meter', 'data': 'x', 'label': 'X', 'open': False},
+               {'kind': 'meter', 'data': 'y', 'label': 'Y', 'open': False},
+               {'kind': 'meter', 'data': 'z', 'label': 'Z', 'open': False}]}
 
     def __init__(self, input_data=None, calibration_samples=200, shape=None, alias=None, model_path='', dimensions=2):
         super().__init__(self.nodeName, {'input_data': {'io': 'in'}, 'data': {'io': 'out'},

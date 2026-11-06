@@ -3,6 +3,7 @@ from pathlib import Path
 import unittest
 import numpy as np
 from backend.api.handlers import Handlers
+from backend.api.schemas import parse_command
 from backend.api.protocol import decode
 from backend.api.runtime import Runtime
 
@@ -24,9 +25,9 @@ class WindowShapeTests(unittest.IsolatedAsyncioTestCase):
         ], 'connections': []})
         connection = {'source': {'nodeId': 'source', 'element': 'data'}, 'target': {'nodeId': 'history', 'element': 'input_data'}}
         with self.assertRaisesRegex(ValueError, 'incompatible with input data'):
-            await self.handlers.connection_add(None, connection)
+            await self.handlers.connection_add(None, parse_command('connection.add', connection))
         self.runtime.configure('history', {'shape': [1]})
-        await self.handlers.connection_add(None, connection)
+        await self.handlers.connection_add(None, parse_command('connection.add', connection))
         self.assertEqual(self.runtime.tick(), [])
         history = self.runtime.nodes['history']
         self.assertEqual(history.data.value.shape, (5, 1))

@@ -20,6 +20,29 @@ class ArrayReshaperNode(ArrayInputNode, AudioUpdatable):
     """
 
     nodeName = 'ArrayReshaper'
+    ui = {'title': 'Array Reshaper',
+     'description': 'Slice → reshape → transpose → reverse. Slice includes start and excludes end; reshape must '
+                    'preserve the selected element count. Negative axes count from the end.',
+     'category': 'transforms',
+     'fields': [{'name': 'input_data', 'control': 'port', 'label': 'Input data'},
+                {'name': 'shape', 'control': 'shape', 'label': 'Input shape', 'rebuild': True},
+                {'name': 'slice_interval',
+                 'control': 'interval',
+                 'label': 'Slice',
+                 'step': 1,
+                 'ordered': False,
+                 'rebuild': True},
+                {'name': 'slice_axis', 'control': 'slider', 'label': 'Slice axis', 'rebuild': True},
+                {'name': 'reshape', 'control': 'shape', 'label': 'Reshape', 'rebuild': True},
+                {'name': 'transpose', 'control': 'switch', 'label': 'Transpose', 'rebuild': True},
+                {'name': 'transpose_axes',
+                 'control': 'axis',
+                 'label': 'Custom transpose axes',
+                 'permutation': True,
+                 'rebuild': True},
+                {'name': 'reverse', 'control': 'switch', 'label': 'Reverse', 'rebuild': True},
+                {'name': 'reverse_axis', 'control': 'slider', 'label': 'Reverse axis', 'rebuild': True}],
+     'views': [{'kind': 'bars', 'data': 'data', 'label': 'Data', 'open': True}]}
 
     def __init__(self, input_data=None, shape=None, slice_interval=None, slice_axis=0,
                  reshape=None, transpose=False, transpose_axes=None, reverse=False,

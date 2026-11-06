@@ -17,6 +17,13 @@ class CosineAngleNode(ArrayInputNode, AudioUpdatable):
     """
 
     nodeName = 'CosineAngle'
+    ui = {'title': 'Cosine Angle',
+     'description': 'Convert (N, 2) XY coordinates to angles in radians. Display each direction on a circle of '
+                    'radius 1; the origin uses angle 0.',
+     'category': 'transforms',
+     'fields': [{'name': 'input_data', 'control': 'port', 'label': 'XY coordinates'},
+                {'name': 'shape', 'control': 'shape', 'label': 'Input shape', 'rebuild': True}],
+     'views': [{'kind': 'angle', 'data': 'data', 'label': 'Direction', 'unit': 'rad', 'open': True}]}
     input_shapes = {'input_data': (0, 2)}
 
     def __init__(self, input_data=None, shape=None, alias=None):

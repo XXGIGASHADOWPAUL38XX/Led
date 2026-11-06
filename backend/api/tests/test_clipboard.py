@@ -4,6 +4,7 @@ import numpy as np
 
 from backend.api.clipboard import copy_nodes
 from backend.api.handlers import Handlers
+from backend.api.schemas import parse_command
 from backend.api.history import History
 from backend.api.runtime import Runtime
 
@@ -19,7 +20,7 @@ class ClipboardTests(unittest.IsolatedAsyncioTestCase):
         self.runtime.close()
 
     async def paste(self, copied):
-        return await self.handlers.graph_paste(None, {'graph': copied, 'position': [400, 300]})
+        return await self.handlers.graph_paste(None, parse_command('graph.paste', {'graph': copied, 'position': [400, 300]}))
 
     async def test_curve_arrays_and_repeated_pastes_are_independent(self):
         self.runtime.load({'nodes': [{'id': 'curve', 'type': 'Function', 'position': [0, 0],
@@ -37,7 +38,7 @@ class ClipboardTests(unittest.IsolatedAsyncioTestCase):
         np.testing.assert_array_equal(clone.points.value, [[0, .2], [1, .8]])
         self.runtime.set_element('curve copy', 'points', [[0, .1], [1, .3]])
         np.testing.assert_array_equal(original.points.value, [[0, .4], [1, .9]])
-        await self.handlers.graph_restore(None, inverse[1])
+        await self.handlers.graph_restore(None, parse_command('graph.restore', inverse[1]))
         self.assertEqual(set(self.runtime.nodes), {'curve'})
 
     async def test_group_links_and_dynamic_ports_target_the_copies(self):
@@ -93,8 +94,8 @@ class ClipboardTests(unittest.IsolatedAsyncioTestCase):
             {'id': 'operator', 'type': 'OperatorPipeline', 'position': [300, 0], 'parameters': {}},
             {'id': 'consumer', 'type': 'OperatorPipeline', 'position': [600, 0], 'parameters': {}},
         ], 'connections': []})
-        await self.handlers.connection_add(None, {'source': {'nodeId': 'source', 'element': 'data'}, 'target': {'nodeId': 'operator', 'element': 'add_element'}})
-        await self.handlers.connection_add(None, {'source': {'nodeId': 'operator', 'element': 'source:data_out'}, 'target': {'nodeId': 'consumer', 'element': 'add_element'}})
+        await self.handlers.connection_add(None, parse_command('connection.add', {'source': {'nodeId': 'source', 'element': 'data'}, 'target': {'nodeId': 'operator', 'element': 'add_element'}}))
+        await self.handlers.connection_add(None, parse_command('connection.add', {'source': {'nodeId': 'operator', 'element': 'source:data_out'}, 'target': {'nodeId': 'consumer', 'element': 'add_element'}}))
         await self.paste(copy_nodes(self.runtime, ['consumer']))
         self.assertEqual(self.runtime.graph['connections'][-1]['target']['element'], 'operator copy:source copy:data')
         self.runtime.set_element('source', 'input_value', .9)
