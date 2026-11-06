@@ -1,0 +1,8 @@
+dist
+package-lock.json
+public/templates
+test-results
+playwright-report
+target
+.metrics
+src/api/schema.d.ts

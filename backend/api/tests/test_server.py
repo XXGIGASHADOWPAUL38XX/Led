@@ -1,0 +1,250 @@
+import asyncio
+import os
+import unittest
+from copy import deepcopy
+
+import httpx
+import uvicorn
+from websockets.asyncio.client import connect
+from websockets.exceptions import InvalidStatus
+
+from backend.api.runtime import Runtime
+from backend.api.server import Server, create_app, uvicorn_options
+from backend.api.protocol import encode, decode
+from backend.api.tests.test_runtime import graph
+
+
+async def receive_kind(socket, kind):
+    async with asyncio.timeout(3):
+        while True:
+            message = decode(await socket.recv())
+            if message['type'] == kind:
+                return message
+
+
+class LiveServer(unittest.IsolatedAsyncioTestCase):
+    """A real uvicorn server on a free port, serving the test graph."""
+    @classmethod
+    def setUpClass(cls):
+        cls.runtime = Runtime()
+
+    async def asyncSetUp(self):
+        self.runtime.load(graph())
+        self.service = Server(self.runtime)
+        self.server = uvicorn.Server(uvicorn.Config(create_app(self.service), host='127.0.0.1', port=0,
+                                                    log_level='warning', **uvicorn_options))
+        self.serving = asyncio.create_task(self.server.serve())
+        while not self.server.started:
+            await asyncio.sleep(0.01)
+        port = self.server.servers[0].sockets[0].getsockname()[1]
+        self.http = f'http://127.0.0.1:{port}'
+        self.url = f'ws://127.0.0.1:{port}/ws'
+
+    async def asyncTearDown(self):
+        self.server.should_exit = True
+        await self.serving
+        self.runtime.close()
+
+
+class ServerTests(LiveServer):
+    async def test_http_api_reports_health_and_documents_itself_for_local_origins(self):
+        async with httpx.AsyncClient(base_url=self.http) as client:
+            health = await client.get('/api/v1/health', headers={'Origin': 'http://localhost:3000'})
+            self.assertEqual(health.json(), {'status': 'ok', 'revision': self.runtime.revision})
+            self.assertEqual(health.headers['access-control-allow-origin'], 'http://localhost:3000')
+            foreign = await client.get('/api/v1/health', headers={'Origin': 'https://example.com'})
+            self.assertNotIn('access-control-allow-origin', foreign.headers)
+            self.assertEqual((await client.get('/docs')).status_code, 200)
+            schemas = (await client.get('/openapi.json')).json()['components']['schemas']
+            self.assertIn('Snapshot', schemas)
+
+    async def test_catalog_is_served_once_per_version_and_left_out_of_snapshots(self):
+        async with httpx.AsyncClient(base_url=self.http) as client:
+            response = await client.get('/api/v1/catalog')
+            nodes = response.json()
+            self.assertEqual({node['type'] for node in nodes}, set(self.runtime.catalog.classes))
+            buffer = next(node for node in nodes if node['type'] == 'Buffer')
+            self.assertEqual(buffer['title'], 'Buffer')
+            self.assertNotIn('actions', buffer)
+            cached = await client.get('/api/v1/catalog', headers={'If-None-Match': response.headers['etag']})
+            self.assertEqual(cached.status_code, 304)
+            self.assertEqual(cached.content, b'')
+        async with connect(self.url) as socket:
+            self.assertNotIn('catalog', (await receive_kind(socket, 'graph.snapshot'))['payload'])
+
+    async def test_websocket_refuses_foreign_origins_and_other_paths(self):
+        with self.assertRaises(InvalidStatus):
+            async with connect(self.url, origin='https://example.com'):
+                pass
+        async with connect(self.url, origin='http://127.0.0.1:3000') as socket:
+            await receive_kind(socket, 'graph.snapshot')
+        with self.assertRaises(InvalidStatus):
+            async with connect(self.url.replace('/ws', '/other')):
+                pass
+
+    async def test_stream_changes_are_deltas_and_a_refused_change_changes_nothing(self):
+        data, frequencies = {'nodeId': 'amp', 'element': 'data'}, {'nodeId': 'amp', 'element': 'frequencies'}
+        async with connect(self.url) as socket:
+            await receive_kind(socket, 'graph.snapshot')
+
+            async def update(request_id, **change):
+                await socket.send(encode({'type': 'streams.update', 'requestId': request_id, 'payload': change}))
+                while (reply := decode(await socket.recv()))['requestId'] != request_id:
+                    pass
+                return reply
+
+            self.assertEqual((await update(1, add=[data, frequencies]))['payload']['result'], {'streams': 2})
+            self.assertEqual((await update(2, add=[data]))['payload']['result'], {'streams': 2})
+            self.assertEqual((await update(3, remove=[frequencies]))['payload']['result'], {'streams': 1})
+            refused = await update(4, add=[frequencies, {'nodeId': 'amp', 'element': 'powering'}])
+            self.assertEqual(refused['type'], 'error')
+            self.assertEqual((await update(5, remove=[]))['payload']['result'], {'streams': 1})
+
+    async def test_text_frames_are_rejected_without_closing_the_session(self):
+        async with connect(self.url) as socket:
+            await receive_kind(socket, 'graph.snapshot')
+            await socket.send('{"type": "streams.update"}')
+            self.assertIn('binary', (await receive_kind(socket, 'error'))['payload']['message'])
+            await socket.send(encode({'type': 'streams.update', 'requestId': 1, 'payload': {}}))
+            self.assertEqual((await receive_kind(socket, 'ack'))['requestId'], 1)
+
+    async def test_binary_frames_backpressure_and_reliable_controls(self):
+        async with connect(self.url) as slow, connect(self.url) as editor:
+            snapshot = await receive_kind(slow, 'graph.snapshot')
+            await receive_kind(editor, 'graph.snapshot')
+            self.assertEqual(len(snapshot['payload']['graph']['nodes']), 2)
+            await slow.send(encode({'type': 'streams.update', 'requestId': 1, 'payload': {'add': [{'nodeId': 'amp', 'element': 'data'}]}}))
+            await receive_kind(slow, 'ack')
+            first = await receive_kind(slow, 'frame')
+            self.assertEqual(first['payload']['values'][0]['value'].shape, (180,))
+            with self.assertRaises(TimeoutError):
+                await asyncio.wait_for(slow.recv(), timeout=0.13)
+            await editor.send(encode({'type': 'element.set', 'requestId': 2, 'payload': {'nodeId': 'amp', 'element': 'powering', 'value': 0.75}}))
+            update = await receive_kind(slow, 'state.update')
+            self.assertEqual(update['payload']['value'], 0.75)
+            ack = await receive_kind(editor, 'ack')
+            self.assertEqual(ack['requestId'], 2)
+            await slow.send(encode({'type': 'frame.ack', 'payload': {'sequence': first['payload']['sequence']}}))
+            second = await receive_kind(slow, 'frame')
+            self.assertGreater(second['payload']['sequence'], first['payload']['sequence'])
+            self.assertEqual(second['revision'], update['revision'])
+
+    async def test_graph_edits_keep_unchanged_nodes_and_live_errors_name_their_request(self):
+        original = self.runtime.nodes['amp']
+        async with httpx.AsyncClient(base_url=f'{self.http}/api/v1') as client:
+            for method, path, body in [
+                ('POST', '/nodes', {'nodeId': 'constant', 'nodeType': 'ConstantArray'}),
+                ('PATCH', '/graph/positions', {'positions': {'constant': [10, 20], 'buffer': [24, 24], 'amp': [424, 24]}}),
+                ('DELETE', '/nodes/constant', None),
+                ('DELETE', '/connections/wire', None),
+                ('POST', '/connections', {'connectionId': 'wire', 'source': {'nodeId': 'buffer', 'element': 'data'},
+                                          'target': {'nodeId': 'amp', 'element': 'buffer'}}),
+            ]:
+                response = await client.request(method, path, json=body)
+                self.assertEqual(response.status_code, 200, (path, response.text))
+                if path in ('/nodes', '/graph/positions'):
+                    self.assertIs(self.runtime.nodes['amp'], original)
+        self.assertEqual(next(node['position'] for node in self.runtime.graph['nodes'] if node['id'] == 'amp'), [424, 24])
+        async with connect(self.url) as socket:
+            await receive_kind(socket, 'graph.snapshot')
+            await socket.send(encode({'type': 'element.set', 'requestId': 99, 'payload': {'nodeId': 'amp', 'element': 'powering', 'value': 100}}))
+            error = await receive_kind(socket, 'error')
+            self.assertEqual(error['requestId'], 99)
+            self.assertEqual(self.runtime.nodes['amp'].powering.value, 0.5)
+
+    async def test_reconnect_gets_current_snapshot_without_command_replay(self):
+        async with connect(self.url) as socket:
+            await receive_kind(socket, 'graph.snapshot')
+            await socket.send(encode({'type': 'element.set', 'requestId': 1, 'payload': {'nodeId': 'amp', 'element': 'freq_bins', 'value': 256}}))
+            await receive_kind(socket, 'ack')
+        async with connect(self.url) as socket:
+            snapshot = await receive_kind(socket, 'graph.snapshot')
+            amp = next(node for node in snapshot['payload']['nodes'] if node['id'] == 'amp')
+            bins = next(field for field in amp['elements'] if field['name'] == 'freq_bins')
+            self.assertEqual(bins['value'], 256)
+
+    async def test_a_slow_http_search_does_not_block_live_controls(self):
+        started, release = asyncio.Event(), asyncio.Event()
+
+        async def delayed_search(session, payload):
+            started.set()
+            await release.wait()
+            return {'nodeId': payload['nodeId'], 'query': payload['query'], 'tracks': []}
+
+        self.service.router.routes['player.search'] = delayed_search
+        async with connect(self.url) as socket, httpx.AsyncClient(base_url=self.http) as client:
+            await receive_kind(socket, 'graph.snapshot')
+            search = asyncio.create_task(client.get('/api/v1/players/amp/search', params={'query': 'kick'}))
+            await asyncio.wait_for(started.wait(), 3)
+            await socket.send(encode({'type': 'element.set', 'requestId': 2, 'payload': {'nodeId': 'amp', 'element': 'powering', 'value': 0.75}}))
+            self.assertEqual((await receive_kind(socket, 'ack'))['requestId'], 2)
+            release.set()
+            self.assertEqual((await search).json()['tracks'], [])
+
+    async def test_the_websocket_only_carries_live_controls_and_streams(self):
+        async with connect(self.url) as socket:
+            await receive_kind(socket, 'graph.snapshot')
+            await socket.send(encode({'type': 'node.remove', 'requestId': 1, 'payload': {'nodeId': 'amp'}}))
+            error = await receive_kind(socket, 'error')
+            self.assertEqual((error['requestId'], error['payload']['message']), (1, 'node.remove is served by the HTTP API'))
+            self.assertIn('amp', self.runtime.nodes)
+
+    async def test_python_side_settings_reach_connected_clients(self):
+        async with connect(self.url) as socket:
+            await receive_kind(socket, 'graph.snapshot')
+            self.runtime.nodes['amp'].powering.value = 0.9
+            update = await receive_kind(socket, 'state.update')
+            self.assertEqual(update['payload']['value'], 0.9)
+            self.assertEqual(update['payload']['element'], 'powering')
+
+    async def test_chart_inputs_stream_without_backend_rendering(self):
+        self.runtime.load({'nodes': [{'id': 'lights', 'type': 'BarGraphChart', 'parameters': {}}], 'connections': []})
+        async with connect(self.url) as socket:
+            await receive_kind(socket, 'graph.snapshot')
+            await socket.send(encode({'type': 'streams.update', 'requestId': 1, 'payload': {'add': [
+                {'nodeId': 'lights', 'element': 'data'}, {'nodeId': 'lights', 'element': 'brushes'}]}}))
+            await receive_kind(socket, 'ack')
+            frame = await receive_kind(socket, 'frame')
+            values = {item['element']: item['value'] for item in frame['payload']['values']}
+            self.assertEqual(values['data'].shape, (180,))
+            self.assertEqual(values['brushes'].shape, (180, 4))
+
+    async def test_structural_configuration_updates_schema_and_streams_real_results(self):
+        self.runtime.load({'nodes': [
+            {'id': 'source', 'type': 'ConstantArray', 'parameters': {'input_value': 0.75}},
+            {'id': 'expression', 'type': 'OperatorPipeline', 'parameters': {}},
+        ], 'connections': []})
+        async with connect(self.url) as socket:
+            await receive_kind(socket, 'graph.snapshot')
+            async with httpx.AsyncClient(base_url=self.http) as client:
+                configured = await client.put('/api/v1/nodes/expression/parameters', json={'parameters': {
+                    'arguments': [{'nodeId': 'source', 'element': 'data'}, '*', 0.5], 'length': 180}})
+            self.assertEqual(configured.status_code, 200)
+            patch = (await receive_kind(socket, 'graph.patch'))['payload']
+            self.assertEqual([node['id'] for node in patch['descriptors']], ['expression'])
+            self.assertEqual(patch['nodeOrder'], ['source', 'expression'])
+            self.assertIn('source:data', [port['name'] for port in patch['descriptors'][0]['ports']])
+            await socket.send(encode({'type': 'streams.update', 'requestId': 2, 'payload': {
+                'add': [{'nodeId': 'expression', 'element': 'data'}]}}))
+            await receive_kind(socket, 'ack')
+            frame = await receive_kind(socket, 'frame')
+            self.assertTrue((frame['payload']['values'][0]['value'] == 0.375).all())
+
+    async def test_save_and_load_template_restores_authoritative_values_and_fresh_instances(self):
+        async with connect(self.url) as socket:
+            await receive_kind(socket, 'graph.snapshot')
+            await socket.send(encode({'type': 'element.set', 'requestId': 1, 'payload': {'nodeId': 'amp', 'element': 'powering', 'value': 0.75}}))
+            await receive_kind(socket, 'ack')
+            async with httpx.AsyncClient(base_url=f'{self.http}/api/v1') as client:
+                saved = (await client.get('/graph')).json()['graph']
+                self.assertEqual(saved['nodes'][1]['parameters']['powering'], 0.75)
+                original = self.runtime.nodes['amp']
+                self.assertEqual((await client.put('/graph', json={'graph': saved})).status_code, 200)
+                await receive_kind(socket, 'graph.snapshot')
+                self.assertIsNot(self.runtime.nodes['amp'], original)
+                self.assertEqual(self.runtime.nodes['amp'].powering.value, 0.75)
+                restored = self.runtime.nodes['amp']
+                invalid = deepcopy(saved)
+                invalid['nodes'][1]['type'] = 'UnknownNode'
+                self.assertEqual((await client.put('/graph', json={'graph': invalid})).status_code, 422)
+                self.assertIs(self.runtime.nodes['amp'], restored)

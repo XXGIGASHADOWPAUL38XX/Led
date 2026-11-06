@@ -1,1 +1,0 @@
-from frontend.components.elements.color_picker.color_picker import ColorPicker

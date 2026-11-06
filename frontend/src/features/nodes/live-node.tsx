@@ -1,0 +1,112 @@
+import { Button } from "@/components/ui/button";
+import { useBackend } from "@/api/backend-context";
+import { useBackendNode } from "@/api/hooks";
+import { Node } from "./node";
+import { NodeFields } from "./node-fields";
+import { NodeView } from "./node-views";
+import { useCatalog } from "../catalog/catalog-context";
+
+export function LiveNode({ id, selected }: { id: string; selected: boolean }) {
+  const backend = useBackend();
+  const node = useBackendNode(id);
+  const catalog = useCatalog();
+  if (!node) return null;
+  const definition = catalog[node.type];
+  if (!definition) return <p role="alert">Missing UI definition for {node.type}</p>;
+  // Dynamic stems and argument ports follow the live processing schema.
+  const inlineOutputs = new Set(
+    definition.fields
+      .filter((field) => field.control === "expression")
+      .flatMap(
+        (field) =>
+          node.elements
+            .find((element) => element.name === field.name)
+            ?.itemPorts?.filter(Boolean)
+            .map((name) => `${name}_out`) ?? [],
+      ),
+  );
+  if (definition.fields.some((field) => field.control === "expression")) {
+    inlineOutputs.add("data");
+    for (const operation of (node.elements.find((element) => element.name === "operations")?.value ?? []) as {
+      name: string;
+    }[])
+      inlineOutputs.add(operation.name);
+  }
+  const views = [
+    ...definition.views,
+    ...node.ports
+      .filter(
+        (port) =>
+          port.direction === "out" &&
+          !inlineOutputs.has(port.name) &&
+          !definition.views.some((view) => view.data === port.name),
+      )
+      .map((port) => ({
+        kind: node.type === "StemsRecognition" ? ("trigger" as const) : ("bars" as const),
+        data: port.name,
+        label: port.name,
+        open: false,
+      })),
+  ];
+  const shown = new Set([
+    ...definition.fields.flatMap((field) => [field.name, field.addPort]),
+    ...views.map((view) => view.data),
+    ...node.elements.flatMap((element) => element.itemPorts ?? []),
+  ]);
+  return (
+    <Node
+      id={id}
+      selected={selected}
+      title={definition.title}
+      description={definition.description}
+      inputs={node.ports
+        .filter(
+          (port) =>
+            port.direction === "in" &&
+            !shown.has(port.name) &&
+            !definition.fields.some((field) => field.portsPrefix && port.name.startsWith(field.portsPrefix)),
+        )
+        .map((port) => port.name)}
+    >
+      <div className="flex items-center justify-between text-2xs text-muted-foreground">
+        <span>
+          {definition.category} · {id}
+        </span>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => {
+            void backend.graph.removeNode(id);
+          }}
+          aria-label={`Remove ${id}`}
+        >
+          Remove
+        </Button>
+      </div>
+      <NodeFields key={node.id} node={node} definition={definition} />
+      {definition.actions && (
+        <div className="flex gap-2">
+          {definition.actions.map((action) => (
+            <Button
+              key={action}
+              onClick={() => {
+                void backend.graph.runNode(id, action);
+              }}
+              className="flex-1 capitalize"
+            >
+              {action}
+            </Button>
+          ))}
+        </div>
+      )}
+      {views.map((view, index) => (
+        <NodeView
+          key={`${view.data ?? view.kind}-${index}`}
+          node={node}
+          view={view}
+          hidePort={inlineOutputs.has(view.data ?? "")}
+        />
+      ))}
+    </Node>
+  );
+}

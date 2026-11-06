@@ -1,3 +1,16 @@
 /esp32/.pio/
 /.venv/
 /.venv-pio/
+__pycache__/
+*.py[cod]
+
+/frontend/node_modules/
+/frontend/dist/
+/frontend/test-results/
+/frontend/playwright-report/
+/frontend/*.tsbuildinfo
+
+# Quality tool outputs (crapper, dryer, mutator)
+.metrics/
+target/
+.coverage
