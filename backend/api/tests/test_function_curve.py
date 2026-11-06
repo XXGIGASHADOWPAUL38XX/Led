@@ -85,7 +85,7 @@ class FunctionCurveTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.runtime.graph, before)
 
     def test_input_shape_and_edited_endpoint_coordinates(self):
-        self.runtime.configure('curve', {'input_data': np.zeros((7, 3)),
+        self.runtime.configure('curve', {'input_data': np.zeros((7, 3)), 'number_points': 7,
             'points': [[0.2, 0.4], [0.8, 0.9]], 'point_ids': ['left', 'right'], 'slopes': [0]})
         data = self.runtime.nodes['curve'].data.value
         self.assertEqual(data.shape, (7, 3))

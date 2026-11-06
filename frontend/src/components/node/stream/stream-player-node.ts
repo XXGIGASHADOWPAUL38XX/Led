@@ -37,6 +37,12 @@ export default {
   ],
   "views": [
     {
+      "kind": "meter",
+      "data": "chunk_id",
+      "label": "Chunk ID",
+      "open": false
+    },
+    {
       "kind": "history",
       "data": "chunk",
       "label": "Chunk",
